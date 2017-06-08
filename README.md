@@ -6,6 +6,11 @@ _parallel-and-distributed-IR_ es un sistema distribuido y paralelo de recuperaci
 
 Este sistema propone aplicar técnicas de paralelización al momento de la resolución de queries del usuario de manera tal de optimizar los tiempos de respuesta. De igual manera, el sistema constará de una serie de dispositivos o nodos interconectados que garanticen una mayor confiabilidad, seguridad y disponibilidad de los servicios y datos administrados.
 
+Propuesta completa [aquí][1]
+
 ## Arquitectura
 
 ![arquitectura de sistema](http://i.imgur.com/AzY7S5x.png)
+
+[1]: https://drive.google.com/open?id=1-hrXE356gGyHKITsZKsmqjxnsO6fwFIvwg2OK6spN-8
+
