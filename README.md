@@ -8,8 +8,8 @@ Este sistema propone aplicar técnicas de paralelización al momento de la resol
 
 ## Arquitectura
 
-![arquitectura de sistema](https://drive.google.com/file/d/0B13cNeaiufwVdGdzME16UnpPRHc/view?usp=sharing)
-
+![arquitectura de sistema](https://drive.google.com/open?id=0B13cNeaiufwVdGdzME16UnpPRHc)
+![Bilby Stampede](http://example.com/images/logo.png)
 
 
 
