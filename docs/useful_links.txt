@@ -1,0 +1,2 @@
+files i/o in c:
+https://www.programiz.com/c-programming/c-file-input-output
