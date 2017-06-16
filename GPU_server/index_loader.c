@@ -2,7 +2,6 @@
 #include <stdlib.h>
 #include <string.h>
 
-
 typedef struct Posting {
    int termId;
    int docsLength;
@@ -11,14 +10,14 @@ typedef struct Posting {
  } Posting;
 
  void displayPosting(Posting *postings, int size);
- void postingsFromSeqFile(FILE *postingsFile, int totalTerms);
+ Posting* postingsFromSeqFile(FILE *postingsFile, int totalTerms);
 
-void postingsFromSeqFile(FILE *postingsFile, int totalTerms) {
+ Posting* postingsFromSeqFile(FILE *postingsFile, int totalTerms) {
   const MAX_BYTES_READ_PER_LINE = 1000000;
   printf("Reading postings...\n");
   char line[MAX_BYTES_READ_PER_LINE];
   int postingsCount = 0;
-  Posting postings[totalTerms];
+  Posting* postings = malloc(sizeof(Posting) * totalTerms);
 
   // ITERATE OVER EACH LINES OF THE POSTING FILE
   while (fgets(line, MAX_BYTES_READ_PER_LINE, postingsFile) != NULL) {
@@ -59,10 +58,9 @@ void postingsFromSeqFile(FILE *postingsFile, int totalTerms) {
     postingsCount++;
   }
 
-  displayPosting(postings, totalTerms);
   printf("Finish reading postings\n");
   fclose(postingsFile);
-
+  return postings;
 }
 
 void displayPosting(Posting* postings, int size){
@@ -80,7 +78,7 @@ void displayPosting(Posting* postings, int size){
   }
 }
 
-
+/*
 int main(int argc, char const *argv[]) {
   if (argc  != 2){
     printf("How to use: \n\t$%s /path/to/postings.txt\n", argv[0]);
@@ -95,5 +93,6 @@ int main(int argc, char const *argv[]) {
    exit(1);
   }
   const TERMS = 30332;
-  postingsFromSeqFile(txtFilePtr, TERMS);
+  Posting* p = postingsFromSeqFile(txtFilePtr, TERMS);
 }
+*/

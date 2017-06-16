@@ -31,5 +31,7 @@ hs_err_pid*
 
 
 ############################ MY FILES ###################################
-code_snippets/seq_posting.txt
+.ftpconfig
+.ftpignore
+.gitignore
 ############################ END MY FILES ###################################
