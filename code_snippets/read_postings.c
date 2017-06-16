@@ -2,7 +2,19 @@
 #include <stdlib.h>
 #include <string.h>
 
-void readPostings(FILE *postingsFile);
+
+const MAX_BYTES_READ = 1000000;
+const TERMS = 30332;
+typedef struct Posting {
+   int termId;
+   int docsLength;
+   float *weights;
+   int *docIds;
+ } Posting;
+
+ void displayPosting(Posting *postings, int size);
+ void readPostings(FILE *postingsFile);
+
 
 int main(int argc, char const *argv[]) {
   if (argc  != 2){
@@ -21,37 +33,68 @@ int main(int argc, char const *argv[]) {
 }
 
 void readPostings(FILE *postingsFile) {
-  const MAX_BYTES_READ = 1000000;
+
   printf("Reading postings...\n");
   char line[MAX_BYTES_READ];
-  int term;
+  int postingsCount = 0;
+  Posting postings[TERMS];
+
+  // ITERATE OVER EACH LINES OF THE POSTING FILE
   while (fgets(line, MAX_BYTES_READ, postingsFile) != NULL) {
-    printf("%zu\n", sizeof (line));
+    // CHOP STRING
     strtok(line, "\n");
+    // POSTING FOR THIS TERM
+    Posting termPosting;
+    // SPLIT LINE IN TOKENS
     char* tokens = strtok(line, ":");
+    // FIRST TOKEN IS TERM ID
+    // TURN IT INTO INT
     char *ptr;
-    term = strtol(tokens, &ptr, 10);
+    termPosting.termId = strtol(tokens, &ptr, 10);
+    // SECOND TOKEN IS DOCS AND WEIGHT OF TERM
     char *termDocsAndWeight = strtok (NULL, ":");
-    int docsCount;
-    for (
-      docsCount=0;
-      termDocsAndWeight[docsCount];
-      termDocsAndWeight[docsCount]==';' ? docsCount++ : *termDocsAndWeight++
-    );
-    printf("Docs count: %d\n", docsCount);
-    int docs[docsCount];
-    int weights[docsCount];
-    //*termDocsAndWeight = termDocsAndWeight[0];
-    *termDocsAndWeight -= 10;
-    printf("%s\n", termDocsAndWeight);
-    tokens = strtok(termDocsAndWeight, ";");
-    while (tokens != NULL) {
-      printf("%s\n", tokens);
-      tokens = strtok(NULL, ";");
+    // COUNTING TO GET NUMBER OF DOCUMENTS THIS TERM APPEARS IN
+    termPosting.docsLength = 0;
+    int i;
+    for (i=0; i < strlen(termDocsAndWeight); i++)
+      if (termDocsAndWeight[i] == ';'){
+        termPosting.docsLength++;
     }
-    exit(0);
+    termPosting.docIds = (int*) malloc(sizeof(int) * termPosting.docsLength);
+    termPosting.weights = (float*) malloc(sizeof(float) * termPosting.docsLength);
+    char *pairWeightDoc, *doc, *weight, *saveptr;
+    tokens = strtok_r(termDocsAndWeight, ";", &saveptr);
+    int docPos = 0;
+    while (tokens != NULL) {
+      char *saveptr2, *ptr2;
+      doc = strtok_r(tokens, ",", &saveptr2);
+      weight = strtok_r(NULL, ",", &saveptr2);
+      termPosting.weights[docPos] = atof(weight);
+      termPosting.docIds[docPos] = strtol(tokens, &ptr2, 10);
+      tokens = strtok_r(NULL, ";", &saveptr);
+      docPos++;
+    }
+    postings[postingsCount] = termPosting;
+    postingsCount++;
   }
 
+  displayPosting(postings, TERMS);
+  printf("Finish reading postings\n");
   fclose(postingsFile);
 
+}
+
+void displayPosting(Posting* postings, int size){
+  int i,j;
+  printf("total terms: %d\n", TERMS);
+  for (i = 0; i < size; i++) {
+    Posting termPosting = postings[i];
+    printf("Term: %d\n", termPosting.termId);
+    for (j = 0; j < termPosting.docsLength; j++)
+      printf(
+        "doc: %d - weight: %4.4f\n",
+        termPosting.docIds[j],
+        termPosting.weights[j]
+      );
+  }
 }
