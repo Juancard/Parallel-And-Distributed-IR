@@ -3,8 +3,6 @@
 #include <string.h>
 
 
-const MAX_BYTES_READ = 1000000;
-const TERMS = 30332;
 typedef struct Posting {
    int termId;
    int docsLength;
@@ -13,34 +11,17 @@ typedef struct Posting {
  } Posting;
 
  void displayPosting(Posting *postings, int size);
- void readPostings(FILE *postingsFile);
+ void postingsFromSeqFile(FILE *postingsFile, int totalTerms);
 
-
-int main(int argc, char const *argv[]) {
-  if (argc  != 2){
-    printf("How to use: \n\t$%s /path/to/postings.txt\n", argv[0]);
-    exit(1);
-  }
-  char const *pathToPostings = argv[1];
-  printf("%s\n", pathToPostings);
-  FILE *txtFilePtr;
-  txtFilePtr = fopen(pathToPostings, "r");
-  if(txtFilePtr == NULL) {
-   printf("Error! No such file.\n");
-   exit(1);
-  }
-  readPostings(txtFilePtr);
-}
-
-void readPostings(FILE *postingsFile) {
-
+void postingsFromSeqFile(FILE *postingsFile, int totalTerms) {
+  const MAX_BYTES_READ_PER_LINE = 1000000;
   printf("Reading postings...\n");
-  char line[MAX_BYTES_READ];
+  char line[MAX_BYTES_READ_PER_LINE];
   int postingsCount = 0;
-  Posting postings[TERMS];
+  Posting postings[totalTerms];
 
   // ITERATE OVER EACH LINES OF THE POSTING FILE
-  while (fgets(line, MAX_BYTES_READ, postingsFile) != NULL) {
+  while (fgets(line, MAX_BYTES_READ_PER_LINE, postingsFile) != NULL) {
     // CHOP STRING
     strtok(line, "\n");
     // POSTING FOR THIS TERM
@@ -78,7 +59,7 @@ void readPostings(FILE *postingsFile) {
     postingsCount++;
   }
 
-  displayPosting(postings, TERMS);
+  displayPosting(postings, totalTerms);
   printf("Finish reading postings\n");
   fclose(postingsFile);
 
@@ -86,7 +67,7 @@ void readPostings(FILE *postingsFile) {
 
 void displayPosting(Posting* postings, int size){
   int i,j;
-  printf("total terms: %d\n", TERMS);
+  printf("total terms: %d\n", size);
   for (i = 0; i < size; i++) {
     Posting termPosting = postings[i];
     printf("Term: %d\n", termPosting.termId);
@@ -97,4 +78,22 @@ void displayPosting(Posting* postings, int size){
         termPosting.weights[j]
       );
   }
+}
+
+
+int main(int argc, char const *argv[]) {
+  if (argc  != 2){
+    printf("How to use: \n\t$%s /path/to/postings.txt\n", argv[0]);
+    exit(1);
+  }
+  char const *pathToPostings = argv[1];
+  printf("%s\n", pathToPostings);
+  FILE *txtFilePtr;
+  txtFilePtr = fopen(pathToPostings, "r");
+  if(txtFilePtr == NULL) {
+   printf("Error! No such file.\n");
+   exit(1);
+  }
+  const TERMS = 30332;
+  postingsFromSeqFile(txtFilePtr, TERMS);
 }
