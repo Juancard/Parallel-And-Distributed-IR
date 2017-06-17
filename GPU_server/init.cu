@@ -6,9 +6,10 @@
 #define POSTINGS_FILE "resources/seq_posting.txt"
 
 // GPU KERNEL
-__global__ void k_resolveQuery (int *queryTerms, int querySize){
+__global__ void k_resolveQuery (int *queryTerms, int querySize, float *docScores){
 	int index = blockIdx.x * blockDim.x + threadIdx.x;
-	printf ("I am (%d, %d) with doc %d\n", blockIdx.x, threadIdx.x, index);
+	docScores[index] = index + 0.0f;
+	printf ("I am (%d, %d) with doc %d - score %1.1f\n", blockIdx.x, threadIdx.x, index, docScores[index]);
 }
 
 void displayPosting(Posting *postings, int size);
@@ -70,9 +71,31 @@ void resolve_query(char *query){
   }
 
   int *d_queryTerms;
-  cudaMalloc((void **) &d_queryTerms, querySize * sizeof(int));
+	float *docScores, *d_docScores;
+	int DOCS = 4;
+	int MAX_BLOCKS = 1024;
+	int MAX_THREADS = 1024;
+	int blocks = DOCS;
+	int threads = 1;
+	if (blocks > MAX_BLOCKS) {
+		blocks = MAX_BLOCKS;
+		printf("WARNING: too many documents in collection and not enough blocks. Only first 1024 docs will be processed\n");
+	}
+
+	docScores = (float *) malloc(sizeof(float) * DOCS);
+	cudaMalloc((void **) &d_queryTerms, querySize * sizeof(int));
+  cudaMalloc((void **) &d_docScores, DOCS * sizeof(float));
+
   cudaMemcpy(d_queryTerms, queryTerms, querySize * sizeof(int), cudaMemcpyHostToDevice);
-  k_resolveQuery<<<2, 2>>>(d_queryTerms, querySize);
-  cudaFree(d_queryTerms);
+	k_resolveQuery<<<blocks, threads>>>(d_queryTerms, querySize, d_docScores);
+
+	cudaMemcpy(docScores, d_docScores, DOCS * sizeof(float), cudaMemcpyDeviceToHost);
+
+	for (i = 0; i < DOCS; i++) {
+		printf("doc %d: %1.1f\n", i, docScores[i]);
+	}
+	
+	cudaFree(d_queryTerms);
+	cudaFree(d_docScores);
   free(queryTerms);
 }
