@@ -1,25 +1,23 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include "index_loader.c"
+#include "index_loader.h"
 
 #define POSTINGS_FILE "resources/seq_posting.txt"
+
+// GPU KERNEL
+__global__ void k_resolveQuery (int *queryTerms, int querySize){
+	int index = blockIdx.x * blockDim.x + threadIdx.x;
+	printf ("I am (%d, %d) with doc %d\n", blockIdx.x, threadIdx.x, index);
+}
 
 void displayPosting(Posting *postings, int size);
 Posting* postingsFromSeqFile(FILE *postingsFile, int totalTerms);
 void index_collection();
 void resolve_query(char *query);
 
-/*
-// GPU KERNEL
-__global__ void resolveQuery (int *a, int *b, int *c){
-	int index = blockIdx.x * blockDim.x + threadIdx.x;
-	c[index] = a[index] + b[index];
-	//*c = *a + *b;
-	//printf ("RUNNING ON DEVICE %d \n", blockIdx.x);
 
-}
-*/
+
 
 int main(int argc, char const *argv[]) {
   index_collection();
@@ -41,7 +39,7 @@ void index_collection() {
    printf("Error! No posting file in path %s.\n", POSTINGS_FILE);
    exit(1);
   }
-  const TERMS = 30332;
+  const int TERMS = 30332;
   Posting* postingsLoaded = postingsFromSeqFile(txtFilePtr, TERMS);
   printf("Finish indexing\n");
 }
@@ -60,8 +58,8 @@ void resolve_query(char *query){
       spacesCounter++;
     }
   }
-  int numberOfTerms = spacesCounter + 1;
-  int *queryTerms = malloc(sizeof(int) * numberOfTerms);
+  int querySize = spacesCounter + 1;
+  int *queryTerms = (int *) malloc(sizeof(int) * querySize);
   char *tokens = strtok(query, " ");
   int termPos = 0;
   while (tokens != NULL) {
@@ -71,7 +69,10 @@ void resolve_query(char *query){
     termPos++;
   }
 
-  int *queryTermsDevice;
-  cudaMalloc((void **)&queryTermsDevice, numberOfTerms);
-
+  int *d_queryTerms;
+  cudaMalloc((void **) &d_queryTerms, querySize * sizeof(int));
+  cudaMemcpy(d_queryTerms, queryTerms, querySize * sizeof(int), cudaMemcpyHostToDevice);
+  k_resolveQuery<<<2, 2>>>(d_queryTerms, querySize);
+  cudaFree(d_queryTerms);
+  free(queryTerms);
 }

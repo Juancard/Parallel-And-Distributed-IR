@@ -13,11 +13,11 @@ typedef struct Posting {
  Posting* postingsFromSeqFile(FILE *postingsFile, int totalTerms);
 
  Posting* postingsFromSeqFile(FILE *postingsFile, int totalTerms) {
-  const MAX_BYTES_READ_PER_LINE = 1000000;
+  const int MAX_BYTES_READ_PER_LINE = 1000000;
   printf("Reading postings...\n");
   char line[MAX_BYTES_READ_PER_LINE];
   int postingsCount = 0;
-  Posting* postings = malloc(sizeof(Posting) * totalTerms);
+  Posting* postings = (Posting *) malloc(sizeof(Posting) * totalTerms);
 
   // ITERATE OVER EACH LINES OF THE POSTING FILE
   while (fgets(line, MAX_BYTES_READ_PER_LINE, postingsFile) != NULL) {
@@ -42,7 +42,7 @@ typedef struct Posting {
     }
     termPosting.docIds = (int*) malloc(sizeof(int) * termPosting.docsLength);
     termPosting.weights = (float*) malloc(sizeof(float) * termPosting.docsLength);
-    char *pairWeightDoc, *doc, *weight, *saveptr;
+    char *doc, *weight, *saveptr;
     tokens = strtok_r(termDocsAndWeight, ";", &saveptr);
     int docPos = 0;
     while (tokens != NULL) {
@@ -78,7 +78,7 @@ void displayPosting(Posting* postings, int size){
   }
 }
 
-/*
+/* MAIN WORKS, UNCOMMENT TO TEST THIS LIBRARY
 int main(int argc, char const *argv[]) {
   if (argc  != 2){
     printf("How to use: \n\t$%s /path/to/postings.txt\n", argv[0]);
