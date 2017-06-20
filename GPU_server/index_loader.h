@@ -14,13 +14,12 @@ typedef struct Posting {
 
  Posting* postingsFromSeqFile(FILE *postingsFile, int totalTerms) {
   const int MAX_BYTES_READ_PER_LINE = 1000000;
-  printf("Reading postings...\n");
   char line[MAX_BYTES_READ_PER_LINE];
   int postingsCount = 0;
   Posting* postings = (Posting *) malloc(sizeof(Posting) * totalTerms);
-
   // ITERATE OVER EACH LINES OF THE POSTING FILE
   while (fgets(line, MAX_BYTES_READ_PER_LINE, postingsFile) != NULL) {
+
     // CHOP STRING
     strtok(line, "\n");
     // POSTING FOR THIS TERM
@@ -45,19 +44,24 @@ typedef struct Posting {
     char *doc, *weight, *saveptr;
     tokens = strtok_r(termDocsAndWeight, ";", &saveptr);
     int docPos = 0;
+    printf("1\n");
     while (tokens != NULL) {
       char *saveptr2, *ptr2;
       doc = strtok_r(tokens, ",", &saveptr2);
+      printf("doc %d\n", strtol(tokens, &ptr2, 10));
       weight = strtok_r(NULL, ",", &saveptr2);
+      printf("weight %d\n", atof(weight));
       termPosting.weights[docPos] = atof(weight);
       termPosting.docIds[docPos] = strtol(tokens, &ptr2, 10);
       tokens = strtok_r(NULL, ";", &saveptr);
+      printf("tokens: %d\n", tokens);
       docPos++;
+      printf("2\n");
     }
     postings[postingsCount] = termPosting;
     postingsCount++;
   }
-
+  printf("4\n");
   printf("Finish reading postings\n");
   fclose(postingsFile);
   return postings;

@@ -5,18 +5,26 @@
 
 #define POSTINGS_FILE "resources/seq_posting.txt"
 
+typedef struct Lala {
+   int termId;
+	 int docsLength;
+   int *docIds;
+ } Lala;
 // global variables that are allocated in device during indexing
 Posting *d_postings;
 int *d_termsInPostings;
+Lala *d_lala;
 
 // GPU KERNEL
 __global__ void k_resolveQuery (
+		Lala *lala,
 		Posting *postings,
 		int *termsInPostings,
 		int *queryTerms,
 		int querySize,
 		float *docScores
 	){
+	printf("lala: %d\n", lala->docsLength);
 	int myDocId = blockIdx.x * blockDim.x + threadIdx.x;
 	docScores[myDocId] = 0;
 	int i, j, termId, termFound;
@@ -87,6 +95,7 @@ void index_collection() {
    exit(1);
   }
   const int TERMS = 30332;
+	printf("Loading postings...\n");
   Posting* postingsLoaded = postingsFromSeqFile(txtFilePtr, TERMS);
 
 	// Postings to device
@@ -147,8 +156,23 @@ void resolveQuery(char *query){
 
   cudaMemcpy(d_queryTerms, queryTerms, querySize * sizeof(int), cudaMemcpyHostToDevice);
 
+	// Allocate storage for struct LALA and docIds
+	Lala l;
+	l.termId = 5;
+	l.docsLength = 1;
+	int size =  sizeof(int) * l.docsLength;
+	l.docIds = (int *) malloc(size);
+	int *d_docIds;
+  cudaMalloc(&d_lala, sizeof(Lala));
+  cudaMalloc(&d_docIds, size);
+
+	cudaMemcpy(d_docIds, l.docIds, size, cudaMemcpyHostToDevice);
+	cudaMemcpy(d_lala, &l, sizeof(Lala), cudaMemcpyHostToDevice);
+	cudaMemcpy(&(d_lala->docIds), &d_lala, sizeof(int*), cudaMemcpyHostToDevice);
+
 	cudaEventRecord(resolveQueryStart);
 	k_resolveQuery<<<numBlocks, BLOCK_SIZE>>>(
+		d_lala,
 		d_postings,
 		d_termsInPostings,
 		d_queryTerms,
