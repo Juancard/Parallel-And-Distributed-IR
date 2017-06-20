@@ -1,2 +1,4 @@
 files i/o in c:
 https://www.programiz.com/c-programming/c-file-input-output
+cuda basics (check out related links on the bottom, too):
+https://devblogs.nvidia.com/parallelforall/even-easier-introduction-cuda/
