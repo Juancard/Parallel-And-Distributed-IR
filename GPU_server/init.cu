@@ -17,11 +17,38 @@ __global__ void k_resolveQuery (
 		int querySize,
 		float *docScores
 	){
-	int index = blockIdx.x * blockDim.x + threadIdx.x;
+	int myDocId = blockIdx.x * blockDim.x + threadIdx.x;
+	docScores[myDocId] = 0;
+	int i, j, termId, termFound;
+	for (i = 0; i < querySize; i++) {
+		termId = queryTerms[i];
+		termFound = j = 0;
+		Posting termPosting;
+		while (termFound != 1 && j < *termsInPostings) {
+			termPosting = postings[j];
+			if (termPosting.termId == termId) termFound = 1;
+			j++;
+		}
+		if (termFound == 1) {
+			int docIdsPos = -1;
+			int currentDocId;
+			printf("%d\n", termId);
+			do {
+				docIdsPos++;
+				printf("in do while %d\n", docIdsPos);
+				currentDocId = termPosting.docIds[docIdsPos];
+				printf("currentDocId: %d\n", currentDocId);
+			} while(myDocId < currentDocId && docIdsPos < termPosting.docsLength - 1);
+			if (myDocId == currentDocId) {
+				docScores[myDocId] += termPosting.weights[docIdsPos];
+			}
+		}
+	}
+	/*
 	docScores[index] = index + 0.0f;
 	printf ("I am (%d, %d) with doc %d - score %1.1f\n", blockIdx.x, threadIdx.x, index, docScores[index]);
 	printf("\t Term %d is in %d docs\n", index, postings[index].docsLength);
-
+	*/
 }
 
 void displayPosting(Posting *postings, int size);
@@ -63,6 +90,9 @@ void index_collection() {
   Posting* postingsLoaded = postingsFromSeqFile(txtFilePtr, TERMS);
 
 	// Postings to device
+	/*
+	TODO structs ARE NOT COPIED THIS WAY, FIX IT ON NEXT COMMIT
+	*/
 	printf("Copying postings from host to device\n");
 	int postingsSize = sizeof(Posting) * TERMS;
 	cudaMalloc((void **) &d_postings, postingsSize);
@@ -134,11 +164,6 @@ void resolveQuery(char *query){
 	float milliseconds = 0;
 	cudaEventElapsedTime(&milliseconds, resolveQueryStart, resolveQueryStop);
 
-	/*
-	for (i = 0; i < DOCS; i++) {
-		printf("doc %d: %1.1f\n", i, docScores[i]);
-	}
-	*/
 	printf("Time elapsed: %10.4f ms\n", milliseconds);
 
 	cudaFree(d_queryTerms);
