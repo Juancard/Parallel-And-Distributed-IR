@@ -5,34 +5,40 @@
 
 #define POSTINGS_FILE "resources/seq_posting.txt"
 
-typedef struct Lala {
-   int termId;
-	 int docsLength;
-   int *docIds;
- } Lala;
 // global variables that are allocated in device during indexing
 Posting *d_postings;
-int *d_termsInPostings;
-Lala *d_lala;
+int terms;
+int docs;
+Posting d_lala;
 
 // GPU KERNEL
 __global__ void k_resolveQuery (
-		Lala *lala,
 		Posting *postings,
-		int *termsInPostings,
+		int terms,
+		int docs,
 		int *queryTerms,
 		int querySize,
 		float *docScores
 	){
-	printf("lala: %d\n", lala->docsLength);
-	int myDocId = blockIdx.x * blockDim.x + threadIdx.x;
+	int index = blockIdx.x * blockDim.x + threadIdx.x;
+	if (index >= docs) return;
+
+	int myDocId = index;
 	docScores[myDocId] = 0;
+	printf ("I am term %d - (%d - %d - %4.2f)\n",
+		postings[myDocId].termId,
+		postings[myDocId].docsLength,
+		postings[myDocId].docIds[0],
+		postings[myDocId].weights[0]
+	);
+
+	/*
 	int i, j, termId, termFound;
 	for (i = 0; i < querySize; i++) {
 		termId = queryTerms[i];
 		termFound = j = 0;
 		Posting termPosting;
-		while (termFound != 1 && j < *termsInPostings) {
+		while (termFound != 1 && j < terms) {
 			termPosting = postings[j];
 			if (termPosting.termId == termId) termFound = 1;
 			j++;
@@ -52,6 +58,7 @@ __global__ void k_resolveQuery (
 			}
 		}
 	}
+	*/
 	/*
 	docScores[index] = index + 0.0f;
 	printf ("I am (%d, %d) with doc %d - score %1.1f\n", blockIdx.x, threadIdx.x, index, docScores[index]);
@@ -59,12 +66,14 @@ __global__ void k_resolveQuery (
 	*/
 }
 
-void displayPosting(Posting *postings, int size);
 Posting* postingsFromSeqFile(FILE *postingsFile, int totalTerms);
 void index_collection();
 void resolveQuery(char *query);
 void handleKernelError();
-
+cudaError_t checkCuda(cudaError_t result);
+// to use only during developing, delete on production
+Posting* LoadDummyPostings(int size);
+void displayPosting(Posting *postings, int size);
 
 int main(int argc, char const *argv[]) {
   index_collection();
@@ -94,22 +103,36 @@ void index_collection() {
    printf("Error! No posting file in path %s.\n", POSTINGS_FILE);
    exit(1);
   }
-  const int TERMS = 30332;
+
 	printf("Loading postings...\n");
-  Posting* postingsLoaded = postingsFromSeqFile(txtFilePtr, TERMS);
+	terms = 30332; // hardcoded
+	docs = 4; // hardcoded
+  Posting* postingsLoaded = postingsFromSeqFile(txtFilePtr, terms);
+	//Posting* postingsLoaded = LoadDummyPostings(terms);
+  printf("Finish reading postings\n");
 
 	// Postings to device
-	/*
-	TODO structs ARE NOT COPIED THIS WAY, FIX IT ON NEXT COMMIT
-	*/
 	printf("Copying postings from host to device\n");
-	int postingsSize = sizeof(Posting) * TERMS;
-	cudaMalloc((void **) &d_postings, postingsSize);
-	cudaMemcpy(d_postings, postingsLoaded, postingsSize, cudaMemcpyHostToDevice);
 
-	// terms to device
-	cudaMalloc((void **) &d_termsInPostings, sizeof(int));
-  cudaMemcpy(d_termsInPostings, &TERMS, sizeof(int), cudaMemcpyHostToDevice);
+  // POSTINGS TO DEVICE
+	checkCuda( cudaMalloc((void**)&d_postings, sizeof(Posting) * terms) );
+	checkCuda( cudaMemcpy(d_postings, postingsLoaded, sizeof(Posting) * terms, cudaMemcpyHostToDevice) );
+	int i;
+	int *d_docIds;
+	float *d_weights;
+	for (i = 0; i < terms; i++) {
+		Posting p = postingsLoaded[i];
+
+		checkCuda( cudaMalloc((void**) &d_docIds, sizeof(int) * p.docsLength) );
+		checkCuda( cudaMalloc((void**) &d_weights, sizeof(float) * p.docsLength) );
+
+		checkCuda( cudaMemcpy(&(d_postings[i].docIds), &(d_docIds), sizeof(int *), cudaMemcpyHostToDevice) );
+		checkCuda( cudaMemcpy(&(d_postings[i].weights), &(d_weights), sizeof(float *), cudaMemcpyHostToDevice) );
+
+		checkCuda( cudaMemcpy(d_docIds, p.docIds, sizeof(int) * p.docsLength, cudaMemcpyHostToDevice) );
+		checkCuda( cudaMemcpy(d_weights, p.weights, sizeof(float) * p.docsLength, cudaMemcpyHostToDevice) );
+
+	}
 
 	free(postingsLoaded);
   printf("Finish indexing\n");
@@ -145,36 +168,20 @@ void resolveQuery(char *query){
 
   int *d_queryTerms;
 	float *docScores, *d_docScores;
-	int DOCS = 4;
-	int BLOCK_SIZE = DOCS;//1024;
+	int BLOCK_SIZE = 1024;
+	int numBlocks = (docs + BLOCK_SIZE - 1) / BLOCK_SIZE;
 
-	int numBlocks = (DOCS + BLOCK_SIZE - 1) / BLOCK_SIZE;
-
-	docScores = (float *) malloc(sizeof(float) * DOCS);
+	docScores = (float *) malloc(sizeof(float) * docs);
 	cudaMalloc((void **) &d_queryTerms, querySize * sizeof(int));
-  cudaMalloc((void **) &d_docScores, DOCS * sizeof(float));
+  cudaMalloc((void **) &d_docScores, docs * sizeof(float));
 
   cudaMemcpy(d_queryTerms, queryTerms, querySize * sizeof(int), cudaMemcpyHostToDevice);
 
-	// Allocate storage for struct LALA and docIds
-	Lala l;
-	l.termId = 5;
-	l.docsLength = 1;
-	int size =  sizeof(int) * l.docsLength;
-	l.docIds = (int *) malloc(size);
-	int *d_docIds;
-  cudaMalloc(&d_lala, sizeof(Lala));
-  cudaMalloc(&d_docIds, size);
-
-	cudaMemcpy(d_docIds, l.docIds, size, cudaMemcpyHostToDevice);
-	cudaMemcpy(d_lala, &l, sizeof(Lala), cudaMemcpyHostToDevice);
-	cudaMemcpy(&(d_lala->docIds), &d_lala, sizeof(int*), cudaMemcpyHostToDevice);
-
 	cudaEventRecord(resolveQueryStart);
 	k_resolveQuery<<<numBlocks, BLOCK_SIZE>>>(
-		d_lala,
 		d_postings,
-		d_termsInPostings,
+		terms,
+		docs,
 		d_queryTerms,
 		querySize,
 		d_docScores
@@ -182,7 +189,7 @@ void resolveQuery(char *query){
 	handleKernelError();
 	cudaEventRecord(resolveQueryStop);
 
-	cudaMemcpy(docScores, d_docScores, DOCS * sizeof(float), cudaMemcpyDeviceToHost);
+	cudaMemcpy(docScores, d_docScores, docs * sizeof(float), cudaMemcpyDeviceToHost);
 
 	cudaEventSynchronize(resolveQueryStop);
 	float milliseconds = 0;
@@ -202,4 +209,16 @@ void handleKernelError(){
 	  printf("Sync kernel error: %s\n", cudaGetErrorString(errSync));
 	if (errAsync != cudaSuccess)
 	  printf("Async kernel error: %s\n", cudaGetErrorString(errAsync));
+}
+
+cudaError_t checkCuda(cudaError_t result)
+{
+#if defined(DEBUG) || defined(_DEBUG)
+  if (result != cudaSuccess) {
+    fprintf(stderr, "CUDA Runtime Error: %s\n",
+            cudaGetErrorString(result));
+    assert(result == cudaSuccess);
+  }
+#endif
+  return result;
 }

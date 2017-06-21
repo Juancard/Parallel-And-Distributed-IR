@@ -44,25 +44,18 @@ typedef struct Posting {
     char *doc, *weight, *saveptr;
     tokens = strtok_r(termDocsAndWeight, ";", &saveptr);
     int docPos = 0;
-    printf("1\n");
     while (tokens != NULL) {
       char *saveptr2, *ptr2;
       doc = strtok_r(tokens, ",", &saveptr2);
-      printf("doc %d\n", strtol(tokens, &ptr2, 10));
       weight = strtok_r(NULL, ",", &saveptr2);
-      printf("weight %d\n", atof(weight));
       termPosting.weights[docPos] = atof(weight);
       termPosting.docIds[docPos] = strtol(tokens, &ptr2, 10);
       tokens = strtok_r(NULL, ";", &saveptr);
-      printf("tokens: %d\n", tokens);
       docPos++;
-      printf("2\n");
     }
     postings[postingsCount] = termPosting;
     postingsCount++;
   }
-  printf("4\n");
-  printf("Finish reading postings\n");
   fclose(postingsFile);
   return postings;
 }
@@ -80,6 +73,24 @@ void displayPosting(Posting* postings, int size){
         termPosting.weights[j]
       );
   }
+}
+
+// load postings invented, just for testing
+Posting* LoadDummyPostings(int size){
+  int i;
+  Posting* postings = (Posting *) malloc(sizeof(Posting) * size);
+  for (i = 0; i < size; i++) {
+    Posting p1;
+    p1.termId = i;
+    p1.docsLength = 5;
+    p1.docIds = (int *) malloc(sizeof(int) * p1.docsLength);
+    p1.weights = (float *) malloc(sizeof(float) * p1.docsLength);
+    int j;
+    for (j = 0; j < p1.docsLength; j++) p1.docIds[j] = j;
+    for (j = 0; j < p1.docsLength; j++) p1.weights[j] = j * (i + 1);
+    postings[i] = p1;
+  }
+  return postings;
 }
 
 /* MAIN WORKS, UNCOMMENT TO TEST THIS LIBRARY

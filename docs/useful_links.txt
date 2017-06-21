@@ -2,3 +2,5 @@ files i/o in c:
 https://www.programiz.com/c-programming/c-file-input-output
 cuda basics (check out related links on the bottom, too):
 https://devblogs.nvidia.com/parallelforall/even-easier-introduction-cuda/
+how to pass an array of structs of arrays from host to device:
+https://stackoverflow.com/questions/15431365/cudamemcpy-segmentation-fault
