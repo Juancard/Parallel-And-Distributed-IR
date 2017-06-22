@@ -4,6 +4,7 @@
 #include "index_loader.h"
 
 #define POSTINGS_FILE "resources/seq_posting.txt"
+#define POSTINGS_FILE2 "resources/mini_postings.txt"
 
 // global variables that are allocated in device during indexing
 Posting *d_postings;
@@ -25,14 +26,6 @@ __global__ void k_resolveQuery (
 
 	int myDocId = index;
 	docScores[myDocId] = 0;
-	printf ("I am term %d - (%d - %d - %4.2f)\n",
-		postings[myDocId].termId,
-		postings[myDocId].docsLength,
-		postings[myDocId].docIds[0],
-		postings[myDocId].weights[0]
-	);
-
-	/*
 	int i, j, termId, termFound;
 	for (i = 0; i < querySize; i++) {
 		termId = queryTerms[i];
@@ -44,26 +37,22 @@ __global__ void k_resolveQuery (
 			j++;
 		}
 		if (termFound == 1) {
+			//printf("term %d has %d docs.\n", termPosting.termId, termPosting.docsLength);
 			int docIdsPos = -1;
 			int currentDocId;
-			printf("%d\n", termId);
 			do {
 				docIdsPos++;
-				printf("in do while %d\n", docIdsPos);
 				currentDocId = termPosting.docIds[docIdsPos];
-				printf("currentDocId: %d\n", currentDocId);
-			} while(myDocId < currentDocId && docIdsPos < termPosting.docsLength - 1);
+				//printf("current doc id: %d\n", currentDocId);
+			} while(currentDocId < myDocId && docIdsPos < termPosting.docsLength - 1);
 			if (myDocId == currentDocId) {
+				//printf("found my doc id: %d\n", currentDocId);
+				//printf("doc %d: weight to sum: %4.2f\n", myDocId, termPosting.weights[docIdsPos]);
 				docScores[myDocId] += termPosting.weights[docIdsPos];
+				//printf("doc %d: current weight: %4.2f\n", myDocId, docScores[myDocId]);
 			}
 		}
 	}
-	*/
-	/*
-	docScores[index] = index + 0.0f;
-	printf ("I am (%d, %d) with doc %d - score %1.1f\n", blockIdx.x, threadIdx.x, index, docScores[index]);
-	printf("\t Term %d is in %d docs\n", index, postings[index].docsLength);
-	*/
 }
 
 Posting* postingsFromSeqFile(FILE *postingsFile, int totalTerms);
@@ -98,14 +87,14 @@ int main(int argc, char const *argv[]) {
 
 
 void index_collection() {
-  FILE *txtFilePtr = fopen(POSTINGS_FILE, "r");
+  FILE *txtFilePtr = fopen(POSTINGS_FILE2, "r");
   if(txtFilePtr == NULL) {
-   printf("Error! No posting file in path %s.\n", POSTINGS_FILE);
+   printf("Error! No posting file in path %s.\n", POSTINGS_FILE2);
    exit(1);
   }
 
 	printf("Loading postings...\n");
-	terms = 30332; // hardcoded
+	terms = 4; // hardcoded
 	docs = 4; // hardcoded
   Posting* postingsLoaded = postingsFromSeqFile(txtFilePtr, terms);
 	//Posting* postingsLoaded = LoadDummyPostings(terms);
@@ -196,6 +185,10 @@ void resolveQuery(char *query){
 	cudaEventElapsedTime(&milliseconds, resolveQueryStart, resolveQueryStop);
 
 	printf("Time elapsed: %10.4f ms\n", milliseconds);
+
+	for (i=0; i < docs; i++){
+		printf("doc %d: %4.2f\n", i, docScores[i]);
+	}
 
 	cudaFree(d_queryTerms);
 	cudaFree(d_docScores);
