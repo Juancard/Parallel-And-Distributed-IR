@@ -11,6 +11,7 @@ typedef struct Posting {
 
  void displayPosting(Posting *postings, int size);
  Posting* postingsFromSeqFile(FILE *postingsFile, int totalTerms);
+ float* docsNormFromSeqFile(FILE *docsNormFile, int totalDocs);
 
  Posting* postingsFromSeqFile(FILE *postingsFile, int totalTerms) {
   const int MAX_BYTES_READ_PER_LINE = 1000000;
@@ -49,7 +50,7 @@ typedef struct Posting {
       doc = strtok_r(tokens, ",", &saveptr2);
       weight = strtok_r(NULL, ",", &saveptr2);
       termPosting.weights[docPos] = atof(weight);
-      termPosting.docIds[docPos] = strtol(tokens, &ptr2, 10);
+      termPosting.docIds[docPos] = strtol(doc, &ptr2, 10);
       tokens = strtok_r(NULL, ";", &saveptr);
       docPos++;
     }
@@ -58,6 +59,31 @@ typedef struct Posting {
   }
   fclose(postingsFile);
   return postings;
+}
+
+float* docsNormFromSeqFile(FILE *docsNormFile, int totalDocs){
+  const int MAX_BYTES_READ_PER_LINE = 1000;
+  char line[MAX_BYTES_READ_PER_LINE];
+  int docsCount = 0;
+  float* docsNorm = (float *) malloc(sizeof(float) * totalDocs);
+  // ITERATE OVER EACH LINES OF THE POSTING FILE
+  int docId;
+  float docNorm;
+  char *tokens;
+  while (
+    fgets(line, MAX_BYTES_READ_PER_LINE, docsNormFile) != NULL
+    && docsCount < totalDocs
+  ) {
+    strtok(line, "\n");
+    tokens = strtok(line, ":");
+    char *ptr;
+    docId = strtol(tokens, &ptr, 10);
+    tokens = strtok(NULL, ":");
+    docNorm = atof(tokens);
+    docsNorm[docId] = docNorm;
+    docsCount++;
+  }
+  return docsNorm;
 }
 
 void displayPosting(Posting* postings, int size){

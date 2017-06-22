@@ -6,16 +6,29 @@
 #define POSTINGS_FILE "resources/seq_posting.txt"
 #define POSTINGS_FILE2 "resources/mini_postings.txt"
 #define POSTINGS_FILE3 "resources/mini_postings2.txt"
+#define POSTINGS_FILE4 "resources/mini_seq_posting.txt"
+#define DOCUMENTS_NORM "resources/documents_norm.txt"
+
+Posting* postingsFromSeqFile(FILE *postingsFile, int totalTerms);
+float* docsNormFromSeqFile(FILE *docsNormFile, int totalDocs);
+void index_collection();
+void resolveQuery(char *query);
+void handleKernelError();
+cudaError_t checkCuda(cudaError_t result);
+// to use only during developing, delete on production
+Posting* LoadDummyPostings(int size);
+void displayPosting(Posting *postings, int size);
 
 // global variables that are allocated in device during indexing
 Posting *d_postings;
+float *dev_docsNorm;
 int terms;
 int docs;
-Posting d_lala;
 
 // GPU KERNEL
 __global__ void k_resolveQuery (
 		Posting *postings,
+		float *docsNorm,
 		int terms,
 		int docs,
 		int *queryTerms,
@@ -26,6 +39,7 @@ __global__ void k_resolveQuery (
 	if (index >= docs) return;
 
 	int myDocId = index;
+	printf("doc %d has norm %4.4f\n", myDocId, docsNorm[myDocId]);
 	docScores[myDocId] = 0;
 	int i, j, termId, termFound;
 	for (i = 0; i < querySize; i++) {
@@ -56,15 +70,6 @@ __global__ void k_resolveQuery (
 	}
 }
 
-Posting* postingsFromSeqFile(FILE *postingsFile, int totalTerms);
-void index_collection();
-void resolveQuery(char *query);
-void handleKernelError();
-cudaError_t checkCuda(cudaError_t result);
-// to use only during developing, delete on production
-Posting* LoadDummyPostings(int size);
-void displayPosting(Posting *postings, int size);
-
 int main(int argc, char const *argv[]) {
   index_collection();
 
@@ -88,17 +93,17 @@ int main(int argc, char const *argv[]) {
 
 
 void index_collection() {
-  FILE *txtFilePtr = fopen(POSTINGS_FILE3, "r");
-  if(txtFilePtr == NULL) {
-   printf("Error! No posting file in path %s.\n", POSTINGS_FILE3);
-   exit(1);
-  }
+
+	terms = 346; // hardcoded
+	docs = 6; // hardcoded
 
 	printf("Loading postings...\n");
-	terms = 17; // hardcoded
-	docs = 5; // hardcoded
+	FILE *txtFilePtr = fopen(POSTINGS_FILE4, "r");
+	if(txtFilePtr == NULL) {
+	 printf("Error! No posting file in path %s\n", POSTINGS_FILE4);
+	 exit(1);
+	}
   Posting* postingsLoaded = postingsFromSeqFile(txtFilePtr, terms);
-	//Posting* postingsLoaded = LoadDummyPostings(terms);
   printf("Finish reading postings\n");
 
 	// Postings to device
@@ -124,7 +129,23 @@ void index_collection() {
 
 	}
 
+
+	printf("Loading documents norm...\n");
+	txtFilePtr = fopen(DOCUMENTS_NORM, "r");
+	if(txtFilePtr == NULL) {
+	 printf("Error! No documents norm file in path %s\n", DOCUMENTS_NORM);
+	 exit(1);
+	}
+	float* documentsNorm = docsNormFromSeqFile(txtFilePtr, docs);
+	printf("Finish loading documents norms\n");
+
+	// docs norm to device
+	printf("Copying docs norm from host to device\n");
+	checkCuda( cudaMalloc((void**)& dev_docsNorm, sizeof(float) * docs) );
+	checkCuda( cudaMemcpy(dev_docsNorm, documentsNorm, sizeof(float) * docs, cudaMemcpyHostToDevice) );
+
 	free(postingsLoaded);
+	free(documentsNorm);
   printf("Finish indexing\n");
 }
 
@@ -170,6 +191,7 @@ void resolveQuery(char *query){
 	cudaEventRecord(resolveQueryStart);
 	k_resolveQuery<<<numBlocks, BLOCK_SIZE>>>(
 		d_postings,
+		dev_docsNorm,
 		terms,
 		docs,
 		d_queryTerms,
