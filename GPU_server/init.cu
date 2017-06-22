@@ -39,33 +39,26 @@ __global__ void k_resolveQuery (
 	if (index >= docs) return;
 
 	int myDocId = index;
-	printf("doc %d has norm %4.4f\n", myDocId, docsNorm[myDocId]);
+	//printf("doc %d has norm %4.4f\n", myDocId, docsNorm[myDocId]);
 	docScores[myDocId] = 0;
-	int i, j, termId, termFound;
+	int i;
+	Posting termPosting;
+	//printf("query terms: %d\n", querySize);
 	for (i = 0; i < querySize; i++) {
-		termId = queryTerms[i];
-		termFound = j = 0;
-		Posting termPosting;
-		while (termFound != 1 && j < terms) {
-			termPosting = postings[j];
-			if (termPosting.termId == termId) termFound = 1;
-			j++;
-		}
-		if (termFound == 1) {
-			//printf("term %d has %d docs.\n", termPosting.termId, termPosting.docsLength);
-			int docIdsPos = -1;
-			int currentDocId;
-			do {
-				docIdsPos++;
-				currentDocId = termPosting.docIds[docIdsPos];
-				//printf("current doc id: %d\n", currentDocId);
-			} while(currentDocId < myDocId && docIdsPos < termPosting.docsLength - 1);
-			if (myDocId == currentDocId) {
-				//printf("found my doc id: %d\n", currentDocId);
-				//printf("doc %d: weight to sum: %4.2f\n", myDocId, termPosting.weights[docIdsPos]);
-				docScores[myDocId] += termPosting.weights[docIdsPos];
-				//printf("doc %d: current weight: %4.2f\n", myDocId, docScores[myDocId]);
-			}
+		termPosting = postings[queryTerms[i]];
+		//printf("term %d has %d docs.\n", queryTerms[i], termPosting.docsLength);
+		int docIdsPos = -1;
+		int currentDocId;
+		do {
+			docIdsPos++;
+			currentDocId = termPosting.docIds[docIdsPos];
+			//printf("current doc id: %d\n", currentDocId);
+		} while(currentDocId < myDocId && docIdsPos < termPosting.docsLength - 1);
+		if (myDocId == currentDocId) {
+			//printf("found my doc id: %d\n", currentDocId);
+			//printf("doc %d: weight to sum: %4.2f\n", myDocId, termPosting.weights[docIdsPos]);
+			docScores[myDocId] += termPosting.weights[docIdsPos];
+			//printf("doc %d: current weight: %4.2f\n", myDocId, docScores[myDocId]);
 		}
 	}
 }
@@ -83,8 +76,8 @@ int main(int argc, char const *argv[]) {
  	*/
 	char src[3], query[3];
 
-	strcpy(src,  "1 ");
-	strcpy(query, "2 ");
+	strcpy(src,  "41");
+	strcpy(query, "43 ");
 
 	strcat(query, src);
 	resolveQuery(query);
