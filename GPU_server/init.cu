@@ -20,7 +20,7 @@ Posting* LoadDummyPostings(int size);
 void displayPosting(Posting *postings, int size);
 
 // global variables that are allocated in device during indexing
-Posting *d_postings;
+Posting *dev_postings;
 float *dev_docsNorm;
 int terms;
 int docs;
@@ -103,22 +103,22 @@ void index_collection() {
 	printf("Copying postings from host to device\n");
 
   // POSTINGS TO DEVICE
-	checkCuda( cudaMalloc((void**)&d_postings, sizeof(Posting) * terms) );
-	checkCuda( cudaMemcpy(d_postings, postingsLoaded, sizeof(Posting) * terms, cudaMemcpyHostToDevice) );
+	checkCuda( cudaMalloc((void**)&dev_postings, sizeof(Posting) * terms) );
+	checkCuda( cudaMemcpy(dev_postings, postingsLoaded, sizeof(Posting) * terms, cudaMemcpyHostToDevice) );
 	int i;
-	int *d_docIds;
-	float *d_weights;
+	int *dev_docIds;
+	float *dev_weights;
 	for (i = 0; i < terms; i++) {
 		Posting p = postingsLoaded[i];
 
-		checkCuda( cudaMalloc((void**) &d_docIds, sizeof(int) * p.docsLength) );
-		checkCuda( cudaMalloc((void**) &d_weights, sizeof(float) * p.docsLength) );
+		checkCuda( cudaMalloc((void**) &dev_docIds, sizeof(int) * p.docsLength) );
+		checkCuda( cudaMalloc((void**) &dev_weights, sizeof(float) * p.docsLength) );
 
-		checkCuda( cudaMemcpy(&(d_postings[i].docIds), &(d_docIds), sizeof(int *), cudaMemcpyHostToDevice) );
-		checkCuda( cudaMemcpy(&(d_postings[i].weights), &(d_weights), sizeof(float *), cudaMemcpyHostToDevice) );
+		checkCuda( cudaMemcpy(&(dev_postings[i].docIds), &(dev_docIds), sizeof(int *), cudaMemcpyHostToDevice) );
+		checkCuda( cudaMemcpy(&(dev_postings[i].weights), &(dev_weights), sizeof(float *), cudaMemcpyHostToDevice) );
 
-		checkCuda( cudaMemcpy(d_docIds, p.docIds, sizeof(int) * p.docsLength, cudaMemcpyHostToDevice) );
-		checkCuda( cudaMemcpy(d_weights, p.weights, sizeof(float) * p.docsLength, cudaMemcpyHostToDevice) );
+		checkCuda( cudaMemcpy(dev_docIds, p.docIds, sizeof(int) * p.docsLength, cudaMemcpyHostToDevice) );
+		checkCuda( cudaMemcpy(dev_weights, p.weights, sizeof(float) * p.docsLength, cudaMemcpyHostToDevice) );
 
 	}
 
@@ -170,31 +170,31 @@ void resolveQuery(char *query){
     termPos++;
   }
 
-  int *d_queryTerms;
-	float *docScores, *d_docScores;
+  int *dev_queryTerms;
+	float *docScores, *dev_docScores;
 	int BLOCK_SIZE = 1024;
 	int numBlocks = (docs + BLOCK_SIZE - 1) / BLOCK_SIZE;
 
 	docScores = (float *) malloc(sizeof(float) * docs);
-	cudaMalloc((void **) &d_queryTerms, querySize * sizeof(int));
-  cudaMalloc((void **) &d_docScores, docs * sizeof(float));
+	cudaMalloc((void **) &dev_queryTerms, querySize * sizeof(int));
+  cudaMalloc((void **) &dev_docScores, docs * sizeof(float));
 
-  cudaMemcpy(d_queryTerms, queryTerms, querySize * sizeof(int), cudaMemcpyHostToDevice);
+  cudaMemcpy(dev_queryTerms, queryTerms, querySize * sizeof(int), cudaMemcpyHostToDevice);
 
 	cudaEventRecord(resolveQueryStart);
 	k_resolveQuery<<<numBlocks, BLOCK_SIZE>>>(
-		d_postings,
+		dev_postings,
 		dev_docsNorm,
 		terms,
 		docs,
-		d_queryTerms,
+		dev_queryTerms,
 		querySize,
-		d_docScores
+		dev_docScores
 	);
 	handleKernelError();
 	cudaEventRecord(resolveQueryStop);
 
-	cudaMemcpy(docScores, d_docScores, docs * sizeof(float), cudaMemcpyDeviceToHost);
+	cudaMemcpy(docScores, dev_docScores, docs * sizeof(float), cudaMemcpyDeviceToHost);
 
 	cudaEventSynchronize(resolveQueryStop);
 	float milliseconds = 0;
@@ -206,8 +206,8 @@ void resolveQuery(char *query){
 		printf("doc %d: %4.2f\n", i, docScores[i]);
 	}
 
-	cudaFree(d_queryTerms);
-	cudaFree(d_docScores);
+	cudaFree(dev_queryTerms);
+	cudaFree(dev_docScores);
   free(queryTerms);
 }
 
