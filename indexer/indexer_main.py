@@ -66,6 +66,14 @@ def main():
 		path=INDEX_DIR, title="seq_posting.txt")
 	print "Postings guardadas en: %s" % sp.path
 
+	documentsNorm = indexer.getDocumentsNorm()
+	docStr = ""
+	with open(INDEX_DIR + "documents_norm.txt", "w") as f:
+		for d in documentsNorm:
+			docStr += "%d:%.6f\n" % (d, documentsNorm[d])
+		f.write(docStr)
+	print "Documents norm guardadas en: " + INDEX_DIR + "documents_norm.txt"
+
 
 	# Guardo configuracion del index
 	CONFIG_NAME = "config.json"

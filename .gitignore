@@ -36,5 +36,5 @@ hs_err_pid*
 ############################ MY FILES ###################################
 .ftpconfig
 .ftpignore
-.gitignore
+indexer/index_data/
 ############################ END MY FILES ###################################
