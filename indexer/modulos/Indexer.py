@@ -19,7 +19,7 @@ class Indexer(object):
 		self.postings = DictionaryPostings({})
 		self.documents = Documents()
 		self.documentsTerms = {}
-		self.positions = DictionaryPostings({})
+		#self.positions = DictionaryPostings({})
 
 	def index(self, config):
 		"""Indexa la coleccion dada"""
@@ -42,7 +42,7 @@ class Indexer(object):
 			print "Cargando " + actualDoc["name"]
 			with codecs.open(filePath, mode='rt', encoding='utf-8') as f:
 
-				# GUardo tokens y terminos del documento
+				# Guardo tokens y terminos del documento
 				tokens = []
 				terms = []
 
@@ -53,7 +53,6 @@ class Indexer(object):
 					tokens.extend(analysed["tokens"])
 
 			# Guardo documento actual
-			docId += 1
 			self.documents.addDocument(docId, actualDoc["name"])
 
 			# De cada documento los terminos que tiene (sin repetir)
@@ -64,6 +63,7 @@ class Indexer(object):
 			#Actualizo stats
 			self.updateStats(tokens, terms)
 
+			docId += 1
 			#------FIN-LEER-ARCHIVO--------------------#
 
 		#----------------FIN-LEER-COLECCION---------#
@@ -74,7 +74,7 @@ class Indexer(object):
 		print u"Generando id de los términos"
 		self.setTermsId()
 		self.postings.sortByKey()
-		self.positions.sortByKey()
+		#self.positions.sortByKey()
 
 	def updateIndex(self, docId, terms):
 		position = 0
@@ -84,30 +84,30 @@ class Indexer(object):
 			if not self.vocabulary.isATerm(t):
 				self.vocabulary.addTerm(t, 1.0, 1.0)
 				self.postings.addPosting(t, docId, 1.0)
-				self.positions.addPosting(t, docId, [position])
+				#self.positions.addPosting(t, docId, [position])
 			else:
 				self.vocabulary.incrementCF(t, 1.0)
 				# termino no estaba en este documento?
 				if not self.postings.isDocInPosting(t, docId):
 					self.vocabulary.incrementDF(t, 1.0)
 					self.postings.addDocToPosting(t, docId, 1.0)
-					self.positions.addDocToPosting(t, docId, [position])
+					#self.positions.addDocToPosting(t, docId, [position])
 				# else termino ya existe en documento:
 				else:
 					# Actualizo postings con frecuencias
 					self.postings.addDocToPosting(t, docId, self.postings.getValue(t, docId) + 1.0)
 					# Actualizo postings posicionales
-					positionList = self.positions.getValue(t, docId)
-					positionList.append(position)
-					self.positions.addDocToPosting(t, docId, positionList)
+					#positionList = self.positions.getValue(t, docId)
+					#positionList.append(position)
+					#self.positions.addDocToPosting(t, docId, positionList)
 			position += 1
 
 	def setTermsId(self):
-		termId = 1
+		termId = 0
 		for term in self.vocabulary.content:
 			self.vocabulary.setId(term, termId)
 			self.postings.termToId(term, termId)
-			self.positions.termToId(term, termId)
+			#self.positions.termToId(term, termId)
 			for doc in self.documentsTerms:
 				if term in self.documentsTerms[doc]:
 					self.documentsTerms[doc].discard(term)
