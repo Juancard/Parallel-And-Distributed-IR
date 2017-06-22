@@ -5,6 +5,7 @@
 
 #define POSTINGS_FILE "resources/seq_posting.txt"
 #define POSTINGS_FILE2 "resources/mini_postings.txt"
+#define POSTINGS_FILE3 "resources/mini_postings2.txt"
 
 // global variables that are allocated in device during indexing
 Posting *d_postings;
@@ -87,15 +88,15 @@ int main(int argc, char const *argv[]) {
 
 
 void index_collection() {
-  FILE *txtFilePtr = fopen(POSTINGS_FILE2, "r");
+  FILE *txtFilePtr = fopen(POSTINGS_FILE3, "r");
   if(txtFilePtr == NULL) {
-   printf("Error! No posting file in path %s.\n", POSTINGS_FILE2);
+   printf("Error! No posting file in path %s.\n", POSTINGS_FILE3);
    exit(1);
   }
 
 	printf("Loading postings...\n");
-	terms = 4; // hardcoded
-	docs = 4; // hardcoded
+	terms = 17; // hardcoded
+	docs = 5; // hardcoded
   Posting* postingsLoaded = postingsFromSeqFile(txtFilePtr, terms);
 	//Posting* postingsLoaded = LoadDummyPostings(terms);
   printf("Finish reading postings\n");
