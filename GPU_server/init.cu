@@ -74,31 +74,31 @@ int main(int argc, char const *argv[]) {
         query[strlen (query) - 1] = '\0';
   resolveQuery(query);
  	*/
-	char src[3], query[3];
+	char qt2[3], q[3];
 
-	strcpy(src,  "41");
-	strcpy(query, "43 ");
+	strcpy(qt2,  "10"); // 'libre'
+	strcpy(q, "11 "); // 'pais'
 
-	strcat(query, src);
-	resolveQuery(query);
+	strcat(q, qt2); // 'pais libre'
+	resolveQuery(q);
   return 0;
 }
 
 
 void index_collection() {
 
-	terms = 346; // hardcoded
-	docs = 6; // hardcoded
+	terms = 17; // hardcoded
+	docs = 4; // hardcoded
 
 	printf("Loading postings...\n");
-	FILE *txtFilePtr = fopen(POSTINGS_FILE4, "r");
+	FILE *txtFilePtr = fopen(POSTINGS_FILE3, "r");
 	if(txtFilePtr == NULL) {
-	 printf("Error! No posting file in path %s\n", POSTINGS_FILE4);
+	 printf("Error! No posting file in path %s\n", POSTINGS_FILE3);
 	 exit(1);
 	}
   Posting* postingsLoaded = postingsFromSeqFile(txtFilePtr, terms);
   printf("Finish reading postings\n");
-
+	
 	// Postings to device
 	printf("Copying postings from host to device\n");
 
