@@ -9,15 +9,25 @@
 #define POSTINGS_FILE4 "resources/mini_seq_posting.txt"
 #define DOCUMENTS_NORM "resources/documents_norm.txt"
 
+typedef struct Query {
+   int size;
+   float *weights;
+   int *termsId;
+	 float norm;
+ } Query;
+
 Posting* postingsFromSeqFile(FILE *postingsFile, int totalTerms);
 float* docsNormFromSeqFile(FILE *docsNormFile, int totalDocs);
 void index_collection();
 void resolveQuery(char *query);
+Query parseQuery(char* queryStr);
 void handleKernelError();
 cudaError_t checkCuda(cudaError_t result);
 // to use only during developing, delete on production
 Posting* LoadDummyPostings(int size);
 void displayPosting(Posting *postings, int size);
+
+
 
 // global variables that are allocated in device during indexing
 Posting *dev_postings;
@@ -31,8 +41,7 @@ __global__ void k_resolveQuery (
 		float *docsNorm,
 		int terms,
 		int docs,
-		int *queryTerms,
-		int querySize,
+		Query q,
 		float *docScores
 	){
 	int index = blockIdx.x * blockDim.x + threadIdx.x;
@@ -44,9 +53,9 @@ __global__ void k_resolveQuery (
 	int i;
 	Posting termPosting;
 	//printf("query terms: %d\n", querySize);
-	for (i = 0; i < querySize; i++) {
-		termPosting = postings[queryTerms[i]];
-		//printf("term %d has %d docs.\n", queryTerms[i], termPosting.docsLength);
+	for (i = 0; i < q.size; i++) {
+		termPosting = postings[q.termsId[i]];
+		//printf("term %d has %d docs.\n", q.termsId[i], termPosting.docsLength);
 		int docIdsPos = -1;
 		int currentDocId;
 		do {
@@ -74,12 +83,13 @@ int main(int argc, char const *argv[]) {
         query[strlen (query) - 1] = '\0';
   resolveQuery(query);
  	*/
-	char qt2[3], q[3];
+	char q[20];
 
-	strcpy(qt2,  "10"); // 'libre'
-	strcpy(q, "11 "); // 'pais'
+	/* Query string format:
+	[norma_query]#[term_1]:[weight_1];[term_n]:[weight_n]
+	*/
+	strcpy(q, "1.4142135624#10:1;11:1;");
 
-	strcat(q, qt2); // 'pais libre'
 	resolveQuery(q);
   return 0;
 }
@@ -98,7 +108,7 @@ void index_collection() {
 	}
   Posting* postingsLoaded = postingsFromSeqFile(txtFilePtr, terms);
   printf("Finish reading postings\n");
-	
+
 	// Postings to device
 	printf("Copying postings from host to device\n");
 
@@ -142,16 +152,24 @@ void index_collection() {
   printf("Finish indexing\n");
 }
 
-void resolveQuery(char *query){
-  printf("Searching for: %s\n", query);
+void resolveQuery(char *queryStr){
+  printf("Searching for: %s\n", queryStr);
 	cudaEvent_t resolveQueryStart, resolveQueryStop;
 	cudaEventCreate(&resolveQueryStart);
 	cudaEventCreate(&resolveQueryStop);
   int i;
+	Query q = parseQuery(queryStr);
+	printf("Query: \n");
+	for (i = 0; i < q.size; i++) {
+		printf("term %d: %.4f\n", q.termsId[i], q.weights[i]);
+	}
+	printf("Query norm: %.4f\n", q.norm);
+	exit(0);
+	/*
   int previousCharIsSpace = 0;
   int spacesCounter = 0;
 
-  for (i = 0; i < strlen(query); i++) {
+  for (i = 0; i < strlen(queryStr); i++) {
     if (query[i] != ' ') {
       previousCharIsSpace = 0;
     } else if (previousCharIsSpace == 0) {
@@ -160,7 +178,8 @@ void resolveQuery(char *query){
     }
   }
   int querySize = spacesCounter + 1;
-  int *queryTerms = (int *) malloc(sizeof(int) * querySize);
+
+  int *queryTerms = (int *) malloc(sizeof(int) * q.size);
   char *tokens = strtok(query, " ");
   int termPos = 0;
   while (tokens != NULL) {
@@ -171,15 +190,17 @@ void resolveQuery(char *query){
   }
 
   int *dev_queryTerms;
+		*/
+
 	float *docScores, *dev_docScores;
 	int BLOCK_SIZE = 1024;
 	int numBlocks = (docs + BLOCK_SIZE - 1) / BLOCK_SIZE;
 
 	docScores = (float *) malloc(sizeof(float) * docs);
-	cudaMalloc((void **) &dev_queryTerms, querySize * sizeof(int));
+	//cudaMalloc((void **) &dev_queryTerms, querySize * sizeof(int));
   cudaMalloc((void **) &dev_docScores, docs * sizeof(float));
 
-  cudaMemcpy(dev_queryTerms, queryTerms, querySize * sizeof(int), cudaMemcpyHostToDevice);
+  //cudaMemcpy(dev_queryTerms, queryTerms, querySize * sizeof(int), cudaMemcpyHostToDevice);
 
 	cudaEventRecord(resolveQueryStart);
 	k_resolveQuery<<<numBlocks, BLOCK_SIZE>>>(
@@ -187,8 +208,7 @@ void resolveQuery(char *query){
 		dev_docsNorm,
 		terms,
 		docs,
-		dev_queryTerms,
-		querySize,
+		q,
 		dev_docScores
 	);
 	handleKernelError();
@@ -206,9 +226,38 @@ void resolveQuery(char *query){
 		printf("doc %d: %4.2f\n", i, docScores[i]);
 	}
 
-	cudaFree(dev_queryTerms);
 	cudaFree(dev_docScores);
-  free(queryTerms);
+	/*
+	TODO: FREE QUERY
+	*/
+}
+
+Query parseQuery(char* queryStr){
+	Query q;
+	char *tokens = strtok(queryStr, "#");
+	q.norm = atof(tokens);
+	char *termToWeight = strtok(NULL, "#");
+	q.size = 0;
+	int i;
+	for (i=0; i < strlen(termToWeight); i++)
+		if (termToWeight[i] == ';')
+			q.size++;
+	//printf("terms length: %d\n", q.size);
+	q.termsId = (int*) malloc(sizeof(int) * q.size);
+	q.weights = (float*) malloc(sizeof(float) * q.size);
+	char *tokenPtr1, *termStr, *weightStr;
+	tokens = strtok_r(termToWeight, ";", &tokenPtr1);
+	int termPos = 0;
+	while (tokens != NULL) {
+		char *tokenPtr2, *intPtr;
+		termStr = strtok_r(tokens, ":", &tokenPtr2);
+		weightStr = strtok_r(NULL, ":", &tokenPtr2);
+		q.weights[termPos] = atof(weightStr);
+		q.termsId[termPos] = strtol(termStr, &intPtr, 10);
+		tokens = strtok_r(NULL, ";", &tokenPtr1);
+		termPos++;
+	}
+	return q;
 }
 
 void handleKernelError(){
