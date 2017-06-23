@@ -7,13 +7,13 @@ typedef struct Posting {
    int docsLength;
    float *weights;
    int *docIds;
- } Posting;
+} Posting;
 
- void displayPosting(Posting *postings, int size);
- Posting* postingsFromSeqFile(FILE *postingsFile, int totalTerms);
- float* docsNormFromSeqFile(FILE *docsNormFile, int totalDocs);
+void displayPosting(Posting *postings, int size);
+Posting* postingsFromSeqFile(FILE *postingsFile, int totalTerms);
+float* docsNormFromSeqFile(FILE *docsNormFile, int totalDocs);
 
- Posting* postingsFromSeqFile(FILE *postingsFile, int totalTerms) {
+Posting* postingsFromSeqFile(FILE *postingsFile, int totalTerms) {
   const int MAX_BYTES_READ_PER_LINE = 1000000;
   char line[MAX_BYTES_READ_PER_LINE];
   int postingsCount = 0;
@@ -103,10 +103,10 @@ void displayPosting(Posting* postings, int size){
         termPosting.weights[j]
       );
   }
-}
+  }
 
-// load postings invented, just for testing
-Posting* LoadDummyPostings(int size){
+  // load postings invented, just for testing
+  Posting* LoadDummyPostings(int size){
   int i;
   Posting* postings = (Posting *) malloc(sizeof(Posting) * size);
   for (i = 0; i < size; i++) {
@@ -125,19 +125,19 @@ Posting* LoadDummyPostings(int size){
 
 /* MAIN WORKS, UNCOMMENT TO TEST THIS LIBRARY
 int main(int argc, char const *argv[]) {
-  if (argc  != 2){
-    printf("How to use: \n\t$%s /path/to/postings.txt\n", argv[0]);
-    exit(1);
-  }
-  char const *pathToPostings = argv[1];
-  printf("%s\n", pathToPostings);
-  FILE *txtFilePtr;
-  txtFilePtr = fopen(pathToPostings, "r");
-  if(txtFilePtr == NULL) {
-   printf("Error! No such file.\n");
-   exit(1);
-  }
-  const TERMS = 30332;
-  Posting* p = postingsFromSeqFile(txtFilePtr, TERMS);
+if (argc  != 2){
+  printf("How to use: \n\t$%s /path/to/postings.txt\n", argv[0]);
+  exit(1);
+}
+char const *pathToPostings = argv[1];
+printf("%s\n", pathToPostings);
+FILE *txtFilePtr;
+txtFilePtr = fopen(pathToPostings, "r");
+if(txtFilePtr == NULL) {
+ printf("Error! No such file.\n");
+ exit(1);
+}
+const TERMS = 30332;
+Posting* p = postingsFromSeqFile(txtFilePtr, TERMS);
 }
 */

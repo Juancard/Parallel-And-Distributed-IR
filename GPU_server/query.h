@@ -45,9 +45,3 @@ void displayQuery(Query q){
 	}
 	printf("Query norm: %.4f\n", q.norm);
 }
-
-void freeQuery(Query q){
-  /*
-  TODO
-  */
-}

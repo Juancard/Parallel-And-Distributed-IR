@@ -129,8 +129,8 @@ void index_collection() {
 		checkCuda( cudaMemcpy(dev_docIds, p.docIds, sizeof(int) * p.docsLength, cudaMemcpyHostToDevice) );
 		checkCuda( cudaMemcpy(dev_weights, p.weights, sizeof(float) * p.docsLength, cudaMemcpyHostToDevice) );
 
+		free(p.weights); free(p.docIds);
 	}
-
 
 	printf("Loading documents norm...\n");
 	txtFilePtr = fopen(DOCUMENTS_NORM, "r");
@@ -172,8 +172,11 @@ void resolveQuery(char *queryStr){
 	float* dev_weights;
 	cudaMalloc((void**) &dev_termsId, sizeof(int) * q.size);
 	cudaMalloc((void**) &dev_weights, sizeof(float) * q.size);
+
 	cudaMemcpy(dev_termsId, q.termsId, sizeof(int) * q.size, cudaMemcpyHostToDevice);
 	cudaMemcpy(dev_weights, q.weights, sizeof(float) * q.size, cudaMemcpyHostToDevice);
+
+	free(q.termsId); free(q.weights);
 	q.termsId = dev_termsId;
 	q.weights = dev_weights;
 
@@ -202,11 +205,8 @@ void resolveQuery(char *queryStr){
 	}
 
 	cudaFree(dev_docScores);
-	/*
-	TODO: FREE QUERY
-	freeQuery();
-	*/
-
+	cudaFree(dev_termsId);
+	cudaFree(dev_weights);
 }
 
 void handleKernelError(){
