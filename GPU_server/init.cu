@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include "index_loader.h"
+#include "query.h"
 
 #define POSTINGS_FILE "resources/seq_posting.txt"
 #define POSTINGS_FILE2 "resources/mini_postings.txt"
@@ -9,24 +10,18 @@
 #define POSTINGS_FILE4 "resources/mini_seq_posting.txt"
 #define DOCUMENTS_NORM "resources/documents_norm.txt"
 
-typedef struct Query {
-   int size;
-   float *weights;
-   int *termsId;
-	 float norm;
- } Query;
-
 Posting* postingsFromSeqFile(FILE *postingsFile, int totalTerms);
 float* docsNormFromSeqFile(FILE *docsNormFile, int totalDocs);
 void index_collection();
-void resolveQuery(char *query);
-Query parseQuery(char* queryStr);
+void resolveQuery(char *queryStr);
+Query parseQuery(char *queryStr);
 void handleKernelError();
 cudaError_t checkCuda(cudaError_t result);
+
 // to use only during developing, delete on production
 Posting* LoadDummyPostings(int size);
 void displayPosting(Posting *postings, int size);
-
+void displayQuery(Query q);
 
 
 // global variables that are allocated in device during indexing
@@ -75,7 +70,7 @@ __global__ void k_resolveQuery (
 int main(int argc, char const *argv[]) {
   index_collection();
 
-	/*
+	/* get query from user input
   char query[1000];
   printf("Enter query: ");
   fgets(query, 1000, stdin);
@@ -159,12 +154,6 @@ void resolveQuery(char *queryStr){
 	cudaEventCreate(&resolveQueryStop);
   int i;
 	Query q = parseQuery(queryStr);
-	printf("Query: \n");
-	for (i = 0; i < q.size; i++) {
-		printf("term %d: %.4f\n", q.termsId[i], q.weights[i]);
-	}
-	printf("Query norm: %.4f\n", q.norm);
-	exit(0);
 	/*
   int previousCharIsSpace = 0;
   int spacesCounter = 0;
@@ -229,35 +218,9 @@ void resolveQuery(char *queryStr){
 	cudaFree(dev_docScores);
 	/*
 	TODO: FREE QUERY
+	freeQuery();
 	*/
-}
 
-Query parseQuery(char* queryStr){
-	Query q;
-	char *tokens = strtok(queryStr, "#");
-	q.norm = atof(tokens);
-	char *termToWeight = strtok(NULL, "#");
-	q.size = 0;
-	int i;
-	for (i=0; i < strlen(termToWeight); i++)
-		if (termToWeight[i] == ';')
-			q.size++;
-	//printf("terms length: %d\n", q.size);
-	q.termsId = (int*) malloc(sizeof(int) * q.size);
-	q.weights = (float*) malloc(sizeof(float) * q.size);
-	char *tokenPtr1, *termStr, *weightStr;
-	tokens = strtok_r(termToWeight, ";", &tokenPtr1);
-	int termPos = 0;
-	while (tokens != NULL) {
-		char *tokenPtr2, *intPtr;
-		termStr = strtok_r(tokens, ":", &tokenPtr2);
-		weightStr = strtok_r(NULL, ":", &tokenPtr2);
-		q.weights[termPos] = atof(weightStr);
-		q.termsId[termPos] = strtol(termStr, &intPtr, 10);
-		tokens = strtok_r(NULL, ";", &tokenPtr1);
-		termPos++;
-	}
-	return q;
 }
 
 void handleKernelError(){
