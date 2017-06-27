@@ -84,12 +84,33 @@ int main(int argc, char *argv[]) {
             printf("indexing\n");
             if (send(sockfd, "INDEX", 10, 0) == -1)
                 perror("send");
+            else {
+              int numbytes;
+              const int ACTION_MAX_DATA_SIZE = 5;
+              char result[ACTION_MAX_DATA_SIZE];
+              if ((numbytes = recv(
+                sockfd,
+                result,
+                ACTION_MAX_DATA_SIZE-1,
+                0
+              )) == -1) {
+                  perror("recv");
+                  exit(1);
+              }
+              result[numbytes] = '\0';
+              printf("%s\n", result);
+              if (strcmp(result, "OK") == 0){
+                printf("Indexing was successful\n");
+              } else if(strcmp(result, "NOK") == 0){
+                printf("Error on indexing\n");
+              }
+            }
             close(sockfd);
             break; /* optional */
 
          case '2':
             sockfd = getConnection(hostname);
-            printf("evalutating\n");
+            printf("evaluating\n");
             if (send(sockfd, "EVALUATE", 10, 0) == -1)
                 perror("send");
             close(sockfd);

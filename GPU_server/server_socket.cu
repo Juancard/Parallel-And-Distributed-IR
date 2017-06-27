@@ -22,6 +22,17 @@ void onAccept(int clientSocketFD){
   }
   action[numbytes] = '\0';
   printf("Action received: %s\n", action);
+  if (strcmp(action, "INDEX") == 0){
+    printf("Indexing...\n");
+    int result = index_collection();
+    const char *toSend = (result == 1)? "OK" : "NOK";
+    if (send(clientSocketFD, toSend, 5, 0) == -1)
+      perror("send indexing result");
+  } else if (strcmp(action, "EVALUATE") == 0){
+    printf("Evaluating...\n");
+  } else {
+    printf("No action\n");
+  }
   close(clientSocketFD);
   exit(0);
 }

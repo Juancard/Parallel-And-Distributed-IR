@@ -7,14 +7,15 @@
 #define POSTINGS_FILE1 "resources/seq_posting.txt"
 #define POSTINGS_FILE2 "resources/mini_postings.txt"
 #define POSTINGS_IR_TP3_3 "resources/ir_tp3_3/seq_postings.txt"
+#define DOCS_NORM_IR_TP3_3 "resources/ir_tp3_3/documents_norm.txt"
 #define POSTINGS_FILE4 "resources/mini_seq_posting.txt"
 
 #define POSTINGS_FILE POSTINGS_IR_TP3_3
-#define DOCUMENTS_NORM_FILE "resources/documents_norm.txt"
+#define DOCUMENTS_NORM_FILE DOCS_NORM_IR_TP3_3
 
 Posting* postingsFromSeqFile(FILE *postingsFile, int totalTerms);
 float* docsNormFromSeqFile(FILE *docsNormFile, int totalDocs);
-void index_collection();
+int index_collection();
 void resolveQuery(char *queryStr);
 Query parseQuery(char *queryStr);
 void handleKernelError();
@@ -97,7 +98,7 @@ int main(int argc, char const *argv[]) {
 }
 */
 
-void index_collection() {
+int index_collection() {
 
 	terms = 17; // hardcoded
 	docs = 4; // hardcoded
@@ -139,7 +140,7 @@ void index_collection() {
 	txtFilePtr = fopen(DOCUMENTS_NORM_FILE, "r");
 	if(txtFilePtr == NULL) {
 	 printf("Error! No documents norm file in path %s\n", DOCUMENTS_NORM_FILE);
-	 exit(1);
+	 return 0;
 	}
 	float* documentsNorm = docsNormFromSeqFile(txtFilePtr, docs);
 	printf("Finish loading documents norms\n");
@@ -152,6 +153,8 @@ void index_collection() {
 	free(postingsLoaded);
 	free(documentsNorm);
   printf("Finish indexing\n");
+
+	return 1;
 }
 
 void resolveQuery(char *queryStr){
