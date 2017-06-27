@@ -113,6 +113,14 @@ int main(int argc, char *argv[]) {
             printf("evaluating\n");
             if (send(sockfd, "EVALUATE", 10, 0) == -1)
                 perror("send");
+            char q[100];
+          	// Query string format:
+          	// [norma_query]#[term_1]:[weight_1];[term_n]:[weight_n]
+          	//
+          	strcpy(q, "1.4142135624#10:1;11:1;");
+            printf("%s\n", q);
+            if (send(sockfd, q, 100, 0) == -1)
+                perror("send");
             close(sockfd);
             break; /* optional */
 

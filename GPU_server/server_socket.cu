@@ -4,10 +4,6 @@
 #include "init.cu"
 
 void onAccept(int clientSocketFD){
-  /*
-  if (send(clientSocketFD, "Hello, world!", 13, 0) == -1)
-      perror("send");
-      */
   int numbytes;
   const int ACTION_MAX_DATA_SIZE = 20;
   char action[ACTION_MAX_DATA_SIZE];
@@ -30,11 +26,24 @@ void onAccept(int clientSocketFD){
       perror("send indexing result");
   } else if (strcmp(action, "EVALUATE") == 0){
     printf("Evaluating...\n");
+    const int QUERY_MAX_DATA_SIZE = 1000; // HARDCODED
+    char query[QUERY_MAX_DATA_SIZE];
+    if ((numbytes = recv(
+      clientSocketFD,
+      query,
+      QUERY_MAX_DATA_SIZE-1,
+      0
+    )) == -1) {
+        perror("recv");
+        exit(1);
+    }
+    query[numbytes] = '\0';
+    printf("Query: %s\n", query);
+    resolveQuery(query);
   } else {
     printf("No action\n");
   }
   close(clientSocketFD);
-  exit(0);
 }
 
 void startServer(char* port){
@@ -87,15 +96,16 @@ void startServer(char* port){
           s, sizeof s);
       printf("server: got connection from %s\n", s);
 
-      if (!fork()) { // this is the child process
-          close(socketDescriptor); // child doesn't need the listener
+      //if (!fork()) { // this is the child process
+          //close(socketDescriptor); // child doesn't need the listener
           onAccept(clientSocketDescriptor);
-      }
+      //}
       close(clientSocketDescriptor);  // parent doesn't need this
   }
 }
 
 int main(int argc, char const *argv[]) {
+  index_collection();
   char port[6];
   strcpy(port, "3491");
   startServer(port);

@@ -44,33 +44,34 @@ __global__ void k_resolveQuery (
 	){
 	int index = blockIdx.x * blockDim.x + threadIdx.x;
 	if (index >= docs) return;
-
 	int myDocId = index;
 	docScores[myDocId] = 0;
 	int i;
+	//printf("docs norm: %.4f\n", docsNorm[myDocId]);
 
 	Posting termPosting;
 	for (i = 0; i < q.size; i++) {
 		termPosting = postings[q.termsId[i]];
-		//printf("term %d has %d docs.\n", q.termsId[i], termPosting.docsLength);
+		printf("term %d has %d docs.\n", q.termsId[i], termPosting.docsLength);
 		int docIdsPos = -1;
 		int currentDocId;
 		do {
 			docIdsPos++;
 			currentDocId = termPosting.docIds[docIdsPos];
-			//printf("current doc id: %d\n", currentDocId);
+			printf("current doc id: %d\n", currentDocId);
 		} while(currentDocId < myDocId && docIdsPos < termPosting.docsLength - 1);
 		if (myDocId == currentDocId) {
-			//printf("found my doc id: %d\n", currentDocId);
-			//printf("doc %d: weight to sum: %.2f * %.2f\n", myDocId, termPosting.weights[docIdsPos], q.weights[i]);
+			printf("found my doc id: %d\n", currentDocId);
+			printf("doc %d: weight to sum: %.2f * %.2f\n", myDocId, termPosting.weights[docIdsPos], q.weights[i]);
 			docScores[myDocId] += termPosting.weights[docIdsPos] * q.weights[i];
-			//printf("doc %d: current weight: %4.2f\n", myDocId, docScores[myDocId]);
+			printf("doc %d: current weight: %4.2f\n", myDocId, docScores[myDocId]);
 		}
 	}
 	/*
 	docScore has a value that is scalar product.
 	next code turns scalar product into cosene similarity
 	*/
+	printf("%.6f\n", q.norm);
 	docScores[myDocId] /= q.norm * docsNorm[myDocId];
 }
 
@@ -143,6 +144,9 @@ int index_collection() {
 	 return 0;
 	}
 	float* documentsNorm = docsNormFromSeqFile(txtFilePtr, docs);
+	for (i = 0; i < docs; i++) {
+		printf("documentsNorm: %4.4f\n", documentsNorm[i]);
+	}
 	printf("Finish loading documents norms\n");
 
 	// docs norm to device
@@ -164,28 +168,30 @@ void resolveQuery(char *queryStr){
 	cudaEventCreate(&resolveQueryStop);
   int i;
 	Query q = parseQuery(queryStr);
-
+	printf("docs: %d\n", docs);
+	printf("terms: %d\n", terms);
 	float *docScores, *dev_docScores;
 	int BLOCK_SIZE = 1024;
 	int numBlocks = (docs + BLOCK_SIZE - 1) / BLOCK_SIZE;
 
 	printf("Sending docs scores to GPU\n");
 	docScores = (float *) malloc(sizeof(float) * docs);
-  cudaMalloc((void **) &dev_docScores, docs * sizeof(float));
+  checkCuda( cudaMalloc((void **) &dev_docScores, docs * sizeof(float)) );
 
 	printf("Sending query to GPU\n");
 	int* dev_termsId;
 	float* dev_weights;
-	cudaMalloc((void**) &dev_termsId, sizeof(int) * q.size);
-	cudaMalloc((void**) &dev_weights, sizeof(float) * q.size);
+	checkCuda( cudaMalloc((void**) &dev_termsId, sizeof(int) * q.size) );
+	checkCuda( cudaMalloc((void**) &dev_weights, sizeof(float) * q.size) );
 
-	cudaMemcpy(dev_termsId, q.termsId, sizeof(int) * q.size, cudaMemcpyHostToDevice);
-	cudaMemcpy(dev_weights, q.weights, sizeof(float) * q.size, cudaMemcpyHostToDevice);
+	checkCuda( cudaMemcpy(dev_termsId, q.termsId, sizeof(int) * q.size, cudaMemcpyHostToDevice) );
+	checkCuda( cudaMemcpy(dev_weights, q.weights, sizeof(float) * q.size, cudaMemcpyHostToDevice) );
 
 	free(q.termsId); free(q.weights);
 	q.termsId = dev_termsId;
 	q.weights = dev_weights;
-
+	printf("numBlocks: %d; block size: %d\n", numBlocks, BLOCK_SIZE);
+	printf("Starting evaluation...\n");
 	cudaEventRecord(resolveQueryStart);
 	k_resolveQuery<<<numBlocks, BLOCK_SIZE>>>(
 		dev_postings,
@@ -207,7 +213,7 @@ void resolveQuery(char *queryStr){
 	printf("Time elapsed: %10.4f ms\n", milliseconds);
 
 	for (i=0; i < docs; i++){
-		printf("doc %d: %4.2f\n", i, docScores[i]);
+		printf("doc %d: %.6f\n", i, docScores[i]);
 	}
 
 	cudaFree(dev_docScores);
