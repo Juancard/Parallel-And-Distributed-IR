@@ -6,3 +6,5 @@ how to pass an array of structs of arrays from host to device:
 https://stackoverflow.com/questions/15431365/cudamemcpy-segmentation-fault
 unified memory:
 https://devblogs.nvidia.com/parallelforall/unified-memory-in-cuda-6/
+sockets in c tutorial:
+http://www.beej.us/guide/bgnet/output/html/singlepage/bgnet.html

@@ -4,11 +4,13 @@
 #include "index_loader.h"
 #include "query.h"
 
-#define POSTINGS_FILE "resources/seq_posting.txt"
+#define POSTINGS_FILE1 "resources/seq_posting.txt"
 #define POSTINGS_FILE2 "resources/mini_postings.txt"
-#define POSTINGS_FILE3 "resources/mini_postings2.txt"
+#define POSTINGS_IR_TP3_3 "resources/ir_tp3_3/seq_postings.txt"
 #define POSTINGS_FILE4 "resources/mini_seq_posting.txt"
-#define DOCUMENTS_NORM "resources/documents_norm.txt"
+
+#define POSTINGS_FILE POSTINGS_IR_TP3_3
+#define DOCUMENTS_NORM_FILE "resources/documents_norm.txt"
 
 Posting* postingsFromSeqFile(FILE *postingsFile, int totalTerms);
 float* docsNormFromSeqFile(FILE *docsNormFile, int totalDocs);
@@ -100,9 +102,9 @@ void index_collection() {
 	docs = 4; // hardcoded
 
 	printf("Loading postings...\n");
-	FILE *txtFilePtr = fopen(POSTINGS_FILE3, "r");
+	FILE *txtFilePtr = fopen(POSTINGS_FILE, "r");
 	if(txtFilePtr == NULL) {
-	 printf("Error! No posting file in path %s\n", POSTINGS_FILE3);
+	 printf("Error! No posting file in path %s\n", POSTINGS_FILE);
 	 exit(1);
 	}
   Posting* postingsLoaded = postingsFromSeqFile(txtFilePtr, terms);
@@ -133,9 +135,9 @@ void index_collection() {
 	}
 
 	printf("Loading documents norm...\n");
-	txtFilePtr = fopen(DOCUMENTS_NORM, "r");
+	txtFilePtr = fopen(DOCUMENTS_NORM_FILE, "r");
 	if(txtFilePtr == NULL) {
-	 printf("Error! No documents norm file in path %s\n", DOCUMENTS_NORM);
+	 printf("Error! No documents norm file in path %s\n", DOCUMENTS_NORM_FILE);
 	 exit(1);
 	}
 	float* documentsNorm = docsNormFromSeqFile(txtFilePtr, docs);
