@@ -73,28 +73,29 @@ __global__ void k_resolveQuery (
 	docScores[myDocId] /= q.norm * docsNorm[myDocId];
 }
 
+/* MAIN WORKING, USED FOR TESTING
 int main(int argc, char const *argv[]) {
   index_collection();
 
-	/* get query from user input
-  char query[1000];
-  printf("Enter query: ");
-  fgets(query, 1000, stdin);
-  if ((strlen(query)>0) && (query[strlen (query) - 1] == '\n'))
-        query[strlen (query) - 1] = '\0';
-  resolveQuery(query);
- 	*/
+	// get query from user input
+  //char query[1000];
+  //printf("Enter query: ");
+  //fgets(query, 1000, stdin);
+  //if ((strlen(query)>0) && (query[strlen (query) - 1] == '\n'))
+  //      query[strlen (query) - 1] = '\0';
+  //resolveQuery(query);
+
 	char q[20];
 
-	/* Query string format:
-	[norma_query]#[term_1]:[weight_1];[term_n]:[weight_n]
-	*/
+	// Query string format:
+	// [norma_query]#[term_1]:[weight_1];[term_n]:[weight_n]
+	//
 	strcpy(q, "1.4142135624#10:1;11:1;");
 
 	resolveQuery(q);
   return 0;
 }
-
+*/
 
 void index_collection() {
 

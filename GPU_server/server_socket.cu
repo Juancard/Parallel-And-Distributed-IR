@@ -1,6 +1,30 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include "my_socket.h"
+#include "init.cu"
+
+void onAccept(int clientSocketFD){
+  /*
+  if (send(clientSocketFD, "Hello, world!", 13, 0) == -1)
+      perror("send");
+      */
+  int numbytes;
+  const int ACTION_MAX_DATA_SIZE = 20;
+  char action[ACTION_MAX_DATA_SIZE];
+  if ((numbytes = recv(
+    clientSocketFD,
+    action,
+    ACTION_MAX_DATA_SIZE-1,
+    0
+  )) == -1) {
+      perror("recv");
+      exit(1);
+  }
+  action[numbytes] = '\0';
+  printf("Action received: %s\n", action);
+  close(clientSocketFD);
+  exit(0);
+}
 
 void startServer(char* port){
   struct addrinfo *servinfo = getAddressInfo(port);
@@ -54,17 +78,15 @@ void startServer(char* port){
 
       if (!fork()) { // this is the child process
           close(socketDescriptor); // child doesn't need the listener
-          if (send(clientSocketDescriptor, "Hello, world!", 13, 0) == -1)
-              perror("send");
-          close(clientSocketDescriptor);
-          exit(0);
+          onAccept(clientSocketDescriptor);
       }
       close(clientSocketDescriptor);  // parent doesn't need this
   }
 }
 
 int main(int argc, char const *argv[]) {
-  char* port = "3490";
+  char port[6];
+  strcpy(port, "3491");
   startServer(port);
   return 0;
 }
