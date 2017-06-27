@@ -1,9 +1,15 @@
 #include <stdio.h>
-#include <arpa/inet.h>
-#include <sys/socket.h>
-#include <netdb.h>
-#include <string.h>
 #include <stdlib.h>
+#include <unistd.h>
+#include <errno.h>
+#include <string.h>
+#include <sys/types.h>
+#include <sys/socket.h>
+
+#include <netdb.h>
+#include <arpa/inet.h>
+#include <sys/wait.h>
+#include <signal.h>
 
 /* ADDRINFO DEFINITION:
   struct addrinfo {
@@ -35,6 +41,16 @@ struct addrinfo* getAddressInfo(char *port) {
 
   // servinfo now points to a linked list of 1 or more struct addrinfos
   return servinfo;
+}
+
+// get sockaddr, IPv4 or IPv6:
+void *get_in_addr(struct sockaddr *sa)
+{
+    if (sa->sa_family == AF_INET) {
+        return &(((struct sockaddr_in*)sa)->sin_addr);
+    }
+
+    return &(((struct sockaddr_in6*)sa)->sin6_addr);
 }
 
 void showAddressInfo(struct addrinfo *servinfo){
@@ -69,48 +85,55 @@ void closeAddressInfo(struct addrinfo *servinfo){
 }
 
 int getSocketDescriptor(struct addrinfo * servinfo){
-  // Assuming first value of the 'servinfo' linked list is good
   int socketDescriptor = socket(
-    servinfo->ai_family,
-    servinfo->ai_socktype,
-    servinfo->ai_protocol
-  );
-  if (socketDescriptor == -1) {
-    printf("Error calling socket function\n");
-    exit(1);
-  }
+      servinfo->ai_family,
+      servinfo->ai_socktype,
+      servinfo->ai_protocol
+    );
+    if (socketDescriptor == -1) perror("server: socket");
   return socketDescriptor;
 }
 
-void doBinding(int socketDescriptor, struct addrinfo * servinfo){
-  // Assuming first value of the 'servinfo' linked list is good
-  int result = bind(socketDescriptor, servinfo->ai_addr, servinfo->ai_addrlen);
-
-  if (result == -1) {
-    printf("Error calling in binding\n");
-    exit(1);
+int doBind(int socketDescriptor, struct addrinfo* servinfo){
+  int yes = 1;
+  if (setsockopt(
+      socketDescriptor,
+      SOL_SOCKET,
+      SO_REUSEADDR,
+      &yes,
+      sizeof(int)
+    ) == -1) {
+      perror("setsockopt");
+      return -1;
   }
+  if (bind(
+    socketDescriptor,
+    servinfo->ai_addr,
+    servinfo->ai_addrlen
+  ) == -1) {
+      perror("server: bind");
+      return -1;
+  }
+  return 1;
 }
 
-void listen(int socketDescriptor){
+void doListen(int socketDescriptor){
   const int BACKLOG = 10; // Number of connections that will be queued until call to accept()
   // Assuming first value of the 'servinfo' linked list is good
   int result = listen(socketDescriptor, BACKLOG);
   if (result == -1) {
-    printf("Error when starting listening event\n");
+    perror("listen");
     exit(1);
   }
 }
 
-int main(int argc, char const *argv[]) {
-  char* port = "3490";
+// to kill zombie processes
+void sigchld_handler(int s)
+{
+    // waitpid() might overwrite errno, so we save and restore it:
+    int saved_errno = errno;
 
-  struct addrinfo *servinfo = getAddressInfo(port);
-  int socketDescriptor = getSocketDescriptor(servinfo);
-  doBinding(socketDescriptor, servinfo);
-  listen(socketDescriptor);
-  closeAddressInfo(servinfo);
+    while(waitpid(-1, NULL, WNOHANG) > 0);
 
-
-  return 0;
+    errno = saved_errno;
 }
