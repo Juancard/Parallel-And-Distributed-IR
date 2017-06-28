@@ -4,30 +4,36 @@
 #include "init.cu"
 
 void onAccept(int clientSocketFD){
+  // WAIT FOR CLIENT TO SEND REQUEST TO ME
   int numbytes;
-  const int ACTION_MAX_DATA_SIZE = 20;
-  char action[ACTION_MAX_DATA_SIZE];
+  const int ACTION_MESSAGE_SIZE = 3;
+  const int STATUS_MESSAGE_SIZE = 2;
+  char action[ACTION_MESSAGE_SIZE + 1];
+  memset(action, 0, ACTION_MESSAGE_SIZE);  //clear the variable
   if ((numbytes = recv(
     clientSocketFD,
     action,
-    ACTION_MAX_DATA_SIZE-1,
+    ACTION_MESSAGE_SIZE,
     0
   )) == -1) {
       perror("recv");
       exit(1);
   }
   action[numbytes] = '\0';
-  printf("Action received: %s\n", action);
-  if (strcmp(action, "INDEX") == 0){
+
+  // WHEN A REQUEST COME:
+  printf("Action received: %s %d\n", action, numbytes);
+  if (strcmp(action, "IND") == 0){
     printf("Indexing...\n");
     int result = index_collection();
-    const char *toSend = (result == 1)? "OK" : "NOK";
-    if (send(clientSocketFD, toSend, 5, 0) == -1)
+    const char *toSend = (result == 1)? "OK" : "NO";
+    if (send(clientSocketFD, toSend, STATUS_MESSAGE_SIZE, 0) == -1)
       perror("send indexing result");
-  } else if (strcmp(action, "EVALUATE") == 0){
+  } else if (strcmp(action, "EVA") == 0){
     printf("Evaluating...\n");
-    const int QUERY_MAX_DATA_SIZE = 1000; // HARDCODED
+    const int QUERY_MAX_DATA_SIZE = 100; // HARDCODED
     char query[QUERY_MAX_DATA_SIZE];
+    memset(query, 0, QUERY_MAX_DATA_SIZE);  //clear the variable
     if ((numbytes = recv(
       clientSocketFD,
       query,
@@ -38,8 +44,10 @@ void onAccept(int clientSocketFD){
         exit(1);
     }
     query[numbytes] = '\0';
+    printf("%d\n", numbytes);
     printf("Query: %s\n", query);
     resolveQuery(query);
+
   } else {
     printf("No action\n");
   }

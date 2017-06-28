@@ -66,6 +66,8 @@ int getConnection(char *hostname){
 }
 
 int main(int argc, char *argv[]) {
+    const int ACTION_MESSAGE_SIZE = 3;
+    const int STATUS_MESSAGE_SIZE = 3;
     int sockfd;
     int quit = 0;
     char option;
@@ -82,16 +84,16 @@ int main(int argc, char *argv[]) {
          case '1':
             sockfd = getConnection(hostname);
             printf("indexing\n");
-            if (send(sockfd, "INDEX", 10, 0) == -1)
+            if (send(sockfd, "IND", ACTION_MESSAGE_SIZE, 0) == -1)
                 perror("send");
             else {
               int numbytes;
-              const int ACTION_MAX_DATA_SIZE = 5;
-              char result[ACTION_MAX_DATA_SIZE];
+
+              char result[STATUS_MESSAGE_SIZE];
               if ((numbytes = recv(
                 sockfd,
                 result,
-                ACTION_MAX_DATA_SIZE-1,
+                STATUS_MESSAGE_SIZE - 1,
                 0
               )) == -1) {
                   perror("recv");
@@ -101,28 +103,29 @@ int main(int argc, char *argv[]) {
               printf("%s\n", result);
               if (strcmp(result, "OK") == 0){
                 printf("Indexing was successful\n");
-              } else if(strcmp(result, "NOK") == 0){
+              } else if(strcmp(result, "NO") == 0){
                 printf("Error on indexing\n");
               }
             }
             close(sockfd);
-            break; /* optional */
+            break;
 
          case '2':
             sockfd = getConnection(hostname);
             printf("evaluating\n");
-            if (send(sockfd, "EVALUATE", 10, 0) == -1)
+            if (send(sockfd, "EVA", ACTION_MESSAGE_SIZE, 0) == -1)
                 perror("send");
             char q[100];
           	// Query string format:
           	// [norma_query]#[term_1]:[weight_1];[term_n]:[weight_n]
           	//
-          	strcpy(q, "1.4142135624#10:1;11:1;");
-            printf("%s\n", q);
-            if (send(sockfd, q, 100, 0) == -1)
+            strcpy(q, "1.4142135624#10:1;11:1;");
+          	//strcpy(q, "123456789qwertyuiopasdfghjkl");
+            printf("%s %zu\n", q, strlen(q));
+            if (send(sockfd, q, strlen(q), 0) == -1)
                 perror("send");
             close(sockfd);
-            break; /* optional */
+            break;
 
           case '0':
             quit = 1;

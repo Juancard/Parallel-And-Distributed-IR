@@ -52,19 +52,19 @@ __global__ void k_resolveQuery (
 	Posting termPosting;
 	for (i = 0; i < q.size; i++) {
 		termPosting = postings[q.termsId[i]];
-		printf("term %d has %d docs.\n", q.termsId[i], termPosting.docsLength);
+		//printf("term %d has %d docs.\n", q.termsId[i], termPosting.docsLength);
 		int docIdsPos = -1;
 		int currentDocId;
 		do {
 			docIdsPos++;
 			currentDocId = termPosting.docIds[docIdsPos];
-			printf("current doc id: %d\n", currentDocId);
+			//printf("current doc id: %d\n", currentDocId);
 		} while(currentDocId < myDocId && docIdsPos < termPosting.docsLength - 1);
 		if (myDocId == currentDocId) {
-			printf("found my doc id: %d\n", currentDocId);
-			printf("doc %d: weight to sum: %.2f * %.2f\n", myDocId, termPosting.weights[docIdsPos], q.weights[i]);
+			//printf("found my doc id: %d\n", currentDocId);
+			//printf("doc %d: weight to sum: %.2f * %.2f\n", myDocId, termPosting.weights[docIdsPos], q.weights[i]);
 			docScores[myDocId] += termPosting.weights[docIdsPos] * q.weights[i];
-			printf("doc %d: current weight: %4.2f\n", myDocId, docScores[myDocId]);
+			//printf("doc %d: current weight: %4.2f\n", myDocId, docScores[myDocId]);
 		}
 	}
 	/*

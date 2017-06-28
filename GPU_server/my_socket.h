@@ -11,6 +11,8 @@
 #include <sys/wait.h>
 #include <signal.h>
 
+#include<fcntl.h>
+#include <sys/time.h>
 /* ADDRINFO DEFINITION:
   struct addrinfo {
       int              ai_flags;     // AI_PASSIVE, AI_CANONNAME, etc.
