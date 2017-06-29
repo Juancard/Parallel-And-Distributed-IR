@@ -13,10 +13,15 @@
 #define POSTINGS_FILE POSTINGS_IR_TP3_3
 #define DOCUMENTS_NORM_FILE DOCS_NORM_IR_TP3_3
 
+typedef struct DocScores {
+   int size;
+   float *scores;
+ } DocScores;
+
 Posting* postingsFromSeqFile(FILE *postingsFile, int totalTerms);
 float* docsNormFromSeqFile(FILE *docsNormFile, int totalDocs);
 int index_collection();
-void resolveQuery(char *queryStr);
+struct DocScores resolveQuery(char *queryStr);
 Query parseQuery(char *queryStr);
 void handleKernelError();
 cudaError_t checkCuda(cudaError_t result);
@@ -71,7 +76,6 @@ __global__ void k_resolveQuery (
 	docScore has a value that is scalar product.
 	next code turns scalar product into cosene similarity
 	*/
-	printf("%.6f\n", q.norm);
 	docScores[myDocId] /= q.norm * docsNorm[myDocId];
 }
 
@@ -108,7 +112,7 @@ int index_collection() {
 	FILE *txtFilePtr = fopen(POSTINGS_FILE, "r");
 	if(txtFilePtr == NULL) {
 	 printf("Error! No posting file in path %s\n", POSTINGS_FILE);
-	 exit(1);
+	 return 0;
 	}
   Posting* postingsLoaded = postingsFromSeqFile(txtFilePtr, terms);
   printf("Finish reading postings\n");
@@ -144,9 +148,6 @@ int index_collection() {
 	 return 0;
 	}
 	float* documentsNorm = docsNormFromSeqFile(txtFilePtr, docs);
-	for (i = 0; i < docs; i++) {
-		printf("documentsNorm: %4.4f\n", documentsNorm[i]);
-	}
 	printf("Finish loading documents norms\n");
 
 	// docs norm to device
@@ -161,12 +162,11 @@ int index_collection() {
 	return 1;
 }
 
-void resolveQuery(char *queryStr){
+struct DocScores resolveQuery(char *queryStr){
   printf("Searching for: %s\n", queryStr);
 	cudaEvent_t resolveQueryStart, resolveQueryStop;
 	cudaEventCreate(&resolveQueryStart);
 	cudaEventCreate(&resolveQueryStop);
-  int i;
 	Query q = parseQuery(queryStr);
 	printf("docs: %d\n", docs);
 	printf("terms: %d\n", terms);
@@ -212,13 +212,14 @@ void resolveQuery(char *queryStr){
 
 	printf("Time elapsed: %10.4f ms\n", milliseconds);
 
-	for (i=0; i < docs; i++){
-		printf("doc %d: %.6f\n", i, docScores[i]);
-	}
-
 	cudaFree(dev_docScores);
 	cudaFree(dev_termsId);
 	cudaFree(dev_weights);
+
+	DocScores ds;
+	ds.size = docs;
+	ds.scores = docScores;
+	return ds;
 }
 
 void handleKernelError(){

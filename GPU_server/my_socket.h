@@ -113,3 +113,71 @@ void sigchld_handler(int s)
 
     errno = saved_errno;
 }
+
+/*Thanks to: http://www.chuidiang.org/clinux/sockets/libreria/Socket.c.txt
+*
+* Lee datos del socket. Supone que se le pasa un buffer con hueco
+*	suficiente para los datos. Devuelve el numero de bytes leidos o
+* 0 si se cierra fichero o -1 si hay error.
+*/
+int read_socket (int fd, char *readBuffer, int toReadLength) {
+	int bytesRead = 0;
+	int aux = 0;
+
+	/*
+	* Comprobacion de que los parametros de entrada son correctos
+	*/
+	if ((fd == -1) || (readBuffer == NULL) || (toReadLength < 1))
+		return -1;
+
+	/*
+	* Mientras no hayamos leido todos los datos solicitados
+	*/
+	while (bytesRead < toReadLength){
+		aux = read(fd, readBuffer + bytesRead, toReadLength - bytesRead);
+		if (aux > 0){
+			/*
+			* Si hemos conseguido leer datos, incrementamos la variable
+			* que contiene los datos leidos hasta el momento
+			*/
+			bytesRead = bytesRead + aux;
+		}
+		else {
+			/*
+			* Si read devuelve 0, es que se ha cerrado el socket. Devolvemos
+			* los caracteres leidos hasta ese momento
+			*/
+			if (aux == 0)
+				return bytesRead;
+			if (aux == -1) {
+				/*
+				* En caso de error, la variable errno nos indica el tipo
+				* de error.
+				* El error EINTR se produce si ha habido alguna
+				* interrupcion del sistema antes de leer ningun dato. No
+				* es un error realmente.
+				* El error EGAIN significa que el socket no esta disponible
+				* de momento, que lo intentemos dentro de un rato.
+				* Ambos errores se tratan con una espera de 100 microsegundos
+				* y se vuelve a intentar.
+				* El resto de los posibles errores provocan que salgamos de
+				* la funcion con error.
+				*/
+				switch (errno)
+				{
+					case EINTR:
+					case EAGAIN:
+						usleep (100);
+						break;
+					default:
+						return -1;
+				}
+			}
+		}
+	}
+
+	/*
+	* Se devuelve el total de los caracteres leidos
+	*/
+	return bytesRead;
+}
