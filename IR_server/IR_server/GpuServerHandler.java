@@ -1,6 +1,7 @@
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
+import java.util.HashMap;
 
 import Common.SocketConnection;
 
@@ -16,16 +17,36 @@ public class GpuServerHandler {
 		this.port = port;
 	}
 
-	public void sendQuery(Query query) throws IOException {
+	public HashMap<Integer, Double> sendQuery(Query query) throws IOException {
 		SocketConnection connection = this.connect();
 		DataOutputStream out = connection.getSocketOutput();
-		
-		out.writeInt(EVALUATE.length());
+        DataInputStream in = connection.getSocketInput();
+
+        String qStr = query.toSocketString();
+        System.out.println("Sending query: " + qStr);
+        out.writeInt(EVALUATE.length());
 		out.writeBytes(EVALUATE);
-		out.writeInt(query.getQuery().length()); 
-		out.writeBytes(query.getQuery());
-		
+		out.writeInt(qStr.length());
+		out.writeBytes(qStr);
+
+        HashMap<Integer, Double> docsScore = new HashMap<Integer, Double>();
+        int docs = in.readInt();
+        int doc, weightLength;
+        String weightStr;
+        byte [] weightBytes = null;
+        for (int i=0; i<docs; i++){
+            doc = in.readInt();
+            weightLength = in.readInt();
+
+            weightBytes = new byte[weightLength];    // Se le da el tamaño
+            in.read(weightBytes, 0, weightLength);   // Se leen los bytes
+            weightStr = new String (weightBytes); // Se convierten a String
+
+            docsScore.put(doc, new Double(weightStr));
+        }
+
 		connection.close();
+        return docsScore;
 	}
 	
 	private SocketConnection connect() throws IOException {
@@ -43,6 +64,5 @@ public class GpuServerHandler {
         
         connection.close();
         return result == 1;
-
 	}
 }

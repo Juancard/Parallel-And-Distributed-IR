@@ -40,7 +40,7 @@ public class SocketConnection {
     private void startConnection(Socket clientSocket) {
         this.clientSocket = clientSocket;
         try {
-            this.clientSocket.setSoLinger (true, 10);
+            //this.clientSocket.setSoLinger (true, 10);
             this.socketOutput = new DataOutputStream(clientSocket.getOutputStream());
             this.socketInput = new DataInputStream(clientSocket.getInputStream());
         } catch (IOException e) {
