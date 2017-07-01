@@ -39,6 +39,7 @@ hs_err_pid*
 ############################ MY FILES ###################################
 .ftpconfig
 .ftpignore
+config.properties
 indexer/index_data/
 *.ods#
 ############################ END MY FILES ###################################

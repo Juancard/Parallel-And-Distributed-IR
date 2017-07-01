@@ -12,27 +12,29 @@ import java.util.List;
  */
 public class PythonIndexer {
 
-    public static final String STOPWORDS_ES = "Resources/Stopwords/stopwords_es.txt";
-    public static final String CORPUS_TP2_2 = "Resources/Corpus/tp2_2";
+    private final String corpusPath;
+    private final String stopwordsPath;
+    private final String indexPath;
+    private final String indexerScript;
 
-    public static final String CORPUS = CORPUS_TP2_2;
-    public static final String STOPWORDS = STOPWORDS_ES;
-
-
-    public static void main(String a[]){
-        try {
-            runFromConsole();
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
+    public PythonIndexer(
+            String corpus,
+            String stopwords,
+            String index,
+            String indexerScript
+    ) {
+        this.corpusPath = corpus;
+        this.stopwordsPath = stopwords;
+        this.indexPath = index;
+        this.indexerScript = indexerScript;
     }
 
-    private static void runFromConsole() throws IOException {
+    public void callScriptIndex() throws IOException {
         List<String> command = new ArrayList<String>();
         command.add("python");
-        command.add("indexer/indexer_main.py");
-        command.add(CORPUS);
-        command.add(STOPWORDS);
+        command.add(this.indexerScript);
+        command.add(this.corpusPath);
+        command.add(this.stopwordsPath);
 
         SystemCommandExecutor commandExecutor = new SystemCommandExecutor(command);
         try {

@@ -8,13 +8,32 @@ import Common.SocketConnection;
 public class GpuServerHandler {
 	private static final String INDEX = "IND";
 	private static final String EVALUATE = "EVA";
-	private int port;
+    private final String username;
+    private final String pass;
+    private final int sshPort;
+    private final String indexPath;
+    private final String irIndexPath;
+    private int port;
 	private String host;
+
 	
 	
-	public GpuServerHandler(String host, int port) {
+	public GpuServerHandler(
+            String host,
+            int port,
+            String username,
+            String pass,
+            int sshPort,
+            String gpuIndexPath,
+            String irIndexPath
+    ) {
 		this.host = host;
 		this.port = port;
+        this.username = username;
+        this.pass = pass;
+        this.sshPort = sshPort;
+        this.indexPath = gpuIndexPath;
+        this.irIndexPath = irIndexPath;
 	}
 
 	public HashMap<Integer, Double> sendQuery(Query query) throws IOException {
@@ -65,4 +84,8 @@ public class GpuServerHandler {
         connection.close();
         return result == 1;
 	}
+
+    public void sendIndex(){
+
+    }
 }
