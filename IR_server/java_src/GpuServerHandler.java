@@ -1,9 +1,8 @@
-import java.io.DataInputStream;
-import java.io.DataOutputStream;
-import java.io.IOException;
+import java.io.*;
 import java.util.HashMap;
 
 import Common.SocketConnection;
+import com.jcraft.jsch.*;
 
 public class GpuServerHandler {
 	private static final String INDEX = "IND";
@@ -13,6 +12,8 @@ public class GpuServerHandler {
     private final int sshPort;
     private final String indexPath;
     private final String irIndexPath;
+    private final String postingsFileName;
+    private final String documentsNormFileName;
     private int port;
 	private String host;
 
@@ -25,7 +26,9 @@ public class GpuServerHandler {
             String pass,
             int sshPort,
             String gpuIndexPath,
-            String irIndexPath
+            String irIndexPath,
+            String documentsNormFileName,
+            String postingsFileName
     ) {
 		this.host = host;
 		this.port = port;
@@ -34,6 +37,8 @@ public class GpuServerHandler {
         this.sshPort = sshPort;
         this.indexPath = gpuIndexPath;
         this.irIndexPath = irIndexPath;
+        this.documentsNormFileName = documentsNormFileName;
+        this.postingsFileName = postingsFileName;
 	}
 
 	public HashMap<Integer, Double> sendQuery(Query query) throws IOException {
@@ -72,7 +77,7 @@ public class GpuServerHandler {
 		return new SocketConnection(host, port);
 	}
 
-	public boolean index() throws IOException{
+	public boolean loadIndex() throws IOException{
 		SocketConnection connection = this.connect();
 		DataOutputStream out = connection.getSocketOutput();
 		DataInputStream in = connection.getSocketInput();
@@ -85,7 +90,41 @@ public class GpuServerHandler {
         return result == 1;
 	}
 
-    public void sendIndex(){
+    public void sendIndex() throws JSchException, SftpException, FileNotFoundException {
+        System.out.println("Setting up secure connection to Gpu Server");
+        JSch jsch = new JSch();
+        Session session = jsch.getSession(this.username, this.host,this.sshPort);
+        session.setPassword(this.pass);
+        java.util.Properties config = new java.util.Properties();
+        config.put("StrictHostKeyChecking", "no");
+        session.setConfig(config);
+        System.out.println("Connecting to Gpu Server");
+        session.connect();
+        System.out.println("Opening sftp channel");
+        Channel channel = session.openChannel("sftp");
+        channel.connect();
+        ChannelSftp channelSftp = (ChannelSftp)channel;
+        channelSftp.cd(this.indexPath);
+        File postingsFile = new File(this.irIndexPath + this.postingsFileName);
+        File docsNormFile = new File(this.irIndexPath + this.documentsNormFileName);
+        System.out.println("Sending index: transfering postings");
+        channelSftp.put(new FileInputStream(postingsFile), postingsFile.getName());
+        System.out.println("Sending index: transfering documents norm");
+        channelSftp.put(new FileInputStream(docsNormFile), docsNormFile.getName());
+    }
 
+    @Override
+    public String toString() {
+        return "GpuServerHandler{" +
+                "username='" + username + '\'' +
+                ", pass='" + pass + '\'' +
+                ", sshPort=" + sshPort +
+                ", indexPath='" + indexPath + '\'' +
+                ", irIndexPath='" + irIndexPath + '\'' +
+                ", postingsFileName='" + postingsFileName + '\'' +
+                ", documentsNormFileName='" + documentsNormFileName + '\'' +
+                ", port=" + port +
+                ", host='" + host + '\'' +
+                '}';
     }
 }

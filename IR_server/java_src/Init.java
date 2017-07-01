@@ -1,9 +1,4 @@
-import java.io.DataInputStream;
-import java.io.DataOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.ObjectInputStream;
-import java.io.OutputStream;
+import java.io.*;
 import java.net.Socket;
 import java.util.HashMap;
 import java.util.Properties;
@@ -13,6 +8,8 @@ import Common.CommonMain;
 import Common.PropertiesManager;
 import Common.SocketConnection;
 import Indexer.PythonIndexer;
+import com.jcraft.jsch.JSchException;
+import com.jcraft.jsch.SftpException;
 
 public class Init {
 
@@ -57,6 +54,8 @@ public class Init {
         int sshPort = new Integer(properties.getProperty("GPU_SSH_PORT"));
         String gpuIndexPath = properties.getProperty("GPU_INDEX_PATH");
         String irIndexPath = properties.getProperty("IR_INDEX_PATH");
+        String documentsNormFile = properties.getProperty("IR_DOCUMENTS_NORM_FILE");
+        String postingsFile = properties.getProperty("IR_POSTINGS_FILE");
 
         this.gpuHandler = new GpuServerHandler(
                 host,
@@ -65,7 +64,9 @@ public class Init {
                 pass,
                 sshPort,
                 gpuIndexPath,
-                irIndexPath
+                irIndexPath,
+                documentsNormFile,
+                postingsFile
         );
 
     }
@@ -83,7 +84,7 @@ public class Init {
 	}
 	
 	public void loadGpuIndex() throws java.io.IOException {
-		boolean result = gpuHandler.index();
+		boolean result = gpuHandler.loadIndex();
 		java.lang.String m;
 		m = (result)? "Indexing was successful!" : "Error on indexing";
 		java.lang.System.out.println(m);
@@ -111,10 +112,14 @@ public class Init {
                 init.index();
                 Common.CommonMain.pause();
             } else if (opcion.equals("2")){
+                Common.CommonMain.createSection("Send index to gpu");
+                init.sendIndexToGpu();
+                Common.CommonMain.pause();
+            } else if (opcion.equals("3")){
                 Common.CommonMain.createSection("Load gpu index");
                 init.loadGpuIndex();
                 Common.CommonMain.pause();
-            } else if (opcion.equals("3")){
+            } else if (opcion.equals("4")){
                 Common.CommonMain.createSection("Query");
                 init.query();
                 Common.CommonMain.pause();
@@ -122,12 +127,26 @@ public class Init {
         }
     }
 
-	
+    private void sendIndexToGpu() {
+        try {
+            this.gpuHandler.sendIndex();
+            System.out.println("Index was sent successfully!");
+        } catch (JSchException e) {
+            e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
+        } catch (SftpException e) {
+            e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
+        }
+    }
+
+
     public static void showMain(){
         Common.CommonMain.createSection("IR Server - Main");
         java.lang.System.out.println("1 - Index");
-        java.lang.System.out.println("2 - Load gpu index");
-        java.lang.System.out.println("3 - Query");
+        java.lang.System.out.println("2 - Send index to Gpu");
+        java.lang.System.out.println("3 - Load gpu index");
+        java.lang.System.out.println("4 - Query");
         java.lang.System.out.println("0 - Salir");
         java.lang.System.out.println("");
         java.lang.System.out.print("Ingrese opción: ");
