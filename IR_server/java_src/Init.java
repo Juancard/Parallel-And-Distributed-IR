@@ -27,6 +27,7 @@ public class Init {
 	}
 
     private GpuServerHandler gpuHandler;
+    private PythonIndexer pyIndexer;
 
     public Init(String propertiesPath) throws IOException {
         Properties properties = PropertiesManager.loadProperties(PROPERTIES_PATH);
@@ -40,7 +41,7 @@ public class Init {
         String index = properties.getProperty("IR_INDEX_PATH");
         String indexerScript = properties.getProperty("IR_INDEXER_SCRIPT");
 
-        PythonIndexer pyIndexer = new PythonIndexer(
+        this.pyIndexer = new PythonIndexer(
                 corpus,
                 stopwords,
                 index,
@@ -81,12 +82,20 @@ public class Init {
         }
 	}
 	
-	public void index() throws java.io.IOException {
+	public void loadGpuIndex() throws java.io.IOException {
 		boolean result = gpuHandler.index();
 		java.lang.String m;
 		m = (result)? "Indexing was successful!" : "Error on indexing";
 		java.lang.System.out.println(m);
 	}
+
+    public void index(){
+        try {
+            this.pyIndexer.callScriptIndex();
+        } catch (IOException e) {
+            System.out.println("Error while indexing: " + e.getMessage());
+        }
+    }
 
     private static void handleMainOptions() throws java.io.IOException {
         java.lang.String opcion;
@@ -97,11 +106,15 @@ public class Init {
             opcion = scanner.nextLine();
             if (opcion.equals("0")) {
                 salir = true;
-            } else if (opcion.equals("1")){
+            } else if(opcion.equals("1")){
                 Common.CommonMain.createSection("Index");
                 init.index();
                 Common.CommonMain.pause();
             } else if (opcion.equals("2")){
+                Common.CommonMain.createSection("Load gpu index");
+                init.loadGpuIndex();
+                Common.CommonMain.pause();
+            } else if (opcion.equals("3")){
                 Common.CommonMain.createSection("Query");
                 init.query();
                 Common.CommonMain.pause();
@@ -113,7 +126,8 @@ public class Init {
     public static void showMain(){
         Common.CommonMain.createSection("IR Server - Main");
         java.lang.System.out.println("1 - Index");
-        java.lang.System.out.println("2 - Query");
+        java.lang.System.out.println("2 - Load gpu index");
+        java.lang.System.out.println("3 - Query");
         java.lang.System.out.println("0 - Salir");
         java.lang.System.out.println("");
         java.lang.System.out.print("Ingrese opción: ");
