@@ -71,7 +71,7 @@ class Indexer(object):
 		self.endStats()
 		print u"Ordenando vocabulario alfabeticamente"
 		self.vocabulary.setAlphabeticalOrder()
-		print u"Generando id de los términos"
+		print u"Generando id de los terminos"
 		self.setTermsId()
 		self.postings.sortByKey()
 		#self.positions.sortByKey()

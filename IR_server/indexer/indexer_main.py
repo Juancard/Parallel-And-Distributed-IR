@@ -3,12 +3,12 @@ import sys
 import os
 import json
 
-# Agrego al path la carpeta modulos
-sys.path.insert(0, os.path.abspath("./modulos"))
-from Collection import Collection
-from Indexer import Indexer
-from PicklePersist import PicklePersist
-from Postings import SequentialPostings
+print os.getcwd()
+sys.path.insert(0, os.path.abspath(os.getcwd()))
+from modulos.Collection import Collection
+from modulos.Indexer import Indexer
+from modulos.PicklePersist import PicklePersist
+from modulos.Postings import SequentialPostings
 
 def getParameters():
 	out = []
@@ -53,7 +53,7 @@ def main():
 	indexer.index(indexConfig)
 
 	# Persisto indice para su recuperacion
-	INDEX_DIR = "index_data/"
+	INDEX_DIR = "Resources/Index/"
 	if not os.path.exists(INDEX_DIR):
 	    os.makedirs(INDEX_DIR)
 
