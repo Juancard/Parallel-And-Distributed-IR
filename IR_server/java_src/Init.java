@@ -1,6 +1,7 @@
 import java.io.*;
 import java.net.Socket;
 import java.util.HashMap;
+import java.util.Map;
 import java.util.Properties;
 import java.util.Scanner;
 
@@ -25,11 +26,20 @@ public class Init {
 
     private GpuServerHandler gpuHandler;
     private PythonIndexer pyIndexer;
+    private HashMap<String, Integer> vocabulary;
 
     public Init(String propertiesPath) throws IOException {
         Properties properties = PropertiesManager.loadProperties(PROPERTIES_PATH);
         setupGpuServer(properties);
         setupPythonIndexer(properties);
+        setupVocabulary(properties);
+    }
+
+    private void setupVocabulary(Properties properties) throws IOException {
+        String indexPath = properties.getProperty("IR_INDEX_PATH");
+        String vocabularyFilePath = properties.getProperty("IR_VOCABULARY_FILE");
+        File vocabularyFile = new File(indexPath + vocabularyFilePath);
+        this.vocabulary = Vocabulary.loadFromFile(vocabularyFile);
     }
 
     private void setupPythonIndexer(Properties properties) {
