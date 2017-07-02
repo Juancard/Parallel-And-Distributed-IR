@@ -43,7 +43,7 @@ def main():
 	# data para el analizador lexico
 	indexConfig = {
 		"stopwords": stopwords,
-		"stem": "spanish",
+		#"stem": "spanish",
 		"term_min_size": 3,
 		"term_max_size": 23
 	}
@@ -68,7 +68,7 @@ def main():
 		for t in indexer.vocabulary.content:
 			tStr += "%s:%d\n" % (t, indexer.vocabulary.getId(t))
 		f.write(tStr)
-	print "Vocabulario guardado en: %s" % vocabularyFile 
+	print "Vocabulario guardado en: %s" % vocabularyFile
 
 	sp = SequentialPostings.create(indexer.postings.getAll(),
 		path=INDEX_DIR, title="seq_posting.txt")

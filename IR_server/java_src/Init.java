@@ -27,12 +27,32 @@ public class Init {
     private GpuServerHandler gpuHandler;
     private PythonIndexer pyIndexer;
     private HashMap<String, Integer> vocabulary;
+    private Normalizer normalizer;
 
     public Init(String propertiesPath) throws IOException {
         Properties properties = PropertiesManager.loadProperties(PROPERTIES_PATH);
         setupGpuServer(properties);
         setupPythonIndexer(properties);
         setupVocabulary(properties);
+        setupNormalizer(properties);
+    }
+
+    private void setupNormalizer(Properties properties) throws IOException {
+        String indexPath = properties.getProperty("IR_INDEX_PATH");
+        String normalizerConfigFile = properties.getProperty("IR_NORMALIZER_CONFIGURATION_FILE");
+        this.normalizer = new Normalizer();
+        try {
+            this.normalizer.loadConfiguration(
+                    new File(
+                            indexPath + normalizerConfigFile
+                    )
+            );
+        } catch (IOException e) {
+            throw new IOException(
+                    "Error setting up normalizer: "
+                            + e.getMessage()
+            );
+        }
     }
 
     private void setupVocabulary(Properties properties) throws IOException {
