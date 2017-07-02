@@ -62,6 +62,14 @@ def main():
 	print "Vocabulario guardado en: %s" % pp.save(indexer.vocabulary, INDEX_DIR + "vocabulary")
 	print "Documentos guardados en: %s" % pp.save(indexer.documents, INDEX_DIR + "documents")
 	"""
+	tStr = ""
+	vocabularyFile = INDEX_DIR + "vocabulary.txt"
+	with open(vocabularyFile, "w") as f:
+		for t in indexer.vocabulary.content:
+			tStr += "%s:%d\n" % (t, indexer.vocabulary.getId(t))
+		f.write(tStr)
+	print "Vocabulario guardado en: %s" % vocabularyFile 
+
 	sp = SequentialPostings.create(indexer.postings.getAll(),
 		path=INDEX_DIR, title="seq_posting.txt")
 	print "Postings guardadas en: %s" % sp.path

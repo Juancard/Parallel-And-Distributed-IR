@@ -8,3 +8,5 @@ unified memory:
 https://devblogs.nvidia.com/parallelforall/unified-memory-in-cuda-6/
 sockets in c tutorial:
 http://www.beej.us/guide/bgnet/output/html/singlepage/bgnet.html
+Execute commands from java
+http://alvinalexander.com/java/java-exec-processbuilder-process-1
