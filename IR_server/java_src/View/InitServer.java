@@ -14,13 +14,9 @@ import Model.Vocabulary;
 public class InitServer {
 
     public static final String PROPERTIES_PATH = "java_src/config.properties";
-	//public static java.util.Scanner scanner;
-    public static InitServer initServer;
 
     public static void main(java.lang.String[] args) throws Exception {
-        initServer = new InitServer(PROPERTIES_PATH);
-		//scanner = new java.util.Scanner(java.lang.System.in);
-		//handleMainOptions();
+        new InitServer(PROPERTIES_PATH);
 	}
 
     private GpuServerHandler gpuHandler;
@@ -30,7 +26,7 @@ public class InitServer {
 
     public InitServer(String propertiesPath) throws Exception {
         try {
-            Properties properties = PropertiesManager.loadProperties(PROPERTIES_PATH);
+            Properties properties = PropertiesManager.loadProperties(propertiesPath);
 
             int irServerPort = new Integer(properties.getProperty("IR_PORT"));
             setupGpuServer(properties);
