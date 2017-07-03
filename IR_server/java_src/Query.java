@@ -1,15 +1,26 @@
 import java.io.DataInputStream;
-import java.io.DataOutputStream;
-import java.io.IOException;
-import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.Map;
 
 public class Query{
     private HashMap<Integer, Double> termsToWeight;
+    private IRNormalizer normalizer;
 
     public Query(HashMap<Integer, Double> termsToWeight){
         this.termsToWeight = termsToWeight;
+    }
+
+    public Query(String query, IRNormalizer normalizer){
+        this.normalizer = normalizer;
+        String queryNormalized = normalize(query);
+        System.out.println(queryNormalized);
+    }
+
+    public String normalize(String query){
+        query = this.normalizer.stripAccents(query);
+        query = this.normalizer.toLowerCase(query);
+        query = this.normalizer.removePunctuation(query);
+        query = this.normalizer.removeOtherCharacters(query);
+        return query;
     }
 
     public double getNorm(){

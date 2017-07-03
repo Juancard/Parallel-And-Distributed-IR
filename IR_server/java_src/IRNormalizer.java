@@ -2,6 +2,7 @@ import Common.JSONReader;
 import org.json.JSONObject;
 
 import java.io.*;
+import java.text.Normalizer;
 import java.util.ArrayList;
 
 /**
@@ -9,13 +10,18 @@ import java.util.ArrayList;
  * Date: 02/07/17
  * Time: 14:17
  */
-public class Normalizer {
+public class IRNormalizer {
+
+    // HARDCODED -
+    // THIS SHOULD ALWAYS BE SAME THAT IS USED DURING INDEXATION
+    public static String PUNCTUATION = "¡¿!\"#$%&'()*+,-./:;<=>?@[\\]^_`{|}~";
+    public static String WEIRD_CHARS = "§âÂ¢«»­±¬ºï©®Ÿ€¾°“”·—’‘–Ã¼ü";
 
     private ArrayList<String> stopwords;
     private int termMaxSize;
     private int termMinSize;
 
-    public Normalizer(){
+    public IRNormalizer(){
         this.stopwords = new ArrayList<String>();
         this.termMaxSize = Integer.MAX_VALUE;
         this.termMinSize = -1;
@@ -40,5 +46,34 @@ public class Normalizer {
         String stopword;
         while ((stopword = br.readLine()) != null)
             this.stopwords.add(stopword);
+    }
+
+    public String stripAccents(String s){
+        s = Normalizer.normalize(s, Normalizer.Form.NFKD);
+        s = s.replaceAll("[\\p{InCombiningDiacriticalMarks}]", "");
+        return s;
+    }
+
+    public String toLowerCase(String s){
+        return s.toLowerCase();
+    }
+
+    public String removePunctuation(String s){
+        return removeUnwantedFrom(s, PUNCTUATION);
+    }
+
+    public String removeOtherCharacters(String s){
+        return removeUnwantedFrom(s, WEIRD_CHARS);
+    }
+
+    private String removeUnwantedFrom(String from, String unwanted){
+        String out = "";
+        char c;
+        for (int i=0; i < from.length(); i++){
+            c = from.charAt(i);
+            if (unwanted.indexOf(c) < 0)
+                out += c;
+        }
+        return out;
     }
 }

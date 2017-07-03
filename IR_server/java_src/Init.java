@@ -1,13 +1,8 @@
 import java.io.*;
-import java.net.Socket;
 import java.util.HashMap;
-import java.util.Map;
 import java.util.Properties;
-import java.util.Scanner;
 
-import Common.CommonMain;
 import Common.PropertiesManager;
-import Common.SocketConnection;
 import Indexer.PythonIndexer;
 import com.jcraft.jsch.JSchException;
 import com.jcraft.jsch.SftpException;
@@ -27,7 +22,7 @@ public class Init {
     private GpuServerHandler gpuHandler;
     private PythonIndexer pyIndexer;
     private HashMap<String, Integer> vocabulary;
-    private Normalizer normalizer;
+    private IRNormalizer normalizer;
 
     public Init(String propertiesPath) throws IOException {
         Properties properties = PropertiesManager.loadProperties(PROPERTIES_PATH);
@@ -40,7 +35,7 @@ public class Init {
     private void setupNormalizer(Properties properties) throws IOException {
         String indexPath = properties.getProperty("IR_INDEX_PATH");
         String normalizerConfigFile = properties.getProperty("IR_NORMALIZER_CONFIGURATION_FILE");
-        this.normalizer = new Normalizer();
+        this.normalizer = new IRNormalizer();
         try {
             this.normalizer.loadConfiguration(
                     new File(
@@ -102,6 +97,10 @@ public class Init {
     }
 
     public void query() throws java.io.IOException {
+        System.out.print("Enter query: ");
+        String query = this.scanner.nextLine();
+        Query q = new Query(query, this.normalizer);
+        /*
         java.util.HashMap<Integer, Double> termsToWeight = new java.util.HashMap<Integer, Double>();
         termsToWeight.put(10, new java.lang.Double(1));
         termsToWeight.put(11, new java.lang.Double(1));
@@ -111,6 +110,7 @@ public class Init {
         for (int d : docsScore.keySet()) {
             System.out.println("Doc " + d + ": " + docsScore.get(d));
         }
+        */
 	}
 	
 	public void loadGpuIndex() throws java.io.IOException {
