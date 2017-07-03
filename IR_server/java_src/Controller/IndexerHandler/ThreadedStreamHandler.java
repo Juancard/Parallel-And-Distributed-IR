@@ -1,4 +1,4 @@
-package IR_server.IndexerHandler;
+package Controller.IndexerHandler;
 
 import java.io.*;
 

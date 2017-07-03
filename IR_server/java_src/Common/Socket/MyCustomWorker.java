@@ -58,14 +58,23 @@ public class MyCustomWorker implements Runnable{
         }
     }
 
-    // This class is overriden by inheritants
-    protected void handleClientInput(Object objectFromClient) {
+    private void handleClientInput(Object clientInput) {
         Object objectToClient = null;
 
-        // DOES NOTHING
+        try {
+            objectToClient = this.onClientRequest(clientInput.toString());
+        } catch (Exception e) {
+            e.printStackTrace();
+            this.close();
+        }
 
         if (objectToClient != null)
             this.clientConnection.send(objectToClient);
+    }
+
+    // This class is overriden by inheritants
+    protected Object onClientRequest(String request) {
+        return "NOT YET IMPLEMENTED";
     }
 
     public void sendToClient(Object toSend){

@@ -1,4 +1,4 @@
-package IR_server;
+package Model;
 
 import java.io.DataInputStream;
 import java.util.HashMap;

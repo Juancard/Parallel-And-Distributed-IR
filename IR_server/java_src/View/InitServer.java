@@ -1,11 +1,15 @@
-package IR_server;
+package View;
 
 import java.io.*;
 import java.util.HashMap;
 import java.util.Properties;
 
 import Common.PropertiesManager;
-import IR_server.IndexerHandler.PythonIndexer;
+import Controller.GpuServerHandler;
+import Model.IRNormalizer;
+import Controller.ServerHandler.IRServer;
+import Controller.IndexerHandler.PythonIndexer;
+import Model.Vocabulary;
 
 public class InitServer {
 

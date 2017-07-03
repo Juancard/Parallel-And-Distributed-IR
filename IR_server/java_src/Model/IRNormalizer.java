@@ -1,4 +1,4 @@
-package IR_server;
+package Model;
 
 import Common.JSONReader;
 import org.json.JSONObject;

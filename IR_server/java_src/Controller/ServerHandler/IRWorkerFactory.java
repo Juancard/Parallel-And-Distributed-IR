@@ -1,8 +1,10 @@
-package IR_server;
+package Controller.ServerHandler;
 
 import Common.Socket.MyCustomWorker;
 import Common.Socket.WorkerFactory;
-import IR_server.IndexerHandler.PythonIndexer;
+import Controller.GpuServerHandler;
+import Controller.IndexerHandler.PythonIndexer;
+import Model.IRNormalizer;
 
 import java.net.Socket;
 import java.util.HashMap;

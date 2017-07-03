@@ -1,8 +1,7 @@
-package IR_server;
+package Model;
 
 import java.io.*;
 import java.util.HashMap;
-import java.util.Map;
 
 /**
  * User: juan

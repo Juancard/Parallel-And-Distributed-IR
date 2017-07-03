@@ -1,9 +1,10 @@
-package IR_server;
+package Controller;
 
 import java.io.*;
 import java.util.HashMap;
 
 import Common.Socket.SocketConnection;
+import Model.Query;
 import com.jcraft.jsch.*;
 
 public class GpuServerHandler {

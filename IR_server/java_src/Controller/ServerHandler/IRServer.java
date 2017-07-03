@@ -1,12 +1,11 @@
-package IR_server;
+package Controller.ServerHandler;
 
 import Common.Socket.MyCustomServer;
-import IR_server.IndexerHandler.PythonIndexer;
+import Controller.IndexerHandler.PythonIndexer;
+import Model.IRNormalizer;
+import Controller.GpuServerHandler;
 
-import java.io.File;
-import java.io.IOException;
 import java.util.HashMap;
-import java.util.Properties;
 
 
 /**
@@ -31,10 +30,10 @@ public class IRServer extends MyCustomServer{
         super(
                 port,
                 new IRWorkerFactory(
-                    vocabulary,
-                    gpuHandler,
-                    pythonIndexer,
-                    normalizer
+                        vocabulary,
+                        gpuHandler,
+                        pythonIndexer,
+                        normalizer
                 )
         );
     }
