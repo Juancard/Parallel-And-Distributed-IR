@@ -18,15 +18,17 @@ public class MyCustomServer {
     private ServerSocket serverSocket;
     private Map<Thread, Runnable> threadsPool;
     protected LogManager logManager;
+    private WorkerFactory workerFactory;
 
-    public MyCustomServer(int port) {
-        this.prepareServer(port);
+    public <T extends MyCustomWorker> MyCustomServer(int port, WorkerFactory workerFactory) {
+        this.prepareServer(port, workerFactory);
     }
 
-    private void prepareServer(int port) {
+    private <T extends MyCustomWorker> void prepareServer(int port, WorkerFactory workerFactory) {
         this.port = port;
         this.threadsPool = new HashMap<Thread, Runnable>();
         this.logManager = new LogManager(System.out);
+        this.workerFactory = workerFactory;
     }
 
     public void startServer() throws IOException {
@@ -57,11 +59,19 @@ public class MyCustomServer {
                 String m = "Error in establishing connection with client. Cause: " + e.getMessage();
                 this.out(m);
                 throw new IOException(m);
+            } catch (InstantiationException e) {
+                String m = "Error in establishing connection with client. Cause: " + e.getMessage();
+                this.out(m);
+                throw new IOException(m);
+            } catch (IllegalAccessException e) {
+                String m = "Error in establishing connection with client. Cause: " + e.getMessage();
+                this.out(m);
+                throw new IOException(m);
             }
         }
     }
 
-    private void newConnection(Socket clientSocket) throws IOException {
+    private void newConnection(Socket clientSocket) throws IOException, InstantiationException, IllegalAccessException {
         Runnable runnable = this.newRunnable(clientSocket);
         Thread t = this.newThread(runnable);
         this.threadsPool.put(t, runnable);
@@ -76,12 +86,7 @@ public class MyCustomServer {
     }
 
     protected Runnable newRunnable(Socket clientSocket) throws IOException {
-        return new Runnable() {
-            @Override
-            public void run() {
-                // Does nothing //must be overriden
-            }
-        };
+        return workerFactory.create(clientSocket);
     }
 
     private void closeServer() {
