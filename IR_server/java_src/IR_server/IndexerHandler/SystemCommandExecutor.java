@@ -1,4 +1,4 @@
-package Indexer;
+package IR_server.IndexerHandler;
 
 import java.io.*;
 import java.util.List;

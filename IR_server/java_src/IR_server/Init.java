@@ -1,9 +1,11 @@
+package IR_server;
+
 import java.io.*;
 import java.util.HashMap;
 import java.util.Properties;
 
 import Common.PropertiesManager;
-import Indexer.PythonIndexer;
+import IR_server.IndexerHandler.PythonIndexer;
 import com.jcraft.jsch.JSchException;
 import com.jcraft.jsch.SftpException;
 
@@ -102,10 +104,6 @@ public class Init {
         Query q = new Query(query, this.vocabulary, this.normalizer);
         System.out.println(q.toSocketString());
         /*
-        java.util.HashMap<Integer, Double> termsToWeight = new java.util.HashMap<Integer, Double>();
-        termsToWeight.put(10, new java.lang.Double(1));
-        termsToWeight.put(11, new java.lang.Double(1));
-        Query q = new Query(termsToWeight);
         HashMap<Integer, Double> docsScore = gpuHandler.sendQuery(q);
         System.out.println("Docs Scores are: ");
         for (int d : docsScore.keySet()) {
@@ -151,7 +149,7 @@ public class Init {
                 init.loadGpuIndex();
                 Common.CommonMain.pause();
             } else if (opcion.equals("4")){
-                Common.CommonMain.createSection("Query");
+                Common.CommonMain.createSection("IR_server.Query");
                 init.query();
                 Common.CommonMain.pause();
             }
@@ -177,7 +175,7 @@ public class Init {
         java.lang.System.out.println("1 - Index");
         java.lang.System.out.println("2 - Send index to Gpu");
         java.lang.System.out.println("3 - Load gpu index");
-        java.lang.System.out.println("4 - Query");
+        java.lang.System.out.println("4 - IR_server.Query");
         java.lang.System.out.println("0 - Salir");
         java.lang.System.out.println("");
         java.lang.System.out.print("Ingrese opción: ");

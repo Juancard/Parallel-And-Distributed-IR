@@ -1,3 +1,5 @@
+package IR_server;
+
 import java.io.DataInputStream;
 import java.util.HashMap;
 

@@ -1,11 +1,8 @@
-package Common;
+package Common.Socket;
 
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
-import java.io.EOFException;
 import java.io.IOException;
-import java.io.ObjectInputStream;
-import java.io.ObjectOutputStream;
 import java.net.Socket;
 import java.net.UnknownHostException;
 
@@ -18,9 +15,9 @@ public class SocketConnection {
 
     private Socket clientSocket;
     private DataOutputStream socketOutput;
-	private DataInputStream socketInput;
+    private DataInputStream socketInput;
 
-	public SocketConnection(Socket clientSocket) {
+    public SocketConnection(Socket clientSocket) {
         this.startConnection(clientSocket);
     }
 
@@ -48,7 +45,7 @@ public class SocketConnection {
             this.close();
         }
     }
-    
+
     public String getIdentity(){
         return this.clientSocket.getRemoteSocketAddress().toString();
     }
@@ -88,22 +85,22 @@ public class SocketConnection {
     public Socket getClientSocket() {
         return clientSocket;
     }
-    
-    public DataOutputStream getSocketOutput() {
-		return socketOutput;
-	}
 
-	public void setSocketOutput(DataOutputStream socketOutput) {
-		this.socketOutput = socketOutput;
-	}
+    public DataOutputStream getSocketOutput() {
+        return socketOutput;
+    }
+
+    public void setSocketOutput(DataOutputStream socketOutput) {
+        this.socketOutput = socketOutput;
+    }
 
 
     public DataInputStream getSocketInput() {
-		return socketInput;
-	}
+        return socketInput;
+    }
 
-	public void setSocketInput(DataInputStream socketInput) {
-		this.socketInput = socketInput;
-	}
+    public void setSocketInput(DataInputStream socketInput) {
+        this.socketInput = socketInput;
+    }
 
 }
