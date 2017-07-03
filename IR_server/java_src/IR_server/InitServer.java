@@ -6,19 +6,17 @@ import java.util.Properties;
 
 import Common.PropertiesManager;
 import IR_server.IndexerHandler.PythonIndexer;
-import com.jcraft.jsch.JSchException;
-import com.jcraft.jsch.SftpException;
 
-public class Init {
+public class InitServer {
 
     public static final String PROPERTIES_PATH = "java_src/config.properties";
-	public static java.util.Scanner scanner;
-    public static Init init;
+	//public static java.util.Scanner scanner;
+    public static InitServer initServer;
 
-    public static void main(java.lang.String[] args) throws java.io.IOException {
-        init = new Init(PROPERTIES_PATH);
-		scanner = new java.util.Scanner(java.lang.System.in);
-		handleMainOptions();
+    public static void main(java.lang.String[] args) throws Exception {
+        initServer = new InitServer(PROPERTIES_PATH);
+		//scanner = new java.util.Scanner(java.lang.System.in);
+		//handleMainOptions();
 	}
 
     private GpuServerHandler gpuHandler;
@@ -26,12 +24,31 @@ public class Init {
     private HashMap<String, Integer> vocabulary;
     private IRNormalizer normalizer;
 
-    public Init(String propertiesPath) throws IOException {
-        Properties properties = PropertiesManager.loadProperties(PROPERTIES_PATH);
-        setupGpuServer(properties);
-        setupPythonIndexer(properties);
-        setupVocabulary(properties);
-        setupNormalizer(properties);
+    public InitServer(String propertiesPath) throws Exception {
+        try {
+            Properties properties = PropertiesManager.loadProperties(PROPERTIES_PATH);
+
+            int irServerPort = new Integer(properties.getProperty("IR_PORT"));
+            setupGpuServer(properties);
+            setupPythonIndexer(properties);
+            setupVocabulary(properties);
+            setupNormalizer(properties);
+
+            IRServer irServer = new IRServer(
+                    irServerPort,
+                    this.gpuHandler,
+                    this.pyIndexer,
+                    this.vocabulary,
+                    this.normalizer
+            );
+            irServer.startServer();
+
+        } catch (Exception e){
+            throw new Exception("Error starting server: "
+                    + e.getMessage()
+            );
+        }
+
     }
 
     private void setupNormalizer(Properties properties) throws IOException {
@@ -97,19 +114,19 @@ public class Init {
         );
 
     }
-
+    /*
     public void query() throws java.io.IOException {
         System.out.print("Enter query: ");
         String query = this.scanner.nextLine();
         Query q = new Query(query, this.vocabulary, this.normalizer);
         System.out.println(q.toSocketString());
-        /*
-        HashMap<Integer, Double> docsScore = gpuHandler.sendQuery(q);
-        System.out.println("Docs Scores are: ");
-        for (int d : docsScore.keySet()) {
-            System.out.println("Doc " + d + ": " + docsScore.get(d));
-        }
-        */
+
+        //HashMap<Integer, Double> docsScore = gpuHandler.sendQuery(q);
+        //System.out.println("Docs Scores are: ");
+        //for (int d : docsScore.keySet()) {
+        //    System.out.println("Doc " + d + ": " + docsScore.get(d));
+        //}
+
 	}
 	
 	public void loadGpuIndex() throws java.io.IOException {
@@ -180,6 +197,6 @@ public class Init {
         java.lang.System.out.println("");
         java.lang.System.out.print("Ingrese opción: ");
     }
-
+  */
 
 }
