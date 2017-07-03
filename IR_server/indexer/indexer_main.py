@@ -43,7 +43,6 @@ def main():
 	# data para el analizador lexico
 	indexConfig = {
 		"stopwords": stopwords,
-		#"stem": "spanish",
 		"term_min_size": 3,
 		"term_max_size": 23
 	}

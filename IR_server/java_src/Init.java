@@ -99,7 +99,8 @@ public class Init {
     public void query() throws java.io.IOException {
         System.out.print("Enter query: ");
         String query = this.scanner.nextLine();
-        Query q = new Query(query, this.normalizer);
+        Query q = new Query(query, this.vocabulary, this.normalizer);
+        System.out.println(q.toSocketString());
         /*
         java.util.HashMap<Integer, Double> termsToWeight = new java.util.HashMap<Integer, Double>();
         termsToWeight.put(10, new java.lang.Double(1));
