@@ -45,8 +45,8 @@ public class GpuServerHandler {
 
 	public HashMap<Integer, Double> sendQuery(Query query) throws IOException {
 		SocketConnection connection = this.connect();
-		DataOutputStream out = connection.getSocketOutput();
-        DataInputStream in = connection.getSocketInput();
+		DataOutputStream out = new DataOutputStream(connection.getSocketOutput());
+        DataInputStream in = new DataInputStream(connection.getSocketInput());
 
         String qStr = query.toSocketString();
         System.out.println("Sending query: " + qStr);
@@ -81,8 +81,8 @@ public class GpuServerHandler {
 
 	public boolean loadIndex() throws IOException{
 		SocketConnection connection = this.connect();
-		DataOutputStream out = connection.getSocketOutput();
-		DataInputStream in = connection.getSocketInput();
+        DataOutputStream out = new DataOutputStream(connection.getSocketOutput());
+        DataInputStream in = new DataInputStream(connection.getSocketInput());
 
 		out.writeInt(INDEX.length());
 		out.writeBytes(INDEX);

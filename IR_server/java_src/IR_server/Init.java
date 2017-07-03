@@ -149,7 +149,7 @@ public class Init {
                 init.loadGpuIndex();
                 Common.CommonMain.pause();
             } else if (opcion.equals("4")){
-                Common.CommonMain.createSection("IR_server.Query");
+                Common.CommonMain.createSection("Query");
                 init.query();
                 Common.CommonMain.pause();
             }
@@ -175,7 +175,7 @@ public class Init {
         java.lang.System.out.println("1 - Index");
         java.lang.System.out.println("2 - Send index to Gpu");
         java.lang.System.out.println("3 - Load gpu index");
-        java.lang.System.out.println("4 - IR_server.Query");
+        java.lang.System.out.println("4 - Query");
         java.lang.System.out.println("0 - Salir");
         java.lang.System.out.println("");
         java.lang.System.out.print("Ingrese opción: ");

@@ -1,8 +1,6 @@
 package Common.Socket;
 
-import java.io.DataInputStream;
-import java.io.DataOutputStream;
-import java.io.IOException;
+import java.io.*;
 import java.net.Socket;
 import java.net.UnknownHostException;
 
@@ -14,8 +12,8 @@ import java.net.UnknownHostException;
 public class SocketConnection {
 
     private Socket clientSocket;
-    private DataOutputStream socketOutput;
-    private DataInputStream socketInput;
+    private OutputStream socketOutput;
+    private InputStream socketInput;
 
     public SocketConnection(Socket clientSocket) {
         this.startConnection(clientSocket);
@@ -38,13 +36,40 @@ public class SocketConnection {
         this.clientSocket = clientSocket;
         try {
             //this.clientSocket.setSoLinger (true, 10);
-            this.socketOutput = new DataOutputStream(clientSocket.getOutputStream());
-            this.socketInput = new DataInputStream(clientSocket.getInputStream());
+            this.socketOutput = clientSocket.getOutputStream();
+            this.socketInput = clientSocket.getInputStream();
         } catch (IOException e) {
             this.out("Error in instantiating new server thread");
             this.close();
         }
     }
+
+    public Object read() throws ClassNotFoundException, IOException {
+        try {
+            Object read = new ObjectInputStream(this.socketInput).readObject();
+            return read;
+        } catch(EOFException e){
+            this.close();
+            throw new EOFException("Connection lost.");
+        } catch (IOException e) {
+            String m = "Error in reading from socket. Cause: " + e.getMessage();
+            this.close();
+            throw new IOException(m);
+        } catch (ClassNotFoundException e) {
+            String m = "Error in reading from socket. Cause: " + e.getMessage();
+            this.close();
+            throw new ClassNotFoundException(m);
+        }
+    }
+
+    public void send(Object toSend) {
+        try {
+            new ObjectOutputStream(socketOutput).writeObject(toSend);
+        } catch (IOException e) {
+            this.close();
+        }
+    }
+
 
     public String getIdentity(){
         return this.clientSocket.getRemoteSocketAddress().toString();
@@ -86,20 +111,20 @@ public class SocketConnection {
         return clientSocket;
     }
 
-    public DataOutputStream getSocketOutput() {
+    public OutputStream getSocketOutput() {
         return socketOutput;
     }
 
-    public void setSocketOutput(DataOutputStream socketOutput) {
+    public void setSocketOutput(OutputStream socketOutput) {
         this.socketOutput = socketOutput;
     }
 
 
-    public DataInputStream getSocketInput() {
+    public InputStream getSocketInput() {
         return socketInput;
     }
 
-    public void setSocketInput(DataInputStream socketInput) {
+    public void setSocketInput(InputStream socketInput) {
         this.socketInput = socketInput;
     }
 
