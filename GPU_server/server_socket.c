@@ -161,7 +161,7 @@ void startServer(char* port){
       exit(1);
   }
 
-  printf("server: waiting for connections...\n");
+  printf("server: waiting for connections at port %s...\n", port);
 
   struct sockaddr_storage their_addr; // connector's address information
   socklen_t sin_size;

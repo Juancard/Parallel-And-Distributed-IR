@@ -20,8 +20,6 @@ public class GpuServerHandler {
     private int port;
 	private String host;
 
-	
-	
 	public GpuServerHandler(
             String host,
             int port,
@@ -50,7 +48,7 @@ public class GpuServerHandler {
         DataInputStream in = new DataInputStream(connection.getSocketInput());
 
         String qStr = query.toSocketString();
-        System.out.println("Sending query: " + qStr);
+        this.out("Sending query: " + qStr);
         out.writeInt(EVALUATE.length());
 		out.writeBytes(EVALUATE);
 		out.writeInt(qStr.length());
@@ -75,26 +73,25 @@ public class GpuServerHandler {
 		connection.close();
         return docsScore;
 	}
-	
-	private SocketConnection connect() throws IOException {
-		return new SocketConnection(host, port);
-	}
 
-	public boolean loadIndex() throws IOException{
-		SocketConnection connection = this.connect();
+	public boolean loadIndexInGpu() throws IOException{
+        this.out("Connecting to Gpu at " + this.host + ":" + this.port);
+		SocketConnection connection = new SocketConnection("localhost", this.port);//this.connect();
         DataOutputStream out = new DataOutputStream(connection.getSocketOutput());
         DataInputStream in = new DataInputStream(connection.getSocketInput());
 
-		out.writeInt(INDEX.length());
+        this.out("Sending index to Gpu");
+        out.writeInt(INDEX.length());
 		out.writeBytes(INDEX);
 		int result = in.readInt();
-        
+
+        this.out("Closing connection with Gpu");
         connection.close();
         return result == 1;
 	}
 
     public void sendIndex() throws JSchException, SftpException, FileNotFoundException {
-        System.out.println("Setting up secure connection to Gpu Server");
+        this.out("Setting up secure connection to Gpu Server");
         JSch jsch = new JSch();
         Session session = jsch.getSession(this.username, this.host,this.sshPort);
         session.setPassword(this.pass);
@@ -103,17 +100,26 @@ public class GpuServerHandler {
         session.setConfig(config);
         System.out.println("Connecting to Gpu Server");
         session.connect();
-        System.out.println("Opening sftp channel");
+        this.out("Opening sftp channel");
         Channel channel = session.openChannel("sftp");
         channel.connect();
         ChannelSftp channelSftp = (ChannelSftp)channel;
         channelSftp.cd(this.indexPath);
         File postingsFile = new File(this.irIndexPath + this.postingsFileName);
         File docsNormFile = new File(this.irIndexPath + this.documentsNormFileName);
-        System.out.println("Sending index: transfering postings");
+        this.out("Sending index: transfering postings");
         channelSftp.put(new FileInputStream(postingsFile), postingsFile.getName());
-        System.out.println("Sending index: transfering documents norm");
+        this.out("Sending index: transfering documents norm");
         channelSftp.put(new FileInputStream(docsNormFile), docsNormFile.getName());
+    }
+
+
+    private SocketConnection connect() throws IOException {
+        return new SocketConnection(host, port);
+    }
+
+    private void out(String m){
+        System.out.println(m);
     }
 
     @Override

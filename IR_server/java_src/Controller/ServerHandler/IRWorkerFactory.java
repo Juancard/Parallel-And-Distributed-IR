@@ -5,7 +5,9 @@ import Common.Socket.WorkerFactory;
 import Controller.GpuServerHandler;
 import Controller.IndexerHandler.PythonIndexer;
 import Model.IRNormalizer;
+import Model.Vocabulary;
 
+import java.io.IOException;
 import java.net.Socket;
 import java.util.HashMap;
 
@@ -16,13 +18,14 @@ import java.util.HashMap;
  */
 public class IRWorkerFactory implements WorkerFactory{
 
-    private final HashMap<String, Integer> vocabulary;
+    private Vocabulary vocabulary;
     private final GpuServerHandler gpuHandler;
     private final PythonIndexer pythonIndexer;
     private final IRNormalizer normalizer;
+    private IRServerForConnections irServer;
 
     public IRWorkerFactory(
-            HashMap<String, Integer> vocabulary,
+            Vocabulary vocabulary,
             GpuServerHandler gpuHandler,
             PythonIndexer pythonIndexer,
             IRNormalizer normalizer
@@ -37,10 +40,19 @@ public class IRWorkerFactory implements WorkerFactory{
     public MyCustomWorker create(Socket connection) {
         return new IRWorker(
                 connection,
+                irServer,
                 this.vocabulary,
                 this.gpuHandler,
                 this.pythonIndexer,
                 this.normalizer
         );
+    }
+
+    public void updateVocabulary() throws IOException {
+        this.vocabulary.update();
+    }
+
+    public void setServerForConnections(IRServerForConnections irServer) {
+        this.irServer = irServer;
     }
 }

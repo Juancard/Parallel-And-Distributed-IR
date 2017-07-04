@@ -5,6 +5,7 @@ import Common.Socket.MyCustomWorker;
 import Controller.GpuServerHandler;
 import Controller.IndexerHandler.PythonIndexer;
 import Model.IRNormalizer;
+import Model.Vocabulary;
 
 import java.io.IOException;
 import java.net.Socket;
@@ -17,19 +18,23 @@ import java.util.HashMap;
  */
 public class IRWorker extends MyCustomWorker{
 
-    private final HashMap<String, Integer> vocabulary;
+
+    private IRServerForConnections irServer;
+    private final Vocabulary vocabulary;
     private final GpuServerHandler gpuHandler;
     private final PythonIndexer pythonIndexer;
     private final IRNormalizer normalizer;
 
     public IRWorker(
             Socket clientSocket,
-            HashMap<String, Integer> vocabulary,
+            IRServerForConnections irServer,
+            Vocabulary vocabulary,
             GpuServerHandler gpuHandler,
             PythonIndexer pythonIndexer,
             IRNormalizer normalizer
     ) {
         super(clientSocket);
+        this.irServer = irServer;
         this.vocabulary = vocabulary;
         this.gpuHandler = gpuHandler;
         this.pythonIndexer = pythonIndexer;
@@ -56,7 +61,46 @@ public class IRWorker extends MyCustomWorker{
         return out;
     }
 
-    private Boolean index() {
+    private Object index() {
+        try {
+            this.display("Calling python script");
+            this.pythonIndexer.callScriptIndex();
+        } catch (IOException e) {
+            String m = "Error calling indexer script: " + e.getMessage();
+            this.display(m);
+            return new IOException(m);
+        }
+
+        //HARDCODE: ASSUMING PYTHON SCRIPT WILL NOT FAIL
+        try {
+            this.display("Sending index to Gpu");
+            this.gpuHandler.sendIndex();
+        } catch (Exception e) {
+            String m = "Error on communication with Gpu : " + e.getMessage();
+            this.display(m);
+            return new Exception(m);
+        }
+
+        boolean indexWasLoaded = false;
+        try {
+            this.display("Loading index in Gpu");
+            indexWasLoaded = this.gpuHandler.loadIndexInGpu();
+        } catch (IOException e) {
+            String m = "Error on loading index : " + e.getMessage();
+            this.display(m);
+            return new IOException(m);
+        }
+
+        try {
+            this.display("Update index in IR server");
+            if (indexWasLoaded) this.irServer.updateIndex();
+            else return false;
+        } catch (IOException e) {
+            String m = "Error updating index in IR server: " + e.getMessage();
+            this.display(m);
+            return new IOException(m);
+        }
+
         return true;
     }
 

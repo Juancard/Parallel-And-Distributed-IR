@@ -1,11 +1,12 @@
 package View;
 
 import java.io.*;
-import java.util.HashMap;
 import java.util.Properties;
 
 import Common.PropertiesManager;
 import Controller.GpuServerHandler;
+import Controller.ServerHandler.IRWorker;
+import Controller.ServerHandler.IRWorkerFactory;
 import Model.IRNormalizer;
 import Controller.ServerHandler.IRServer;
 import Controller.IndexerHandler.PythonIndexer;
@@ -21,7 +22,7 @@ public class InitServer {
 
     private GpuServerHandler gpuHandler;
     private PythonIndexer pyIndexer;
-    private HashMap<String, Integer> vocabulary;
+    private Vocabulary vocabulary;
     private IRNormalizer normalizer;
 
     public InitServer(String propertiesPath) throws Exception {
@@ -34,13 +35,16 @@ public class InitServer {
             setupVocabulary(properties);
             setupNormalizer(properties);
 
-            IRServer irServer = new IRServer(
-                    irServerPort,
+            IRWorkerFactory irWorkerFactory = new IRWorkerFactory(
+                    this.vocabulary,
                     this.gpuHandler,
                     this.pyIndexer,
-                    this.vocabulary,
                     this.normalizer
             );
+            IRServer irServer = new IRServer(
+                    irServerPort,
+                    irWorkerFactory);
+
             irServer.startServer();
 
         } catch (Exception e){
@@ -72,8 +76,9 @@ public class InitServer {
     private void setupVocabulary(Properties properties) throws IOException {
         String indexPath = properties.getProperty("IR_INDEX_PATH");
         String vocabularyFilePath = properties.getProperty("IR_VOCABULARY_FILE");
-        File vocabularyFile = new File(indexPath + vocabularyFilePath);
-        this.vocabulary = Vocabulary.loadFromFile(vocabularyFile);
+        this.vocabulary = new Vocabulary(
+                new File(indexPath + vocabularyFilePath)
+        );
     }
 
     private void setupPythonIndexer(Properties properties) {
