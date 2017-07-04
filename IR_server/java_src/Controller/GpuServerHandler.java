@@ -43,7 +43,8 @@ public class GpuServerHandler {
 	}
 
 	public HashMap<Integer, Double> sendQuery(Query query) throws IOException {
-		SocketConnection connection = this.connect();
+        this.out("Connecting to Gpu server at " + this.host + ":" + this.port);
+        SocketConnection connection = this.connect();
 		DataOutputStream out = new DataOutputStream(connection.getSocketOutput());
         DataInputStream in = new DataInputStream(connection.getSocketInput());
 
@@ -54,6 +55,7 @@ public class GpuServerHandler {
 		out.writeInt(qStr.length());
 		out.writeBytes(qStr);
 
+        this.out("Receiving documents scores...");
         HashMap<Integer, Double> docsScore = new HashMap<Integer, Double>();
         int docs = in.readInt();
         int doc, weightLength;
@@ -70,13 +72,15 @@ public class GpuServerHandler {
             docsScore.put(doc, new Double(weightStr));
         }
 
-		connection.close();
+        this.out("Closing connection with Gpu Server");
+        connection.close();
+
         return docsScore;
 	}
 
 	public boolean loadIndexInGpu() throws IOException{
-        this.out("Connecting to Gpu at " + this.host + ":" + this.port);
-		SocketConnection connection = new SocketConnection("localhost", this.port);//this.connect();
+        this.out("Connecting to Gpu server at " + this.host + ":" + this.port);
+		SocketConnection connection = this.connect();
         DataOutputStream out = new DataOutputStream(connection.getSocketOutput());
         DataInputStream in = new DataInputStream(connection.getSocketInput());
 
@@ -85,7 +89,7 @@ public class GpuServerHandler {
 		out.writeBytes(INDEX);
 		int result = in.readInt();
 
-        this.out("Closing connection with Gpu");
+        this.out("Closing connection with Gpu Server");
         connection.close();
         return result == 1;
 	}

@@ -5,6 +5,7 @@ import Common.Socket.MyCustomWorker;
 import Controller.GpuServerHandler;
 import Controller.IndexerHandler.PythonIndexer;
 import Model.IRNormalizer;
+import Model.Query;
 import Model.Vocabulary;
 
 import java.io.IOException;
@@ -104,8 +105,24 @@ public class IRWorker extends MyCustomWorker{
         return true;
     }
 
-    private HashMap<Integer, Double> query(String query){
-        return new HashMap<Integer, Double>();
+    private Object query(String query){
+
+        Query q = new Query(
+                query,
+                this.vocabulary.getMapTermStringToTermId(),
+                this.normalizer
+        );
+
+        if (q.isEmptyOfTerms()) return new HashMap<Integer, Double>();
+
+        try {
+            HashMap<Integer, Double> docsScore = gpuHandler.sendQuery(q);
+            return docsScore;
+        } catch (IOException e) {
+            String m = "Sending query to Gpu server: " + e.getMessage();
+            this.display(m);
+            return new IOException(m);
+        }
     }
 
 }

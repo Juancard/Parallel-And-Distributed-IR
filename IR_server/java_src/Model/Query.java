@@ -48,6 +48,10 @@ public class Query{
         this.termsToWeight.put(termId, weight + 1);
     }
 
+    public boolean isEmptyOfTerms(){
+        return this.termsToWeight.isEmpty();
+    }
+
     public double getNorm(){
         double norm = 0;
         for (int term : termsToWeight.keySet()){
