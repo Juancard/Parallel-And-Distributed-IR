@@ -17,6 +17,7 @@ public class GpuServerHandler {
     private final String irIndexPath;
     private final String postingsFileName;
     private final String documentsNormFileName;
+
     private int port;
 	private String host;
 
@@ -94,21 +95,54 @@ public class GpuServerHandler {
         return result == 1;
 	}
 
-    public void sendIndex() throws JSchException, SftpException, FileNotFoundException {
+    public void sendIndex() throws Exception {
         this.out("Setting up secure connection to Gpu Server");
         JSch jsch = new JSch();
-        Session session = jsch.getSession(this.username, this.host,this.sshPort);
+        Session session = null;
+        try {
+            session = jsch.getSession(this.username, this.host,this.sshPort);
+        } catch (JSchException e) {
+            String m = "Stablishing session on remote GPU. Cause: " + e.getMessage();
+            throw new JSchException(m);
+        }
         session.setPassword(this.pass);
         java.util.Properties config = new java.util.Properties();
         config.put("StrictHostKeyChecking", "no");
         session.setConfig(config);
-        System.out.println("Connecting to Gpu Server");
-        session.connect();
+        this.out("Connecting to Gpu server at " + this.host + ":" + this.port);
+        try {
+            session.connect();
+        } catch (JSchException e) {
+            String m = "Starting session on remote GPU. Cause: " + e.getMessage();
+            throw new JSchException(m);
+        }
         this.out("Opening sftp channel");
-        Channel channel = session.openChannel("sftp");
-        channel.connect();
+        Channel channel = null;
+        try {
+            channel = session.openChannel("sftp");
+        } catch (JSchException e) {
+            String m = "Opening sftp channel on remote GPU. Cause: " + e.getMessage();
+            throw new JSchException(m);
+        }
+        try {
+            channel.connect();
+        } catch (JSchException e) {
+            String m = "Connecting sftp channel on remote GPU. Cause: " + e.getMessage();
+            throw new JSchException(m);
+        }
         ChannelSftp channelSftp = (ChannelSftp)channel;
-        channelSftp.cd(this.indexPath);
+        try {
+            this.out(
+                    "Changing directory from "
+                            + channelSftp.pwd()
+                            + " to: "
+                            + this.indexPath);
+            channelSftp.cd(this.indexPath);
+        } catch (SftpException e) {
+            System.err.println(e);
+            String m = "Could not find index folder in gpu. Cause: " + e.getMessage();
+            throw new Exception(m);
+        }
         File postingsFile = new File(this.irIndexPath + this.postingsFileName);
         File docsNormFile = new File(this.irIndexPath + this.documentsNormFileName);
         this.out("Sending index: transfering postings");
@@ -123,7 +157,7 @@ public class GpuServerHandler {
     }
 
     private void out(String m){
-        System.out.println(m);
+        System.out.println("GPU server handler - " + m);
     }
 
     @Override
@@ -139,5 +173,13 @@ public class GpuServerHandler {
                 ", port=" + port +
                 ", host='" + host + '\'' +
                 '}';
+    }
+
+    public int getPort() {
+        return port;
+    }
+
+    public String getHost() {
+        return host;
     }
 }

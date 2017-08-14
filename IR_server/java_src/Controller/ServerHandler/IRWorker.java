@@ -74,7 +74,12 @@ public class IRWorker extends MyCustomWorker{
 
         //HARDCODE: ASSUMING PYTHON SCRIPT WILL NOT FAIL
         try {
-            this.display("Sending index to Gpu");
+            this.display(
+                    "Connecting to Gpu server at "
+                    + this.gpuHandler.getHost()
+                    + ":"
+                    + this.gpuHandler.getPort()
+            );
             this.gpuHandler.sendIndex();
         } catch (Exception e) {
             String m = "Error on communication with Gpu : " + e.getMessage();
