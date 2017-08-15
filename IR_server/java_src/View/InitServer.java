@@ -14,7 +14,7 @@ import Model.Vocabulary;
 
 public class InitServer {
 
-    public static final String PROPERTIES_PATH = "java_src/localconfig.properties";
+    public static final String PROPERTIES_PATH = "java_src/config.properties";
 
     public static void main(java.lang.String[] args) throws Exception {
         new InitServer(PROPERTIES_PATH);

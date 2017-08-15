@@ -43,22 +43,43 @@ public class GpuServerHandler {
         this.postingsFileName = postingsFileName;
 	}
 
-	public HashMap<Integer, Double> sendQuery(Query query) throws IOException {
+	public HashMap<Integer, Double> sendQuery(Query query) throws IOException{
         this.out("Connecting to Gpu server at " + this.host + ":" + this.port);
-        SocketConnection connection = this.connect();
+        SocketConnection connection;
+		try {
+			connection = this.connect();
+		} catch (IOException e) {
+			String m = "Could not connect to Gpu server. Cause: " + e.getMessage(); 
+			this.out(m);
+			throw new IOException(e);
+		}
 		DataOutputStream out = new DataOutputStream(connection.getSocketOutput());
         DataInputStream in = new DataInputStream(connection.getSocketInput());
 
         String qStr = query.toSocketString();
         this.out("Sending query: " + qStr);
-        out.writeInt(EVALUATE.length());
-		out.writeBytes(EVALUATE);
-		out.writeInt(qStr.length());
-		out.writeBytes(qStr);
+        try {
+            out.writeInt(EVALUATE.length());
+    		out.writeBytes(EVALUATE);
+    		out.writeInt(qStr.length());
+    		out.writeBytes(qStr);
+        } catch(IOException e) {
+        	String m = "Could not send query to GPU. Cause: " + e.getMessage();
+			this.out(m);
+			throw new IOException(m);
+        }
 
         this.out("Receiving documents scores...");
         HashMap<Integer, Double> docsScore = new HashMap<Integer, Double>();
-        int docs = in.readInt();
+        int docs;
+		try {
+			docs = in.readInt();
+		} catch (IOException e) {
+        	String m = "Error while receiving docs size. Cause: " + e.getMessage();
+			this.out(m);
+			throw new IOException(m);
+		}
+        this.out("Docs size: " + docs);
         int doc, weightLength;
         String weightStr;
         byte [] weightBytes = null;
