@@ -1,8 +1,14 @@
 CC=gcc
-NVCC=gcc
+NVCC=nvcc -Wno-deprecated-gpu-targets
+MKDIR_P=mkdir -p
+BIN_PATH=bin/
 OBJ=ir_collection.o ir_collection_handler.o gpu_handler.o docscores.o server_socket.o init.o
-install: $(OBJ)
-	$(NVCC) -o gpu_server $^
+
+install: $(OBJ) directory
+	$(NVCC) -o bin/gpu_server $(OBJ)
+
+directory:
+	$(MKDIR_P) $(BIN_PATH)
 init.o: init.c ir_collection_handler.h server_socket.h
 	$(NVCC) -o $@ $< -c
 server_socket.o: server_socket.c docscores.h gpu_handler.h server_socket.h my_socket.h
@@ -15,5 +21,6 @@ ir_collection_handler.o: ir_collection_handler.c ir_collection_handler.h ir_coll
 	$(NVCC) -o $@ $< -c
 ir_collection.o: ir_collection.c ir_collection.h
 	$(NVCC) -o $@ $< -c
+
 clean:
 	rm -f *.o
