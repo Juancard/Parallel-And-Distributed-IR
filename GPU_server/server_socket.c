@@ -7,37 +7,9 @@ To use when working without nvidia gpu
 #include <stdio.h>
 #include <stdlib.h>
 #include "my_socket.h"
-
-typedef struct DocScores {
-   int size;
-   float *scores;
- } DocScores;
-
-typedef struct Query {
-  int size;
-  float *weights;
-  int *termsId;
-	 float norm;
-} Query;
-
-//simulates indexation was successful
-int index_collection(){
-  return 1;
-}
-
-// simulates scores
-struct DocScores resolveQuery(char *queryStr){
-  struct DocScores ds;
-  ds.size = 4;
-  ds.scores = (float *) malloc(sizeof(float) * ds.size);
-  int i;
-  for (i=0; i < ds.size; i++){
-    ds.scores[i] = i + 0.5;
-  }
-  sleep(1);
-  return ds;
-}
-
+#include "docscores.h"
+#include "gpu_handler.h"
+#include "server_socket.h"
 
 void onAccept(int socketfd){
   // WAIT FOR CLIENT TO SEND REQUEST TO ME
@@ -82,6 +54,8 @@ void onAccept(int socketfd){
       perror("send size of indexing result");
   } else if (strcmp(action, "EVA") == 0){
     printf("Evaluating...\n");
+
+    // Reading length of query
     numbytes = read_socket(
       socketfd,
       (char *)&messageLength,
@@ -89,6 +63,8 @@ void onAccept(int socketfd){
     );
     messageLength = ntohl(messageLength);
     printf("Query size: %d\n", messageLength);
+
+    // Reading query
     char query[messageLength + 1];
     memset(query, 0, messageLength + 1);  //clear the variable
     if ((numbytes = read_socket(
@@ -101,21 +77,34 @@ void onAccept(int socketfd){
     }
     query[numbytes] = '\0';
     printf("Query: %s\n", query);
-    struct DocScores docScores = resolveQuery(query);
+
+    // Calling cuda to evaluate query
+    struct DocScores docScores = evaluateQuery(query);
+
+    // Sending docScores to client
+
+    // first sends docs
+    // (could be removed if the client knows number of docs in collection)
     int docs = htonl(docScores.size);
-    if (
-      send(
+    if (send(
         socketfd,
         (char *)&docs,
         sizeof(int),
-        0)
-        == -1)
+        0) == -1)
       perror("send docscores length");
     int i, doc, weightStrLength;
     for (i=0; i < docScores.size; i++){
       printf("doc %d: %.6f\n", i, docScores.scores[i]);
+
+      // sending doc id
+      //
+      //could be removed if server always send every doc score
+      // needed if gpu server decides to send only those docs
+      // whose score exceeds some threshold (not currently the case)
       doc = htonl(i);
       if ( send(socketfd, (char *)&doc, sizeof(doc), 0) == -1) perror("send doc");
+
+      // sending weight as string
       char weightStr[10];
       snprintf(weightStr, 10, "%.4f", docScores.scores[i]);
       weightStrLength = htonl(strlen(weightStr));
@@ -185,7 +174,7 @@ void startServer(char* port){
       close(clientSocketDescriptor);  // parent doesn't need this
   }
 }
-
+/* test
 int main(int argc, char const *argv[]) {
   index_collection();
   char port[6];
@@ -193,3 +182,4 @@ int main(int argc, char const *argv[]) {
   startServer(port);
   return 0;
 }
+*/

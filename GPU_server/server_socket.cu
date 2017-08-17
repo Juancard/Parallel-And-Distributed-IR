@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include "my_socket.h"
 #include "init.cu"
+
 void onAccept(int socketfd){
   // WAIT FOR CLIENT TO SEND REQUEST TO ME
 
@@ -70,7 +71,7 @@ void onAccept(int socketfd){
     printf("Query: %s\n", query);
 
     // Calling cuda to evaluate query
-    struct DocScores docScores = resolveQuery(query);
+    struct DocScores docScores = evaluateQuery(query);
 
     // Sending docScores to client
 

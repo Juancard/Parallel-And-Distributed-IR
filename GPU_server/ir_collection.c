@@ -1,17 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-
-typedef struct Posting {
-   //int termId;
-   int docsLength;
-   float *weights;
-   int *docIds;
-} Posting;
-
-void displayPosting(Posting *postings, int size);
-Posting* postingsFromSeqFile(FILE *postingsFile, int totalTerms);
-float* docsNormFromSeqFile(FILE *docsNormFile, int totalDocs);
+#include "ir_collection.h"
 
 Posting* postingsFromSeqFile(FILE *postingsFile, int totalTerms) {
   const int MAX_BYTES_READ_PER_LINE = 1000000;
@@ -105,8 +95,8 @@ void displayPosting(Posting* postings, int size){
   }
   }
 
-  // load postings invented, just for testing
-  Posting* LoadDummyPostings(int size){
+// load postings invented, just for testing
+Posting* LoadDummyPostings(int size){
   int i;
   Posting* postings = (Posting *) malloc(sizeof(Posting) * size);
   for (i = 0; i < size; i++) {
@@ -122,22 +112,9 @@ void displayPosting(Posting* postings, int size){
   }
   return postings;
 }
-
-/* MAIN WORKS, UNCOMMENT TO TEST THIS LIBRARY
+/*
 int main(int argc, char const *argv[]) {
-if (argc  != 2){
-  printf("How to use: \n\t$%s /path/to/postings.txt\n", argv[0]);
-  exit(1);
-}
-char const *pathToPostings = argv[1];
-printf("%s\n", pathToPostings);
-FILE *txtFilePtr;
-txtFilePtr = fopen(pathToPostings, "r");
-if(txtFilePtr == NULL) {
- printf("Error! No such file.\n");
- exit(1);
-}
-const TERMS = 30332;
-Posting* p = postingsFromSeqFile(txtFilePtr, TERMS);
+  displayPosting(LoadDummyPostings(3), 3);
+  return 0;
 }
 */

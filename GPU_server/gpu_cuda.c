@@ -1,36 +1,17 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include "index_loader.h"
-#include "query.h"
 
-#define POSTINGS_FILE1 "resources/seq_posting.txt"
-#define POSTINGS_FILE2 "resources/mini_postings.txt"
-#define POSTINGS_IR_TP3_3 "resources/ir_tp3_3/seq_postings.txt"
-#define DOCS_NORM_IR_TP3_3 "resources/ir_tp3_3/documents_norm.txt"
-#define POSTINGS_FILE4 "resources/mini_seq_posting.txt"
+// nvcc compiles via C++, thus won't recognize
+// c header files withouut 'extern "C"' directive
+extern "C" {
+  #include "index_loader.h"
+  #include "query.h"
+  #include "docscores.h"
+}
 
-#define POSTINGS_FILE POSTINGS_IR_TP3_3
-#define DOCUMENTS_NORM_FILE DOCS_NORM_IR_TP3_3
-
-typedef struct DocScores {
-   int size;
-   float *scores;
- } DocScores;
-
-//Posting* postingsFromSeqFile(FILE *postingsFile, int totalTerms);
-//float* docsNormFromSeqFile(FILE *docsNormFile, int totalDocs);
-int index_collection();
-struct DocScores resolveQuery(char *queryStr);
-Query parseQuery(char *queryStr);
 void handleKernelError();
 cudaError_t checkCuda(cudaError_t result);
-
-// to use only during developing, delete on production
-Posting* LoadDummyPostings(int size);
-void displayPosting(Posting *postings, int size);
-void displayQuery(Query q);
-
 
 // global variables that are allocated in device during indexing
 Posting *dev_postings;
@@ -39,7 +20,7 @@ int terms;
 int docs;
 
 // GPU KERNEL
-__global__ void k_resolveQuery (
+__global__ void k_evaluateQuery (
 		Posting *postings,
 		float *docsNorm,
 		int terms,
@@ -77,31 +58,8 @@ __global__ void k_resolveQuery (
 	next code turns scalar product into cosene similarity
 	*/
 	docScores[myDocId] /= q.norm * docsNorm[myDocId];
+  //printf("final score doc %d: %4.2f\n", myDocId, docScores[myDocId]);
 }
-
-/* MAIN WORKING, USED FOR TESTING
-int main(int argc, char const *argv[]) {
-  index_collection();
-
-	// get query from user input
-  //char query[1000];
-  //printf("Enter query: ");
-  //fgets(query, 1000, stdin);
-  //if ((strlen(query)>0) && (query[strlen (query) - 1] == '\n'))
-  //      query[strlen (query) - 1] = '\0';
-  //resolveQuery(query);
-
-	char q[20];
-
-	// Query string format:
-	// [norma_query]#[term_1]:[weight_1];[term_n]:[weight_n]
-	//
-	strcpy(q, "1.4142135624#10:1;11:1;");
-
-	resolveQuery(q);
-  return 0;
-}
-*/
 
 int index_collection() {
 
@@ -162,7 +120,7 @@ int index_collection() {
 	return 1;
 }
 
-struct DocScores resolveQuery(char *queryStr){
+struct DocScores evaluateQuery(char *queryStr){
   printf("Searching for: %s\n", queryStr);
 	cudaEvent_t resolveQueryStart, resolveQueryStop;
 	cudaEventCreate(&resolveQueryStart);
@@ -193,7 +151,7 @@ struct DocScores resolveQuery(char *queryStr){
 	printf("numBlocks: %d; block size: %d\n", numBlocks, BLOCK_SIZE);
 	printf("Starting evaluation...\n");
 	cudaEventRecord(resolveQueryStart);
-	k_resolveQuery<<<numBlocks, BLOCK_SIZE>>>(
+	k_evaluateQuery<<<numBlocks, BLOCK_SIZE>>>(
 		dev_postings,
 		dev_docsNorm,
 		terms,
@@ -242,3 +200,29 @@ cudaError_t checkCuda(cudaError_t result)
 #endif
   return result;
 }
+/*
+// MAIN WORKING, USED FOR TESTING
+int main(int argc, char const *argv[]) {
+  printf("Postigns path: %s\n", POSTINGS_FILE);
+  printf("dOCSnorm path: %s\n", DOCUMENTS_NORM_FILE);
+  if (index_collection() == 0) return 0;
+	// get query from user input
+  //char query[1000];
+  //printf("Enter query: ");
+  //fgets(query, 1000, stdin);
+  //if ((strlen(query)>0) && (query[strlen (query) - 1] == '\n'))
+  //      query[strlen (query) - 1] = '\0';
+  //resolveQuery(query);
+
+	char q[20];
+
+	// Query string format:
+	// [norma_query]#[term_1]:[weight_1];[term_n]:[weight_n]
+	//
+	strcpy(q, "1.4142135624#10:1;11:1;");
+	DocScores ds = evaluateQuery(q);
+  displayDocsScores(ds);
+  return 0;
+}
+// MAIN //
+*/
