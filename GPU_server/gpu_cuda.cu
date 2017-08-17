@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <errno.h>
 
 // nvcc compiles via C++, thus won't recognize
 // c header files withouut 'extern "C"' directive
@@ -101,6 +102,7 @@ void loadPostingsInCuda(Posting* postings, int terms){
   // POSTINGS TO DEVICE
   checkCuda( cudaMalloc((void**)&dev_postings, sizeof(Posting) * terms) );
   checkCuda( cudaMemcpy(dev_postings, postings, sizeof(Posting) * terms, cudaMemcpyHostToDevice) );
+
   int i;
   int *dev_docIds;
   float *dev_weights;

@@ -18,5 +18,8 @@ int main(int argc, char const *argv[]) {
 
 void prepareServer(){
   int status = loadIndexInGPUMemory();
-  if (status == -1) exit(EXIT_FAILURE);
+  if (status == -1) {
+    printf("Could not load index in memory. Exiting.\n");
+    exit(EXIT_FAILURE);
+  }
 }
