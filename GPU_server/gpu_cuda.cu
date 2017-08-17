@@ -5,11 +5,13 @@
 // nvcc compiles via C++, thus won't recognize
 // c header files withouut 'extern "C"' directive
 extern "C" {
-  #include "index_loader.h"
   #include "query.h"
   #include "docscores.h"
+  #include "ir_collection.h"
 }
 
+void loadPostingsInCuda(Posting* postings, int terms);
+void loadDocsNormsInCuda(float* docsNorms, int docs);
 void handleKernelError();
 cudaError_t checkCuda(cudaError_t result);
 
@@ -61,67 +63,53 @@ __global__ void k_evaluateQuery (
   //printf("final score doc %d: %4.2f\n", myDocId, docScores[myDocId]);
 }
 
-int index_collection() {
-
-	terms = 17; // hardcoded
-	docs = 4; // hardcoded
-
-	printf("Loading postings...\n");
-	FILE *txtFilePtr = fopen(POSTINGS_FILE, "r");
-	if(txtFilePtr == NULL) {
-	 printf("Error! No posting file in path %s\n", POSTINGS_FILE);
-	 return 0;
-	}
-  Posting* postingsLoaded = postingsFromSeqFile(txtFilePtr, terms);
-  printf("Finish reading postings\n");
-
+extern "C" int loadIndexInCuda(Collection irCollection) {
 	// Postings to device
 	printf("Copying postings from host to device\n");
-
-  // POSTINGS TO DEVICE
-	checkCuda( cudaMalloc((void**)&dev_postings, sizeof(Posting) * terms) );
-	checkCuda( cudaMemcpy(dev_postings, postingsLoaded, sizeof(Posting) * terms, cudaMemcpyHostToDevice) );
-	int i;
-	int *dev_docIds;
-	float *dev_weights;
-	for (i = 0; i < terms; i++) {
-		Posting p = postingsLoaded[i];
-
-		checkCuda( cudaMalloc((void**) &dev_docIds, sizeof(int) * p.docsLength) );
-		checkCuda( cudaMalloc((void**) &dev_weights, sizeof(float) * p.docsLength) );
-
-		checkCuda( cudaMemcpy(&(dev_postings[i].docIds), &(dev_docIds), sizeof(int *), cudaMemcpyHostToDevice) );
-		checkCuda( cudaMemcpy(&(dev_postings[i].weights), &(dev_weights), sizeof(float *), cudaMemcpyHostToDevice) );
-
-		checkCuda( cudaMemcpy(dev_docIds, p.docIds, sizeof(int) * p.docsLength, cudaMemcpyHostToDevice) );
-		checkCuda( cudaMemcpy(dev_weights, p.weights, sizeof(float) * p.docsLength, cudaMemcpyHostToDevice) );
-
-		free(p.weights); free(p.docIds);
-	}
-
-	printf("Loading documents norm...\n");
-	txtFilePtr = fopen(DOCUMENTS_NORM_FILE, "r");
-	if(txtFilePtr == NULL) {
-	 printf("Error! No documents norm file in path %s\n", DOCUMENTS_NORM_FILE);
-	 return 0;
-	}
-	float* documentsNorm = docsNormFromSeqFile(txtFilePtr, docs);
-	printf("Finish loading documents norms\n");
+  loadPostingsInCuda(irCollection.postings, irCollection.terms);
 
 	// docs norm to device
 	printf("Copying docs norm from host to device\n");
-	checkCuda( cudaMalloc((void**)& dev_docsNorm, sizeof(float) * docs) );
-	checkCuda( cudaMemcpy(dev_docsNorm, documentsNorm, sizeof(float) * docs, cudaMemcpyHostToDevice) );
+  loadDocsNormsInCuda(irCollection.docsNorms, irCollection.docs);
 
-	free(postingsLoaded);
-	free(documentsNorm);
-  printf("Finish indexing\n");
+	free(irCollection.postings);
+	free(irCollection.docsNorms);
 
 	return 1;
 }
 
-struct DocScores evaluateQuery(char *queryStr){
+void loadPostingsInCuda(Posting* postings, int terms){
+  // POSTINGS TO DEVICE
+  checkCuda( cudaMalloc((void**)&dev_postings, sizeof(Posting) * terms) );
+  checkCuda( cudaMemcpy(dev_postings, postings, sizeof(Posting) * terms, cudaMemcpyHostToDevice) );
+  int i;
+  int *dev_docIds;
+  float *dev_weights;
+  for (i = 0; i < terms; i++) {
+    Posting p = postings[i];
+
+    checkCuda( cudaMalloc((void**) &dev_docIds, sizeof(int) * p.docsLength) );
+    checkCuda( cudaMalloc((void**) &dev_weights, sizeof(float) * p.docsLength) );
+
+    checkCuda( cudaMemcpy(&(dev_postings[i].docIds), &(dev_docIds), sizeof(int *), cudaMemcpyHostToDevice) );
+    checkCuda( cudaMemcpy(&(dev_postings[i].weights), &(dev_weights), sizeof(float *), cudaMemcpyHostToDevice) );
+
+    checkCuda( cudaMemcpy(dev_docIds, p.docIds, sizeof(int) * p.docsLength, cudaMemcpyHostToDevice) );
+    checkCuda( cudaMemcpy(dev_weights, p.weights, sizeof(float) * p.docsLength, cudaMemcpyHostToDevice) );
+
+    free(p.weights); free(p.docIds);
+  }
+}
+
+void loadDocsNormsInCuda(float* docsNorms, int docs){
+  checkCuda( cudaMalloc((void**)& dev_docsNorm, sizeof(float) * docs) );
+	checkCuda( cudaMemcpy(dev_docsNorm, docsNorms, sizeof(float) * docs, cudaMemcpyHostToDevice) );
+}
+
+
+extern "C" DocScores evaluateQueryInCuda(char *queryStr){
   printf("Searching for: %s\n", queryStr);
+  /*
 	cudaEvent_t resolveQueryStart, resolveQueryStop;
 	cudaEventCreate(&resolveQueryStart);
 	cudaEventCreate(&resolveQueryStop);
@@ -178,6 +166,7 @@ struct DocScores evaluateQuery(char *queryStr){
 	ds.size = docs;
 	ds.scores = docScores;
 	return ds;
+  */
 }
 
 void handleKernelError(){

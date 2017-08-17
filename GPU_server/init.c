@@ -1,20 +1,22 @@
 #include <stdio.h>
 #include <stdlib.h>
-#include "ir_collection_handler.h"
+#include <errno.h>
+#include "gpu_handler.h"
 #include "server_socket.h"
 
 #define PORT "3491"
-#define INDEX_PATH "resources/index/"
 
 void prepareServer();
 
 int main(int argc, char const *argv[]) {
+  errno = 0; // value 0 meaning "no errors"
   prepareServer();
   startServer(PORT);
+  
   return 0;
 }
 
 void prepareServer(){
-  Collection ir_collection = getCollection(INDEX_PATH);
-  
+  int status = loadIndexInGPUMemory();
+  if (status == -1) exit(EXIT_FAILURE);
 }

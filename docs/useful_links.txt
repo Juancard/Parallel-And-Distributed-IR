@@ -10,3 +10,5 @@ sockets in c tutorial:
 http://www.beej.us/guide/bgnet/output/html/singlepage/bgnet.html
 Execute commands from java
 http://alvinalexander.com/java/java-exec-processbuilder-process-1
+Call cuda functions from c modules files
+https://devtalk.nvidia.com/default/topic/388072/calling-cuda-functions-from-a-c-file/

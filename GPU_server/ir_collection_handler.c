@@ -1,9 +1,11 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <errno.h>
 #include "ir_collection_handler.h"
 #include "ir_collection.h"
 
+#define INDEX_PATH "resources/index/"
 #define POSTINGS_FILENAME "seq_posting.txt"
 #define DOCSNORM_FILENAME "documents_norm.txt"
 
@@ -11,23 +13,39 @@
 #define TERMS 17
 #define DOCS 4
 
-Collection getCollection(char *indexPath){
-  printf("terms: %d\n docs: %d\n", TERMS, DOCS);
+Collection getCollection(){
   Collection collection;
+
   collection.terms = TERMS;
   collection.docs = DOCS;
 
+  printf(
+    "Collection has %d documents and %d terms\n",
+    collection.terms,
+    collection.docs
+  );
+
   printf("Loading postings...\n");
-  char* postingsPath = malloc(strlen(indexPath) + strlen(POSTINGS_FILENAME) + 1);
-  strcpy(postingsPath, indexPath);
-  strcat(postingsPath, POSTINGS_FILENAME);
   collection.postings = getPostings(
-    postingsPath,
+    INDEX_PATH POSTINGS_FILENAME,
     collection.terms
   );
-  displayPosting(collection.postings, collection.terms);
-  printf("Finish loading postings\n");
+  if (collection.postings == NULL) {
+    printf("Fail at loading postings\n");
+    return collection;
+  }
 
+  printf("Loading documents norms\n");
+  collection.docsNorms = getDocsNorms(
+    INDEX_PATH DOCSNORM_FILENAME,
+    collection.docs
+  );
+  if (collection.docsNorms == NULL) {
+    printf("Fail at loading documents norms\n");
+    return collection;
+  }
+
+  return collection;
 }
 
 Posting* getPostings(char* postingsPath, int terms){
@@ -38,6 +56,16 @@ Posting* getPostings(char* postingsPath, int terms){
   }
   return postingsFromSeqFile(txtFilePtr, terms);
 }
+
+float* getDocsNorms(char* docsnormsPath, int docs){
+  FILE *txtFilePtr = fopen(docsnormsPath, "r");
+  if(txtFilePtr == NULL) {
+    printf("Error! No documents norm file in path %s\n", docsnormsPath);
+    return 0;
+  }
+  return docsNormFromSeqFile(txtFilePtr, docs);
+}
+
 /* test
 int main(int argc, char const *argv[]) {
   getDefaultCollection();

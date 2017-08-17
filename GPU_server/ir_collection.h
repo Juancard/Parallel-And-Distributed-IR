@@ -11,7 +11,7 @@ typedef struct Posting {
 typedef struct Collection {
    int terms;
    int docs;
-   float *docsNorm;
+   float *docsNorms;
    Posting *postings;
  } Collection;
 

@@ -42,7 +42,8 @@ void onAccept(int socketfd){
     printf("Closing connection on socket %d\n", socketfd);
   } else if (strcmp(action, "IND") == 0){
     printf("Indexing...\n");
-    int result = index_collection();
+    /*
+    int result = indexCollection();
     result = htonl(result);
     if (
       send(
@@ -52,9 +53,10 @@ void onAccept(int socketfd){
         0)
         == -1)
       perror("send size of indexing result");
+      */
   } else if (strcmp(action, "EVA") == 0){
     printf("Evaluating...\n");
-
+    /*
     // Reading length of query
     numbytes = read_socket(
       socketfd,
@@ -111,7 +113,7 @@ void onAccept(int socketfd){
       if ( send(socketfd, (char *)&(weightStrLength), sizeof(int), 0) == -1) perror("send doc");
       if ( send(socketfd, weightStr, strlen(weightStr), 0) == -1) perror("send doc");
     }
-
+    */
   } else {
     printf("No action\n");
   }
