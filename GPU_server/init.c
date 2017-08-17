@@ -12,7 +12,7 @@ int main(int argc, char const *argv[]) {
   errno = 0; // value 0 meaning "no errors"
   prepareServer();
   startServer(PORT);
-  
+
   return 0;
 }
 

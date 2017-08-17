@@ -10,12 +10,20 @@ extern "C" {
   #include "ir_collection.h"
 }
 
+void setBlocks(int docs);
 void loadPostingsInCuda(Posting* postings, int terms);
 void loadDocsNormsInCuda(float* docsNorms, int docs);
+
 void handleKernelError();
 cudaError_t checkCuda(cudaError_t result);
 
-// global variables that are allocated in device during indexing
+// BLOCK SIZE OF GPU IN Cidetic
+const int THREADS_PER_BLOCK = 1024;
+int blocks; // blocks number depend on nomber of docs in collection
+
+// global variables that are allocated in device
+// during index allocating in gpu
+// and used during evaluation
 Posting *dev_postings;
 float *dev_docsNorm;
 int terms;
@@ -64,6 +72,13 @@ __global__ void k_evaluateQuery (
 }
 
 extern "C" int loadIndexInCuda(Collection irCollection) {
+  // Setting collection metada needed tduring evaluation
+  terms = irCollection.terms;
+  docs = irCollection.docs;
+
+  // Number of blocks of GPU running in parallel
+  setBlocks(docs);
+
 	// Postings to device
 	printf("Copying postings from host to device\n");
   loadPostingsInCuda(irCollection.postings, irCollection.terms);
@@ -76,6 +91,10 @@ extern "C" int loadIndexInCuda(Collection irCollection) {
 	free(irCollection.docsNorms);
 
 	return 1;
+}
+
+void setBlocks(int docs){
+  blocks = (docs + THREADS_PER_BLOCK - 1) / THREADS_PER_BLOCK;
 }
 
 void loadPostingsInCuda(Posting* postings, int terms){
@@ -107,39 +126,30 @@ void loadDocsNormsInCuda(float* docsNorms, int docs){
 }
 
 
-extern "C" DocScores evaluateQueryInCuda(char *queryStr){
-  printf("Searching for: %s\n", queryStr);
-  /*
+extern "C" DocScores evaluateQueryInCuda(Query q){
 	cudaEvent_t resolveQueryStart, resolveQueryStop;
 	cudaEventCreate(&resolveQueryStart);
 	cudaEventCreate(&resolveQueryStop);
-	Query q = parseQuery(queryStr);
-	printf("docs: %d\n", docs);
-	printf("terms: %d\n", terms);
 	float *docScores, *dev_docScores;
-	int BLOCK_SIZE = 1024;
-	int numBlocks = (docs + BLOCK_SIZE - 1) / BLOCK_SIZE;
 
-	printf("Sending docs scores to GPU\n");
+	printf("Allocating memory for docs scores in GPU\n");
 	docScores = (float *) malloc(sizeof(float) * docs);
   checkCuda( cudaMalloc((void **) &dev_docScores, docs * sizeof(float)) );
 
 	printf("Sending query to GPU\n");
 	int* dev_termsId;
 	float* dev_weights;
-	checkCuda( cudaMalloc((void**) &dev_termsId, sizeof(int) * q.size) );
-	checkCuda( cudaMalloc((void**) &dev_weights, sizeof(float) * q.size) );
-
-	checkCuda( cudaMemcpy(dev_termsId, q.termsId, sizeof(int) * q.size, cudaMemcpyHostToDevice) );
-	checkCuda( cudaMemcpy(dev_weights, q.weights, sizeof(float) * q.size, cudaMemcpyHostToDevice) );
-
+  checkCuda( cudaMalloc((void**) &dev_termsId, sizeof(int) * q.size) );
+  checkCuda( cudaMalloc((void**) &dev_weights, sizeof(float) * q.size) );
+  checkCuda( cudaMemcpy(dev_termsId, q.termsId, sizeof(int) * q.size, cudaMemcpyHostToDevice) );
+  checkCuda( cudaMemcpy(dev_weights, q.weights, sizeof(float) * q.size, cudaMemcpyHostToDevice) );
 	free(q.termsId); free(q.weights);
-	q.termsId = dev_termsId;
-	q.weights = dev_weights;
-	printf("numBlocks: %d; block size: %d\n", numBlocks, BLOCK_SIZE);
+	q.termsId = dev_termsId; // ?? no me acuerdo para que hice esto
+	q.weights = dev_weights; // ??
+
 	printf("Starting evaluation...\n");
 	cudaEventRecord(resolveQueryStart);
-	k_evaluateQuery<<<numBlocks, BLOCK_SIZE>>>(
+	k_evaluateQuery<<<blocks, THREADS_PER_BLOCK>>>(
 		dev_postings,
 		dev_docsNorm,
 		terms,
@@ -165,8 +175,8 @@ extern "C" DocScores evaluateQueryInCuda(char *queryStr){
 	DocScores ds;
 	ds.size = docs;
 	ds.scores = docScores;
+
 	return ds;
-  */
 }
 
 void handleKernelError(){
@@ -189,29 +199,3 @@ cudaError_t checkCuda(cudaError_t result)
 #endif
   return result;
 }
-/*
-// MAIN WORKING, USED FOR TESTING
-int main(int argc, char const *argv[]) {
-  printf("Postigns path: %s\n", POSTINGS_FILE);
-  printf("dOCSnorm path: %s\n", DOCUMENTS_NORM_FILE);
-  if (index_collection() == 0) return 0;
-	// get query from user input
-  //char query[1000];
-  //printf("Enter query: ");
-  //fgets(query, 1000, stdin);
-  //if ((strlen(query)>0) && (query[strlen (query) - 1] == '\n'))
-  //      query[strlen (query) - 1] = '\0';
-  //resolveQuery(query);
-
-	char q[20];
-
-	// Query string format:
-	// [norma_query]#[term_1]:[weight_1];[term_n]:[weight_n]
-	//
-	strcpy(q, "1.4142135624#10:1;11:1;");
-	DocScores ds = evaluateQuery(q);
-  displayDocsScores(ds);
-  return 0;
-}
-// MAIN //
-*/
