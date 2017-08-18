@@ -14,6 +14,7 @@
 #include <arpa/inet.h>
 #include "my_socket.h"
 #include "connection_handler.h"
+#include "docscores.h"
 
 #define PORT "3491" // the port client will be connecting to
 
@@ -128,6 +129,38 @@ int main(int argc, char *argv[]) {
             printf("Sending: %s\n", q);
             if (send(sockfd, q, strlen(q), 0) == -1)
                 perror("send");
+
+            // receives docscores
+            int docscoresLength;
+            read_socket(
+              sockfd,
+              (char *)&docscoresLength,
+              sizeof(int)
+            );
+            docscoresLength = ntohl(docscoresLength);
+            printf("Docs scores length received: %d\n", docscoresLength);
+            int i, docId, scoreStrLength;
+            float *scores = malloc(sizeof(float) * docscoresLength);
+            char *scoreStr;
+            for (i=0; i < docscoresLength; i++) {
+              // read docId
+              read_socket(sockfd, (char *)&docId, sizeof(int));
+              docId = ntohl(docId);
+
+              // read score (as string)
+              // first read length of score string
+              read_socket(sockfd, (char *)&scoreStrLength, sizeof(int));
+              scoreStrLength = ntohl(scoreStrLength);
+              // and then the score string itself
+              scoreStr = malloc(scoreStrLength + 1);
+              int numbytes = read_socket(sockfd, scoreStr, scoreStrLength);
+              scoreStr[numbytes] = '\0';
+              scores[docId] = atof(scoreStr);
+              printf("Doc %d: %6.4f\n", docId, scores[docId]);
+
+              free(scoreStr);
+            }
+            free(scores);
             close(sockfd);
             break;
           case '0':

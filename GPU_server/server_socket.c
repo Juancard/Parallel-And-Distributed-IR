@@ -38,55 +38,6 @@ void onAccept(int socketfd){
     onIndexRequest(socketfd);
   } else if (strcmp(action, REQUEST_QUERY_EVAL) == 0){
     onQueryEvalRequest(socketfd);
-/*
-    // Reading query
-    char query[messageLength + 1];
-    memset(query, 0, messageLength + 1);  //clear the variable
-    if ((numbytes = read_socket(
-      socketfd,
-      query,
-      messageLength
-    )) == -1) {
-        perror("recv");
-        exit(1);
-    }
-    query[numbytes] = '\0';
-    printf("Query: %s\n", query);
-
-    // Calling cuda to evaluate query
-    struct DocScores docScores = evaluateQuery(query);
-
-    // Sending docScores to client
-
-    // first sends docs
-    // (could be removed if the client knows number of docs in collection)
-    int docs = htonl(docScores.size);
-    if (send(
-        socketfd,
-        (char *)&docs,
-        sizeof(int),
-        0) == -1)
-      perror("send docscores length");
-    int i, doc, weightStrLength;
-    for (i=0; i < docScores.size; i++){
-      printf("doc %d: %.6f\n", i, docScores.scores[i]);
-
-      // sending doc id
-      //
-      //could be removed if server always send every doc score
-      // needed if gpu server decides to send only those docs
-      // whose score exceeds some threshold (not currently the case)
-      doc = htonl(i);
-      if ( send(socketfd, (char *)&doc, sizeof(doc), 0) == -1) perror("send doc");
-
-      // sending weight as string
-      char weightStr[10];
-      snprintf(weightStr, 10, "%.4f", docScores.scores[i]);
-      weightStrLength = htonl(strlen(weightStr));
-      if ( send(socketfd, (char *)&(weightStrLength), sizeof(int), 0) == -1) perror("send doc");
-      if ( send(socketfd, weightStr, strlen(weightStr), 0) == -1) perror("send doc");
-    }
-    */
   } else {
     printf("No action\n");
   }
