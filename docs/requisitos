@@ -1,0 +1,19 @@
+1 - manage corpus
+1.1 - set corpus
+1.2 - show corpus
+1.3 - delete corpus
+1.4 - search in corpus
+
+2 - manage doc
+2.1 - add doc
+2.2 - edit doc
+2.3 - delete doc
+2.4 - show doc
+
+3 - handle indexer
+3.1 - set stopwords
+3.2 - set rango terminos
+3.3 - set stemming
+
+4 - manage cache
+4.1 - clean cache
