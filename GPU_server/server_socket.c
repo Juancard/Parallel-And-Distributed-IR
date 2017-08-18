@@ -7,8 +7,7 @@ To use when working without nvidia gpu
 #include <stdio.h>
 #include <stdlib.h>
 #include "my_socket.h"
-#include "docscores.h"
-#include "gpu_handler.h"
+#include "connection_handler.h"
 #include "server_socket.h"
 
 void onAccept(int socketfd){
@@ -21,6 +20,7 @@ void onAccept(int socketfd){
     (char *)&messageLength,
     sizeof(int)
   );
+
   messageLength = ntohl(messageLength);
   printf("Message size: %d\n", messageLength);
 
@@ -40,22 +40,11 @@ void onAccept(int socketfd){
 
   if (strcmp(action, "0") == 0){
     printf("Closing connection on socket %d\n", socketfd);
-  } else if (strcmp(action, "IND") == 0){
-    printf("Indexing...\n");
-    /*
-    int result = indexCollection();
-    result = htonl(result);
-    if (
-      send(
-        socketfd,
-        (char *)&result,
-        sizeof(int),
-        0)
-        == -1)
-      perror("send size of indexing result");
-      */
+  } else if (strcmp(action, REQUEST_INDEX) == 0){
+    onIndexRequest(socketfd);
   } else if (strcmp(action, "EVA") == 0){
     printf("Evaluating...\n");
+    onQueryEvalRequest(socketfd);
     /*
     // Reading length of query
     numbytes = read_socket(

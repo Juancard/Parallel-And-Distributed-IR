@@ -13,13 +13,14 @@ extern DocScores evaluateQueryInCuda(Query q);
 
 int loadIndexInGPUMemory(){
   printf("Loading IR collection\n");
-  Collection irCollection = getCollection();
-  if (errno != 0) return -1; // HARDCODE: CHANGE THIS
+  Collection irCollection;
+  int resultStatus = getCollection(&irCollection);
+  if (resultStatus != GET_COLLECTION_SUCCESS) return INDEX_LOADING_FAIL;
 
   printf("Loading index in cuda\n");
   loadIndexInCuda(irCollection);
 
-  return 0;
+  return INDEX_LOADING_SUCCESS;
 }
 
 // simulates scores

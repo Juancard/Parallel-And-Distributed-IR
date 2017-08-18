@@ -13,39 +13,37 @@
 #define TERMS 17
 #define DOCS 4
 
-Collection getCollection(){
-  Collection collection;
-
-  collection.terms = TERMS;
-  collection.docs = DOCS;
+int getCollection(Collection *collection){
+  collection->terms = TERMS;
+  collection->docs = DOCS;
 
   printf(
     "Collection has %d documents and %d terms\n",
-    collection.terms,
-    collection.docs
+    collection->terms,
+    collection->docs
   );
 
-  printf("Loading postings...\n");
-  collection.postings = getPostings(
+  printf("Loading postings\n");
+  collection->postings = getPostings(
     INDEX_PATH POSTINGS_FILENAME,
-    collection.terms
+    collection->terms
   );
-  if (collection.postings == NULL) {
+  if (collection->postings == NULL) {
     printf("Fail at loading postings\n");
-    return collection;
+    return GET_COLLECTION_FAIL;
   }
 
   printf("Loading documents norms\n");
-  collection.docsNorms = getDocsNorms(
+  collection->docsNorms = getDocsNorms(
     INDEX_PATH DOCSNORM_FILENAME,
-    collection.docs
+    collection->docs
   );
-  if (collection.docsNorms == NULL) {
+  if (collection->docsNorms == NULL) {
     printf("Fail at loading documents norms\n");
-    return collection;
+    return GET_COLLECTION_FAIL;
   }
 
-  return collection;
+  return GET_COLLECTION_SUCCESS;
 }
 
 Posting* getPostings(char* postingsPath, int terms){

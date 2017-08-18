@@ -13,6 +13,7 @@
 #include <sys/socket.h>
 #include <arpa/inet.h>
 #include "my_socket.h"
+#include "connection_handler.h"
 
 #define PORT "3491" // the port client will be connecting to
 
@@ -37,13 +38,13 @@ int getConnection(char *hostname){
   for(p = servinfo; p != NULL; p = p->ai_next) {
       if ((sockfd = socket(p->ai_family, p->ai_socktype,
               p->ai_protocol)) == -1) {
-          perror("client: socket");
+          //perror("client: socket");
           continue;
       }
 
       if (connect(sockfd, p->ai_addr, p->ai_addrlen) == -1) {
           close(sockfd);
-          perror("client: connect");
+          //perror("client: connect");
           continue;
       }
 
@@ -82,11 +83,27 @@ int main(int argc, char *argv[]) {
       switch(option) {
 
          case '1':
+            printf("Sending index request...\n");
             sockfd = getConnection(hostname);
-            printf("indexing\n");
-            if (send(sockfd, "IND", ACTION_MESSAGE_SIZE, 0) == -1)
-                perror("send");
+            int messageSize = htonl(strlen(REQUEST_INDEX));
+            write(sockfd, &messageSize, sizeof(messageSize));
+            if (send(sockfd, REQUEST_INDEX, strlen(REQUEST_INDEX), 0) == -1){
+              perror("send");
+            }
             else {
+              int resultStatus;
+              read_socket(
+                sockfd,
+                (char *)&resultStatus,
+                sizeof(int)
+              );
+              resultStatus = ntohl(resultStatus);
+              if (resultStatus == INDEX_SUCCESS){
+                printf("Indexing was successful\n");
+              } else if(resultStatus == INDEX_FAIL){
+                printf("Error on indexing\n");
+              }
+              /*
               int numbytes;
 
               char result[STATUS_MESSAGE_SIZE];
@@ -99,13 +116,15 @@ int main(int argc, char *argv[]) {
                   perror("recv");
                   exit(1);
               }
+
               result[numbytes] = '\0';
-              printf("%s\n", result);
-              if (strcmp(result, "OK") == 0){
+              printf("Server answer: \"%s\"\n", result);
+              if (strcmp(result, INDEX_SUCCESS) == 0){
                 printf("Indexing was successful\n");
               } else if(strcmp(result, "NO") == 0){
                 printf("Error on indexing\n");
               }
+              */
             }
             close(sockfd);
             break;
