@@ -1,9 +1,3 @@
-/*
-Server socket that simulates part of codes that involves
-cuda programming.
-To use when working without nvidia gpu
-*/
-
 #include <stdio.h>
 #include <stdlib.h>
 #include "my_socket.h"
@@ -42,19 +36,9 @@ void onAccept(int socketfd){
     printf("Closing connection on socket %d\n", socketfd);
   } else if (strcmp(action, REQUEST_INDEX) == 0){
     onIndexRequest(socketfd);
-  } else if (strcmp(action, "EVA") == 0){
-    printf("Evaluating...\n");
+  } else if (strcmp(action, REQUEST_QUERY_EVAL) == 0){
     onQueryEvalRequest(socketfd);
-    /*
-    // Reading length of query
-    numbytes = read_socket(
-      socketfd,
-      (char *)&messageLength,
-      sizeof(int)
-    );
-    messageLength = ntohl(messageLength);
-    printf("Query size: %d\n", messageLength);
-
+/*
     // Reading query
     char query[messageLength + 1];
     memset(query, 0, messageLength + 1);  //clear the variable

@@ -81,11 +81,11 @@ int main(int argc, char *argv[]) {
       showMenu();
       option = getchar();getchar();
       switch(option) {
-
+        int messageSize;
          case '1':
             printf("Sending index request...\n");
             sockfd = getConnection(hostname);
-            int messageSize = htonl(strlen(REQUEST_INDEX));
+            messageSize = htonl(strlen(REQUEST_INDEX));
             write(sockfd, &messageSize, sizeof(messageSize));
             if (send(sockfd, REQUEST_INDEX, strlen(REQUEST_INDEX), 0) == -1){
               perror("send");
@@ -103,36 +103,16 @@ int main(int argc, char *argv[]) {
               } else if(resultStatus == INDEX_FAIL){
                 printf("Error on indexing\n");
               }
-              /*
-              int numbytes;
-
-              char result[STATUS_MESSAGE_SIZE];
-              if ((numbytes = recv(
-                sockfd,
-                result,
-                STATUS_MESSAGE_SIZE - 1,
-                0
-              )) == -1) {
-                  perror("recv");
-                  exit(1);
-              }
-
-              result[numbytes] = '\0';
-              printf("Server answer: \"%s\"\n", result);
-              if (strcmp(result, INDEX_SUCCESS) == 0){
-                printf("Indexing was successful\n");
-              } else if(strcmp(result, "NO") == 0){
-                printf("Error on indexing\n");
-              }
-              */
             }
             close(sockfd);
             break;
 
          case '2':
+            printf("Sending evaluation request\n");
             sockfd = getConnection(hostname);
-            printf("evaluating\n");
-            if (send(sockfd, "EVA", ACTION_MESSAGE_SIZE, 0) == -1)
+            messageSize = htonl(strlen(REQUEST_QUERY_EVAL));
+            write(sockfd, &messageSize, sizeof(messageSize));
+            if (send(sockfd, REQUEST_QUERY_EVAL, strlen(REQUEST_QUERY_EVAL), 0) == -1)
                 perror("send");
             char q[100];
           	// Query string format:
@@ -140,12 +120,16 @@ int main(int argc, char *argv[]) {
           	//
             strcpy(q, "1.4142135624#10:1;11:1;");
           	//strcpy(q, "123456789qwertyuiopasdfghjkl");
-            printf("%s %zu\n", q, strlen(q));
+            //printf("%s %zu\n", q, strlen(q));
+            int qLength = strlen(q);
+            int qLengthToSend = htonl(qLength);
+            printf("qlength: %d - sending: %d\n", qLength, qLengthToSend);
+            write(sockfd, &qLengthToSend, sizeof(int));
+            printf("Sending: %s\n", q);
             if (send(sockfd, q, strlen(q), 0) == -1)
                 perror("send");
             close(sockfd);
             break;
-
           case '0':
             quit = 1;
             break;
