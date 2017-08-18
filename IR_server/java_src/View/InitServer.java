@@ -14,7 +14,7 @@ import Model.Vocabulary;
 
 public class InitServer {
 
-    public static final String PROPERTIES_PATH = "java_src/localconfig.properties";
+    public static final String PROPERTIES_PATH = "/localconfig.properties";
 
     public static void main(java.lang.String[] args) throws Exception {
         new InitServer(PROPERTIES_PATH);
@@ -27,7 +27,7 @@ public class InitServer {
 
     public InitServer(String propertiesPath) throws Exception {
         try {
-            Properties properties = PropertiesManager.loadProperties(propertiesPath);
+            Properties properties = PropertiesManager.loadProperties(getClass().getResourceAsStream(propertiesPath));
 
             int irServerPort = new Integer(properties.getProperty("IR_PORT"));
             setupGpuServer(properties);

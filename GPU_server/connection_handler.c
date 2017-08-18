@@ -28,6 +28,7 @@ void onIndexRequest(int socketfd){
       == -1)
     perror("send indexing result status");
 }
+
 void onQueryEvalRequest(int socketfd){
   printf("Connection handler - Eval Request\n");
 

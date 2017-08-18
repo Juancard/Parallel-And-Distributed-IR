@@ -3,6 +3,7 @@ package Common;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.util.Properties;
 
 /**
@@ -16,6 +17,13 @@ public class PropertiesManager {
         FileInputStream in = new FileInputStream(propertiesPath);
         defaultProps.load(in);
         in.close();
+        return defaultProps;
+    }
+
+    public static Properties loadProperties(InputStream propertiesStream) throws IOException {
+        Properties defaultProps = new Properties();
+        defaultProps.load(propertiesStream);
+        propertiesStream.close();
         return defaultProps;
     }
 
