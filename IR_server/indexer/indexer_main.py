@@ -101,11 +101,11 @@ def main():
 		f.write(docStr)
 	print "Documents norm guardadas en: " + INDEX_DIR + "documents_norm.txt"
 
-
-	# Guardo configuracion del index
-	CONFIG_NAME = "config.json"
-	json.dump(indexConfig, open(INDEX_DIR + CONFIG_NAME,'w'))
-	print "Configuracion en: %s" % (INDEX_DIR + CONFIG_NAME)
+	
+	# # Guardo configuracion del index
+	# CONFIG_NAME = "config.json"
+	# json.dump(indexConfig, open(INDEX_DIR + CONFIG_NAME,'w'))
+	# print "Configuracion en: %s" % (INDEX_DIR + CONFIG_NAME)
 
 if __name__ == "__main__":
 	main()
