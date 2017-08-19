@@ -1,5 +1,5 @@
 1 - manage corpus
-1.1 - set corpus
+1.1 - set new corpus
 1.2 - show corpus
 1.3 - delete corpus
 1.4 - search in corpus
@@ -10,7 +10,7 @@
 2.3 - delete doc
 2.4 - show doc
 
-3 - handle indexer
+3 - manage indexer
 3.1 - set stopwords
 3.2 - set rango terminos
 3.3 - set stemming

@@ -52,7 +52,6 @@ public class InitServer {
                     + e.getMessage()
             );
         }
-
     }
 
     private void setupNormalizer(Properties properties) throws IOException {

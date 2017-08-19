@@ -106,7 +106,7 @@ public class GpuServerHandler {
         DataOutputStream out = new DataOutputStream(connection.getSocketOutput());
         DataInputStream in = new DataInputStream(connection.getSocketInput());
 
-        this.out("Sending index to Gpu");
+        this.out("Sending load index message to Gpu");
         out.writeInt(INDEX.length());
 		out.writeBytes(INDEX);
 		int result = in.readInt();
