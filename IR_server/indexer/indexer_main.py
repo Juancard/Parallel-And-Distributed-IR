@@ -2,8 +2,8 @@
 import sys
 import os
 import json
+import ConfigParser
 
-print os.getcwd()
 sys.path.insert(0, os.path.abspath(os.getcwd()))
 from modulos.Collection import Collection
 from modulos.Indexer import Indexer
@@ -19,40 +19,60 @@ def getParameters():
 		sys.exit()
 	except IndexError:
 		print """Uso:
-	{0} /path/a/corpus [/path/to/stop-words.txt]
+	{0} /path/a/corpus
 Ejemplos:
-	{0} ../corpus/T12012-gr stopwords.txt
 	{0} ../corpus/T12012-gr""".format(sys.argv[0])
 		sys.exit()
 
 	# Stopwords
-	try:
-		stopwords = sys.argv[2]
-	except IndexError:
-		stopwords = False
-	out.append(stopwords)
+	# try:
+	# 	stopwords = sys.argv[2]
+	# except IndexError:
+	# 	stopwords = False
+	# out.append(stopwords)
 
 	return out
+
+def loadIni():
+	INI_PATH = os.path.dirname(os.path.realpath(__file__)) + "/indexer.ini"
+	Config = ConfigParser.ConfigParser()
+	Config.read(INI_PATH)
+	print INI_PATH
+	iniData = {}
+	sections = Config.sections()
+	for option in Config.options(sections[0]):
+		opValue = Config.get(sections[0], option)
+		iniData[option] = opValue if opValue != -1 else False;
+	return iniData
+
+def loadIndexConfig(iniData):
+	indexConfig = {}
+	if "stopwords" in iniData and iniData["stopwords"]:
+		indexConfig["stopwords"] = iniData['stopwords']
+	if "stem" in iniData and iniData["stem"]:
+		indexConfig["stem"] = iniData['stem']
+	if "term_min_size" in iniData and iniData["term_min_size"]:
+		indexConfig["term_min_size"] = int(iniData["term_min_size"])
+	if "term_max_size" in iniData and iniData["term_max_size"]:
+		indexConfig["term_max_size"] = int(iniData["term_max_size"])
+	return indexConfig
 
 def main():
 	# Obtengo parametros
 	p = getParameters()
 	collection = p[0]
-	stopwords = p[1]
+	#stopwords = p[1]
 
+	iniData = loadIni()
 	# data para el analizador lexico
-	indexConfig = {
-		"stopwords": stopwords,
-		"term_min_size": 3,
-		"term_max_size": 23
-	}
+	indexConfig = loadIndexConfig(iniData)
 
 	# Indexo
 	indexer = Indexer(collection)
 	indexer.index(indexConfig)
 
 	# Persisto indice para su recuperacion
-	INDEX_DIR = "Resources/Index/"
+	INDEX_DIR = os.path.join(iniData['index_dir'], '')
 	if not os.path.exists(INDEX_DIR):
 	    os.makedirs(INDEX_DIR)
 
