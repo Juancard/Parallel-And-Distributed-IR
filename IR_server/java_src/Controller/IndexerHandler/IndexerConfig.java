@@ -3,7 +3,6 @@ package Controller.IndexerHandler;
 import org.ini4j.Ini;
 
 import java.io.File;
-import java.util.ArrayList;
 
 /**
  * Created by juan on 20/08/17.
@@ -109,5 +108,9 @@ public class IndexerConfig {
                 ", termMinLength=" + minTermsLength +
                 ", termMaxLength=" + maxTermsLength +
                 '}';
+    }
+
+    public File getIndexPath() {
+        return indexPath;
     }
 }

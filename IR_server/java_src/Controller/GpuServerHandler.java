@@ -14,7 +14,7 @@ public class GpuServerHandler {
     private final String pass;
     private final int sshPort;
     private final String indexPath;
-    private final String irIndexPath;
+    private final File irIndexPath;
     private final String postingsFileName;
     private final String documentsNormFileName;
 
@@ -28,7 +28,7 @@ public class GpuServerHandler {
             String pass,
             int sshPort,
             String gpuIndexPath,
-            String irIndexPath,
+            File irIndexPath,
             String documentsNormFileName,
             String postingsFileName
     ) {
@@ -164,8 +164,8 @@ public class GpuServerHandler {
             String m = "Could not find index folder in gpu. Cause: " + e.getMessage();
             throw new Exception(m);
         }
-        File postingsFile = new File(this.irIndexPath + this.postingsFileName);
-        File docsNormFile = new File(this.irIndexPath + this.documentsNormFileName);
+        File postingsFile = new File(this.irIndexPath + "/" + this.postingsFileName);
+        File docsNormFile = new File(this.irIndexPath + "/" + this.documentsNormFileName);
         this.out("Sending index: transfering postings");
         channelSftp.put(new FileInputStream(postingsFile), postingsFile.getName());
         this.out("Sending index: transfering documents norm");
