@@ -13,19 +13,13 @@ import java.util.List;
 public class PythonIndexer {
 
     private final String corpusPath;
-    private final String stopwordsPath;
-    private final String indexPath;
     private final String indexerScript;
 
     public PythonIndexer(
-            String corpus,
-            String stopwords,
-            String index,
-            String indexerScript
+            String indexerScript,
+            String corpus
     ) {
         this.corpusPath = corpus;
-        this.stopwordsPath = stopwords;
-        this.indexPath = index;
         this.indexerScript = indexerScript;
     }
 
@@ -34,7 +28,6 @@ public class PythonIndexer {
         command.add("python");
         command.add(this.indexerScript);
         command.add(this.corpusPath);
-        command.add(this.stopwordsPath);
 
         SystemCommandExecutor commandExecutor = new SystemCommandExecutor(command);
         try {
@@ -52,7 +45,9 @@ public class PythonIndexer {
         System.out.println(stdout);
         System.out.println("STDERR");
         System.out.println(stderr);
-
+        /*
+            TODO: HANDLE STDERR
+         */
     }
 
 }
