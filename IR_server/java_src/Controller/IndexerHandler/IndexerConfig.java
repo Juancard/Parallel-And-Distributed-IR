@@ -3,6 +3,7 @@ package Controller.IndexerHandler;
 import org.ini4j.Ini;
 
 import java.io.File;
+import java.util.ArrayList;
 
 /**
  * Created by juan on 20/08/17.
@@ -99,7 +100,7 @@ public class IndexerConfig {
     public boolean hasStopwords(){
         return this.stopwords != null;
     }
-
+    public File getStopwords(){ return this.stopwords; }
     @Override
     public String toString() {
         return "IndexerConfig{" +

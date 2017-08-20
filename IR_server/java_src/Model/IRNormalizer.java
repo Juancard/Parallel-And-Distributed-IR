@@ -1,6 +1,8 @@
 package Model;
 
 import Common.JSONReader;
+import Controller.IndexerHandler.IndexerConfig;
+import Controller.IndexerHandler.IndexerException;
 import org.json.JSONObject;
 
 import java.io.*;
@@ -20,31 +22,26 @@ public class IRNormalizer {
     public static String WEIRD_CHARS = "§âÂ¢«»­±¬ºï©®Ÿ€¾°“”·—’‘–Ã¼ü";
 
     private ArrayList<String> stopwords;
-    private int termMaxSize;
-    private int termMinSize;
+    private IndexerConfig indexerConfig;
 
-    public IRNormalizer(){
+    public IRNormalizer(IndexerConfig indexerConfiguration) throws IOException {
+        this.indexerConfig = indexerConfiguration;
         this.stopwords = new ArrayList<String>();
-        this.termMaxSize = Integer.MAX_VALUE;
-        this.termMinSize = -1;
+        if (this.indexerConfig.hasStopwords())
+            this.loadStopwords();
     }
 
-    public void loadConfiguration(File configJson) throws IOException {
-        JSONObject json = JSONReader.readJsonFromFile(configJson);
-        if (json.has("stopwords"))
-            loadStopwords(
-                    new File(
-                            json.getString("stopwords")
+    public void loadStopwords() throws IOException {
+        BufferedReader br = null;
+        try {
+            br = new BufferedReader(
+                    new FileReader(
+                            this.indexerConfig.getStopwords()
                     )
             );
-        if (json.has("term_max_size"))
-            this.termMaxSize = json.getInt("term_max_size");
-        if (json.has("term_min_size"))
-            this.termMinSize = json.getInt("term_min_size");
-    }
-
-    public void loadStopwords(File stopwords) throws IOException {
-        BufferedReader br = new BufferedReader(new FileReader(stopwords));
+        } catch (FileNotFoundException e) {
+            throw new IOException("Reading stopwords file: " + e.getMessage());
+        }
         String stopword;
         while ((stopword = br.readLine()) != null)
             this.stopwords.add(stopword);
