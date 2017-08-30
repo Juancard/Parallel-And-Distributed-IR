@@ -66,6 +66,7 @@ public class InitClient {
 
     private void index(){
         try {
+            System.out.println("Indexing...");
             boolean indexIsOk = this.irClientHandler.index();
             if (indexIsOk)
                 System.out.println("Corpus was indexed successfully!");

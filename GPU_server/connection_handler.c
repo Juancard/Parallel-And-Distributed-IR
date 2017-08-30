@@ -9,9 +9,12 @@
 int readQueryLength(int socketfd);
 char *readQueryString(int socketfd, int queryLength);
 int sendEvaluationResponse(int socketfd, DocScores docScores);
+int readInteger(int socketfd);
 
 void onIndexRequest(int socketfd){
   printf("Connection handler - Index Request\n");
+
+
   int result = loadIndexInGPUMemory();
   if (result == INDEX_LOADING_SUCCESS){
     result = INDEX_SUCCESS;
@@ -27,6 +30,16 @@ void onIndexRequest(int socketfd){
       0)
       == -1)
     perror("send indexing result status");
+}
+
+int readInteger(int socketfd){
+  int numbytes, integerValue;
+  numbytes = read_socket(
+    socketfd,
+    (char *)&integerValue,
+    sizeof(int)
+  );
+  return ntohl(integerValue);
 }
 
 void onQueryEvalRequest(int socketfd){

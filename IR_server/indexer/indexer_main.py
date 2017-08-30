@@ -85,7 +85,7 @@ def main():
 	vocabularyFile = INDEX_DIR + "vocabulary.txt"
 	with open(vocabularyFile, "w") as f:
 		for t in indexer.vocabulary.content:
-			tStr += "%s:%d\n" % (t, indexer.vocabulary.getId(t))
+			tStr += "%s:%d\n" % (t.encode('UTF-8'), indexer.vocabulary.getId(t))
 		f.write(tStr)
 	print "Vocabulario guardado en: %s" % vocabularyFile
 
@@ -101,7 +101,7 @@ def main():
 		f.write(docStr)
 	print "Documents norm guardadas en: " + INDEX_DIR + "documents_norm.txt"
 
-	
+
 	# # Guardo configuracion del index
 	# CONFIG_NAME = "config.json"
 	# json.dump(indexConfig, open(INDEX_DIR + CONFIG_NAME,'w'))
