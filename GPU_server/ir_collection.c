@@ -80,6 +80,33 @@ float* docsNormFromSeqFile(FILE *docsNormFile, int totalDocs){
   return docsNorm;
 }
 
+int loadMetadataFromFile(FILE *metadataFile, CorpusMetadata *metadataStruct){
+  char* DOCS_PROP = "docs";
+  char* TERMS_PROP = "terms";
+  const int TOTAL_PROPERTIES = 2;
+  const int BUFFER = 1024;
+  char line[BUFFER];
+  char *tokens;
+  int linesCount = 0;
+  while (
+    fgets(line, BUFFER, metadataFile) != NULL
+    && linesCount < TOTAL_PROPERTIES
+  ) {
+    strtok(line, "\n");
+    tokens = strtok(line, ":");
+    char *ptr;
+    if (strcmp(tokens, DOCS_PROP) == 0){
+      tokens = strtok(NULL, ":");
+      metadataStruct->docs = strtol(tokens, &ptr, 10);
+    } else if (strcmp(tokens, TERMS_PROP) == 0) {
+      tokens = strtok(NULL, ":");
+      metadataStruct->terms = strtol(tokens, &ptr, 10);
+    }
+    linesCount++;
+  }
+  return COLLECTION_OPERATION_SUCCESS;
+}
+
 void displayPosting(Posting* postings, int size){
   int i,j;
   printf("total terms: %d\n", size);

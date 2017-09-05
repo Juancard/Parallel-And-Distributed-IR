@@ -15,7 +15,7 @@ int loadIndexInGPUMemory(){
   printf("Loading IR collection\n");
   Collection irCollection;
   int resultStatus = getCollection(&irCollection);
-  if (resultStatus != GET_COLLECTION_SUCCESS) return INDEX_LOADING_FAIL;
+  if (resultStatus != COLLECTION_HANDLER_SUCCESS) return INDEX_LOADING_FAIL;
 
   printf("Loading index in cuda\n");
   loadIndexInCuda(irCollection);
