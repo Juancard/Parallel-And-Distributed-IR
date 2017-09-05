@@ -23,7 +23,6 @@ int loadIndexInGPUMemory(){
   return INDEX_LOADING_SUCCESS;
 }
 
-// simulates scores
 struct DocScores evaluateQueryInGPU(char *queryStr){
   printf("Searching for: %s\n", queryStr);
   Query q = parseQuery(queryStr);

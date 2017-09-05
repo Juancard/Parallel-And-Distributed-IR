@@ -2,13 +2,18 @@ CC=gcc
 NVCC=nvcc -Wno-deprecated-gpu-targets
 MKDIR_P=mkdir -p
 BIN_PATH=bin/
-OBJ=ir_collection.o ir_collection_handler.o query.o gpu_cuda.o gpu_handler.o docscores.o server_socket.o connection_handler.o init.o
+OBJ=ir_collection.o ir_collection_handler.o query.o docscores.o server_socket.o connection_handler.o init.o
+CUDA_OBJ=gpu_handler.o gpu_cuda.o $(OBJ)
+CUDA_SIMULATION_OBJ=gpu_handler_simulation.o $(OBJ)
 
-install: $(OBJ) directory
-	$(NVCC) -o bin/gpu_server $(OBJ)
+install: $(CUDA_OBJ) directory
+	$(NVCC) -o bin/gpu_server $(CUDA_OBJ)
+gpu_simulation: $(CUDA_SIMULATION_OBJ) directory
+	$(CC) -o bin/gpu_server_simulation $(CUDA_SIMULATION_OBJ)
 
 directory:
 	$(MKDIR_P) $(BIN_PATH)
+
 init.o: init.c gpu_handler.h server_socket.h
 	$(CC) -o $@ $< -c
 server_socket.o: server_socket.c server_socket.h my_socket.h connection_handler.h
@@ -27,6 +32,10 @@ ir_collection_handler.o: ir_collection_handler.c ir_collection_handler.h ir_coll
 	$(CC) -o $@ $< -c
 ir_collection.o: ir_collection.c ir_collection.h
 	$(CC) -o $@ $< -c
+
+gpu_handler_simulation.o: gpu_handler_simulation.c gpu_handler.h query.h docscores.h ir_collection_handler.h
+	$(CC) -o $@ $< -c
+
 
 clean:
 	rm -f *.o
