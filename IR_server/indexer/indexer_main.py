@@ -101,6 +101,14 @@ def main():
 		f.write(docStr)
 	print "Documents norm guardadas en: " + INDEX_DIR + "documents_norm.txt"
 
+	indexMetadata = {
+		"docs": len(indexer.documents.content),
+		"terms": len(indexer.vocabulary.content)
+	}
+	with open(INDEX_DIR + "metadata.txt", "w") as f:
+		f.write("docs: %d\n" % len(indexer.documents.content));
+		f.write("terms: %d\n" % len(indexer.vocabulary.content));
+	print "Metadata guardada en: " + INDEX_DIR + "metadata.txt"
 
 	# # Guardo configuracion del index
 	# CONFIG_NAME = "config.json"

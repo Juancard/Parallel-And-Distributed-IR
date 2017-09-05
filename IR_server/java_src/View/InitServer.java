@@ -114,6 +114,7 @@ public class InitServer {
         File irIndexPath = this.indexerConfiguration.getIndexPath();
         String documentsNormFile = properties.getProperty("IR_DOCUMENTS_NORM_FILE");
         String postingsFile = properties.getProperty("IR_POSTINGS_FILE");
+        String metadataFile = properties.getProperty("IR_METADATA_FILE");
 
         this.gpuHandler = new GpuServerHandler(
                 host,
@@ -124,7 +125,8 @@ public class InitServer {
                 gpuIndexPath,
                 irIndexPath,
                 documentsNormFile,
-                postingsFile
+                postingsFile,
+                metadataFile
         );
     }
 }

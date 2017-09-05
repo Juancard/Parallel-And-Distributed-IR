@@ -17,6 +17,7 @@ public class GpuServerHandler {
     private final File irIndexPath;
     private final String postingsFileName;
     private final String documentsNormFileName;
+    private final String metadataFilename;
 
     private int port;
 	private String host;
@@ -30,7 +31,8 @@ public class GpuServerHandler {
             String gpuIndexPath,
             File irIndexPath,
             String documentsNormFileName,
-            String postingsFileName
+            String postingsFileName,
+            String metadataFilename
     ) {
 		this.host = host;
 		this.port = port;
@@ -41,6 +43,7 @@ public class GpuServerHandler {
         this.irIndexPath = irIndexPath;
         this.documentsNormFileName = documentsNormFileName;
         this.postingsFileName = postingsFileName;
+        this.metadataFilename = metadataFilename;
 	}
 
 	public HashMap<Integer, Double> sendQuery(Query query) throws IOException{
@@ -166,10 +169,13 @@ public class GpuServerHandler {
         }
         File postingsFile = new File(this.irIndexPath + "/" + this.postingsFileName);
         File docsNormFile = new File(this.irIndexPath + "/" + this.documentsNormFileName);
+        File metadataFile = new File(this.irIndexPath + "/" + this.metadataFilename);
         this.out("Sending index: transfering postings");
         channelSftp.put(new FileInputStream(postingsFile), postingsFile.getName());
         this.out("Sending index: transfering documents norm");
         channelSftp.put(new FileInputStream(docsNormFile), docsNormFile.getName());
+        this.out("Sending metadata: transfering metadata");
+        channelSftp.put(new FileInputStream(metadataFile), metadataFile.getName());
     }
 
 

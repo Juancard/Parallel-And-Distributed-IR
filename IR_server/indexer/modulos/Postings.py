@@ -6,11 +6,11 @@ import sys
 import numpy as np
 
 class Postings(object):
-	
+
 	__metaclass__ = ABCMeta
 
 	def __init__(self, content):
-		self.content = content	
+		self.content = content
 
 	@abstractmethod
 	def getAll(self):
@@ -20,27 +20,27 @@ class Postings(object):
 	@abstractmethod
 	def getPosting(self, term):
 		""""Devuelve la posting del termino"""
-        pass    
+        pass
 
 	@abstractmethod
 	def addPosting(self, term, docId, value):
 		""""Agrega posting"""
-        pass   
+        pass
 
 	@abstractmethod
 	def addDocToPosting(self, term, docId, value):
 		""""Agrega documento a la posting"""
-        pass   
-        
+        pass
+
 	@abstractmethod
 	def isPosting(self, term):
 		""""Devuelve verdadero si existe la posting para el termino dado"""
-        pass   
+        pass
 
 	@abstractmethod
 	def getValue(self, term, docId):
 		""""Devuelve valor de la posting en el documento dado"""
-        pass  
+        pass
 
 	def isDocInPosting(self, term, docId):
 		return self.isPosting(term) and docId in self.getPosting(term)
@@ -93,13 +93,13 @@ class DictionaryPostings(Postings):
 	def getStats(self):
 		allPostings = self.getAll()
 		stats = {}
-	
+
 		if allPostings:
 			# Inicializo valores
 			stats["min_len_posting"] = sys.maxint
 			stats["max_len_posting"] = 0
 			stats["sum_len_posting"] = 0.0
-	
+
 			for p in allPostings:
 				lenP = len(allPostings[p])
 				if lenP > stats["max_len_posting"]:
@@ -107,7 +107,7 @@ class DictionaryPostings(Postings):
 				if lenP < stats["min_len_posting"]:
 					stats["min_len_posting"] = lenP
 				stats["sum_len_posting"] += lenP
-	
+
 			stats["mean_len_posting"] = stats["sum_len_posting"] / len(allPostings)
 
 		return stats
@@ -166,17 +166,17 @@ class SequentialPostings(Postings):
 
 	def addPosting(self, term, docId, value):
 		""""Agrega posting"""
-        pass   
+        pass
 
 	def addDocToPosting(self, term, docId, value):
 		""""Agrega documento a la posting"""
-        pass   
-        
+        pass
+
 	def isPosting(self, term):
 		with codecs.open(self.path, mode='rt', encoding='utf-8') as f:
 			for line in f:
 				splitted = line.split(self.SEPARATOR_TERM)
-				if int(splitted[0]) == term:  
+				if int(splitted[0]) == term:
 					return True
 		return False
 
@@ -200,10 +200,10 @@ class SequentialPostings(Postings):
 
 	def getDocsIdFromTerm(self, term):
 		return self.getPosting(term).keys()
-		
+
 
 class BinaryPostings(object):
-	
+
 	def __init__(self, path, termToPointer, dgaps=False):
 		self.path = path
 		self.termToPointer = termToPointer
@@ -212,7 +212,7 @@ class BinaryPostings(object):
 
 	@classmethod
 	# CUIDADO: DGAPS AUN NO COMPLETO, NO IMPLEMENTAR
-	def create(self, postings, path="index_data/", 
+	def create(self, postings, path="index_data/",
 			title="binary_postings.dat", dgaps=False):
 		path = path + title
 		termToPointer = collections.OrderedDict()
@@ -274,19 +274,19 @@ class BinaryPostings(object):
 
 	def addPosting(self, term, docId, value):
 		""""Agrega posting"""
-        pass   
+        pass
 
 	def addDocToPosting(self, term, docId, value):
 		""""Agrega documento a la posting"""
-        pass   
-        
+        pass
+
 	def isPosting(self, term):
 		""""Devuelve verdadero si existe la posting para el termino dado"""
-        pass   
+        pass
 
 	def getValue(self, term, docId):
 		""""Devuelve valor de la posting en el documento dado"""
-        pass  
+        pass
 
 	def getDocsIdFromTerm(self, term):
 		out = {}
@@ -310,7 +310,7 @@ class BinaryPostings(object):
 			for term in self.termToPointer:
 				# Leo longitud de documents Id
 				lenDocs = self.termToPointer[term]["lenDocs"]
-				
+
 				if lenDocs < 2:
 					totalSkipPointers = lenDocs
 				else:
