@@ -22,6 +22,12 @@ public class GpuServerHandler {
     private int port;
 	private String host;
 
+	// Implements Ssh tunnel to connect to GPU server
+    // Reason: Cuda gpu in Cidetic can not be accessed outside their private network
+    private boolean isSshTunnel;
+    private int sshTunnelPort;
+	private String sshTunnelHost;
+
 	public GpuServerHandler(
             String host,
             int port,
@@ -44,13 +50,14 @@ public class GpuServerHandler {
         this.documentsNormFileName = documentsNormFileName;
         this.postingsFileName = postingsFileName;
         this.metadataFilename = metadataFilename;
+        this.isSshTunnel = false;
 	}
 
 	public HashMap<Integer, Double> sendQuery(Query query) throws IOException{
-        this.out("Connecting to Gpu server at " + this.host + ":" + this.port);
         SocketConnection connection;
 		try {
-			connection = this.connect();
+            this.out(this.connectionMessage());
+            connection = this.connect();
 		} catch (IOException e) {
 			String m = "Could not connect to Gpu server. Cause: " + e.getMessage(); 
 			this.out(m);
@@ -104,7 +111,7 @@ public class GpuServerHandler {
 	}
 
 	public boolean loadIndexInGpu() throws IOException{
-        this.out("Connecting to Gpu server at " + this.host + ":" + this.port);
+        this.out(this.connectionMessage());
 		SocketConnection connection = this.connect();
         DataOutputStream out = new DataOutputStream(connection.getSocketOutput());
         DataInputStream in = new DataInputStream(connection.getSocketInput());
@@ -133,7 +140,7 @@ public class GpuServerHandler {
         java.util.Properties config = new java.util.Properties();
         config.put("StrictHostKeyChecking", "no");
         session.setConfig(config);
-        this.out("Connecting to Gpu server at " + this.host + ":" + this.port);
+        this.out("Connecting via ssh to Gpu server at " + this.host + ":" + this.port);
         try {
             session.connect();
         } catch (JSchException e) {
@@ -180,7 +187,18 @@ public class GpuServerHandler {
 
 
     private SocketConnection connect() throws IOException {
+	    String host = (this.isSshTunnel)? this.sshTunnelHost : this.host;
+	    int port = (this.isSshTunnel)? this.sshTunnelPort : this.port;
         return new SocketConnection(host, port);
+    }
+
+    private String connectionMessage(){
+        String message = "Connecting to GPU server";
+        if (this.isSshTunnel)
+            message += " via ssh tunnel at " + this.sshTunnelHost + ":" + this.sshTunnelPort;
+        else
+            message += " at " + this.host + ":" + this.port;
+        return message;
     }
 
     private void out(String m){
@@ -209,4 +227,11 @@ public class GpuServerHandler {
     public String getHost() {
         return host;
     }
+
+    public void setSshTunnel(String host, int port){
+        this.sshTunnelHost = host;
+        this.sshTunnelPort = port;
+        this.isSshTunnel = true;
+    }
+
 }

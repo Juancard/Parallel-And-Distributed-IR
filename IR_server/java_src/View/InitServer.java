@@ -16,7 +16,7 @@ import org.ini4j.Ini;
 
 public class InitServer {
 
-    public static final String PROPERTIES_PATH = "/localconfig.properties";
+    public static final String PROPERTIES_PATH = "/ssh_tunnel.properties";
 
     public static void main(java.lang.String[] args){
         try {
@@ -109,6 +109,8 @@ public class InitServer {
         int port = new Integer(properties.getProperty("GPU_PORT"));
         String username = properties.getProperty("GPU_USERNAME");
         String pass = properties.getProperty("GPU_PASS");
+        String sshTunnelHost = properties.getProperty("GPU_TUNNEL_HOST");
+        String sshTunnelPort = properties.getProperty("GPU_TUNNEL_PORT");
         int sshPort = new Integer(properties.getProperty("GPU_SSH_PORT"));
         String gpuIndexPath = properties.getProperty("GPU_INDEX_PATH");
         File irIndexPath = this.indexerConfiguration.getIndexPath();
@@ -128,5 +130,9 @@ public class InitServer {
                 postingsFile,
                 metadataFile
         );
+        if (sshTunnelHost != null & sshTunnelPort!=null){
+            System.out.println("setting tunnel at " + sshTunnelHost + ":" + sshTunnelPort);
+            this.gpuHandler.setSshTunnel(sshTunnelHost, new Integer(sshTunnelPort));
+        }
     }
 }

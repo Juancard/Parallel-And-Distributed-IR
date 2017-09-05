@@ -43,6 +43,9 @@ hs_err_pid*
 .ftpignore
 config.properties
 localconfig.properties
+ssh_tunnel.properties
 indexer/index_data/
 *.ods#
 ############################ END MY FILES ###################################
+
+.gitignore
