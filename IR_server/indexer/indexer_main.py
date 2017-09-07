@@ -93,6 +93,14 @@ def main():
 		path=INDEX_DIR, title="seq_posting.txt")
 	print "Postings guardadas en: %s" % sp.path
 
+	docStr = ""
+	with open(INDEX_DIR + "max_freq_in_docs.txt", "w") as f:
+		for docId in indexer.maxFreqInDocs:
+			docStr += "%d:%d\n" % (docId, indexer.maxFreqInDocs[docId])
+		f.write(docStr)
+	print "Max freq per doc guardadas en: " + INDEX_DIR + "max_freq_in_docs.txt"
+
+	"""
 	documentsNorm = indexer.getDocumentsNorm()
 	docStr = ""
 	with open(INDEX_DIR + "documents_norm.txt", "w") as f:
@@ -100,6 +108,7 @@ def main():
 			docStr += "%d:%.6f\n" % (d, documentsNorm[d])
 		f.write(docStr)
 	print "Documents norm guardadas en: " + INDEX_DIR + "documents_norm.txt"
+	"""
 
 	with open(INDEX_DIR + "metadata.txt", "w") as f:
 		f.write("docs:%d\n" % len(indexer.documents.content));

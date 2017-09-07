@@ -138,7 +138,7 @@ class SequentialPostings(Postings):
 						for item in value:
 							docStr += "%s%d" % (self.SEPARATOR_VALUE, item)
 					else:
-						docStr += "%s%.6f" % (self.SEPARATOR_VALUE, value)
+						docStr += "%s%d" % (self.SEPARATOR_VALUE, value)
 					docStr += "%s" % (self.SEPARATOR_DOC)
 					postingStr.append(docStr)
 				postingStr.append('\n')

@@ -19,6 +19,7 @@ class Indexer(object):
 		self.postings = DictionaryPostings({})
 		self.documents = Documents()
 		self.documentsTerms = {}
+		self.maxFreqInDocs = {}
 		#self.positions = DictionaryPostings({})
 
 	def index(self, config):
@@ -75,6 +76,7 @@ class Indexer(object):
 		self.setTermsId()
 		self.postings.sortByKey()
 		#self.positions.sortByKey()
+		self.loadMaxFreqs()
 
 	def updateIndex(self, docId, terms):
 		position = 0
@@ -203,6 +205,13 @@ class Indexer(object):
 			termId = self.vocabulary.getId(t)
 			p = self.postings.getPosting(termId)
 			[self.postings.addDocToPosting(termId, docId, (p[docId] / maxTfreq[docId]) * self.vocabulary.getIdf(t)) for docId in p]
+
+	def loadMaxFreqs(self):
+		for d in self.documentsTerms:
+			self.maxFreqInDocs[d] = 0
+			for t in self.documentsTerms[d]:
+				tfreq = self.postings.getValue(t, d)
+				if tfreq > self.maxFreqInDocs[d]: self.maxFreqInDocs[d] = tfreq
 
 	def getDocumentsNorm(self):
 		documentsNorm = {}
