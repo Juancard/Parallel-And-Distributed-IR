@@ -114,9 +114,6 @@ public class InitServer {
         int sshPort = new Integer(properties.getProperty("GPU_SSH_PORT"));
         String gpuIndexPath = properties.getProperty("GPU_INDEX_PATH");
         File irIndexPath = this.indexerConfiguration.getIndexPath();
-        String documentsNormFile = properties.getProperty("IR_DOCUMENTS_NORM_FILE");
-        String postingsFile = properties.getProperty("IR_POSTINGS_FILE");
-        String metadataFile = properties.getProperty("IR_METADATA_FILE");
 
         this.gpuHandler = new GpuServerHandler(
                 host,
@@ -125,10 +122,7 @@ public class InitServer {
                 pass,
                 sshPort,
                 gpuIndexPath,
-                irIndexPath,
-                documentsNormFile,
-                postingsFile,
-                metadataFile
+                irIndexPath
         );
         if (sshTunnelHost != null & sshTunnelPort!=null){
             System.out.println("setting tunnel at " + sshTunnelHost + ":" + sshTunnelPort);

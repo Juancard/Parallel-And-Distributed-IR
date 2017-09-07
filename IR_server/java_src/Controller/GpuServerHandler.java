@@ -2,6 +2,7 @@ package Controller;
 
 import java.io.*;
 import java.util.HashMap;
+import java.util.Vector;
 
 import Common.Socket.SocketConnection;
 import Model.Query;
@@ -15,9 +16,6 @@ public class GpuServerHandler {
     private final int sshPort;
     private final String indexPath;
     private final File irIndexPath;
-    private final String postingsFileName;
-    private final String documentsNormFileName;
-    private final String metadataFilename;
 
     private int port;
 	private String host;
@@ -35,10 +33,7 @@ public class GpuServerHandler {
             String pass,
             int sshPort,
             String gpuIndexPath,
-            File irIndexPath,
-            String documentsNormFileName,
-            String postingsFileName,
-            String metadataFilename
+            File irIndexPath
     ) {
 		this.host = host;
 		this.port = port;
@@ -47,9 +42,7 @@ public class GpuServerHandler {
         this.sshPort = sshPort;
         this.indexPath = gpuIndexPath;
         this.irIndexPath = irIndexPath;
-        this.documentsNormFileName = documentsNormFileName;
-        this.postingsFileName = postingsFileName;
-        this.metadataFilename = metadataFilename;
+
         this.isSshTunnel = false;
 	}
 
@@ -162,6 +155,7 @@ public class GpuServerHandler {
             throw new JSchException(m);
         }
         ChannelSftp channelSftp = (ChannelSftp)channel;
+
         try {
             this.out(
                     "Changing directory from "
@@ -174,15 +168,12 @@ public class GpuServerHandler {
             String m = "Could not find index folder in gpu. Cause: " + e.getMessage();
             throw new Exception(m);
         }
-        File postingsFile = new File(this.irIndexPath + "/" + this.postingsFileName);
-        File docsNormFile = new File(this.irIndexPath + "/" + this.documentsNormFileName);
-        File metadataFile = new File(this.irIndexPath + "/" + this.metadataFilename);
-        this.out("Sending index: transfering postings");
-        channelSftp.put(new FileInputStream(postingsFile), postingsFile.getName());
-        this.out("Sending index: transfering documents norm");
-        channelSftp.put(new FileInputStream(docsNormFile), docsNormFile.getName());
-        this.out("Sending metadata: transfering metadata");
-        channelSftp.put(new FileInputStream(metadataFile), metadataFile.getName());
+
+        File[] indexFiles = this.irIndexPath.listFiles();
+        for (File f : indexFiles){
+            this.out("Sending index: transfering " + f.getName());
+            channelSftp.put(new FileInputStream(f), f.getName());
+        }
     }
 
 
@@ -213,8 +204,6 @@ public class GpuServerHandler {
                 ", sshPort=" + sshPort +
                 ", indexPath='" + indexPath + '\'' +
                 ", irIndexPath='" + irIndexPath + '\'' +
-                ", postingsFileName='" + postingsFileName + '\'' +
-                ", documentsNormFileName='" + documentsNormFileName + '\'' +
                 ", port=" + port +
                 ", host='" + host + '\'' +
                 '}';
