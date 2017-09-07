@@ -80,6 +80,32 @@ float* docsNormFromSeqFile(FILE *docsNormFile, int totalDocs){
   return docsNorm;
 }
 
+int* maxFreqFromSeqFile(FILE *seqFile, int totalDocs){
+  const int MAX_BYTES_READ_PER_LINE = 1000;
+  char line[MAX_BYTES_READ_PER_LINE];
+  int docsCount = 0;
+  int* maxFreqPerDocs = (int *) malloc(sizeof(int) * totalDocs);
+  // ITERATE OVER EACH LINES OF THE POSTING FILE
+  int docId;
+  int maxFreqInCurrentDoc;
+  char *tokens;
+  while (
+    fgets(line, MAX_BYTES_READ_PER_LINE, seqFile) != NULL
+    && docsCount < totalDocs
+  ) {
+    strtok(line, "\n");
+    tokens = strtok(line, ":");
+    char *ptr1, *ptr2;
+    docId = strtol(tokens, &ptr1, 10);
+    tokens = strtok(NULL, ":");
+    maxFreqInCurrentDoc = strtol(tokens, &ptr2, 10);
+    maxFreqPerDocs[docId] = maxFreqInCurrentDoc;
+    docsCount++;
+  }
+  return maxFreqPerDocs;
+}
+
+
 int loadMetadataFromFile(FILE *metadataFile, CorpusMetadata *metadataStruct){
   char* DOCS_PROP = "docs";
   char* TERMS_PROP = "terms";

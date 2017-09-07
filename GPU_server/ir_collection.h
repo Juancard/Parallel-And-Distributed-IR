@@ -15,6 +15,7 @@ typedef struct Collection {
    int terms;
    int docs;
    float *docsNorms;
+   int *maxFreqPerDoc;
    Posting *postings;
  } Collection;
 
@@ -26,6 +27,7 @@ typedef struct Collection {
  void displayPosting(Posting *postings, int size);
  Posting* postingsFromSeqFile(FILE *postingsFile, int totalTerms);
  float* docsNormFromSeqFile(FILE *docsNormFile, int totalDocs);
+ int* maxFreqFromSeqFile(FILE *filePath, int totalDocs);
  int loadMetadataFromFile(FILE *metadataFile, CorpusMetadata *metadataStruct);
  Posting* LoadDummyPostings(int size);
 

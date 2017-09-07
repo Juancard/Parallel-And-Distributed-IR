@@ -7,7 +7,7 @@
 
 #define INDEX_PATH "resources/index/"
 #define POSTINGS_FILENAME "seq_posting.txt"
-#define DOCSNORM_FILENAME "documents_norm.txt"
+#define MAX_FREQ_PER_DOC_FILENAME "max_freq_in_docs.txt"
 #define METADATA_FILENAME "metadata.txt"
 
 int getCollection(Collection *collection){
@@ -39,13 +39,13 @@ int getCollection(Collection *collection){
     return COLLECTION_HANDLER_FAIL;
   }
 
-  printf("Loading documents norms\n");
-  collection->docsNorms = getDocsNorms(
-    INDEX_PATH DOCSNORM_FILENAME,
+  printf("Loading Maximum frequency of each document\n");
+  collection->maxFreqPerDoc = getMaxFreqPerDoc(
+    INDEX_PATH MAX_FREQ_PER_DOC_FILENAME,
     collection->docs
   );
-  if (collection->docsNorms == NULL) {
-    printf("Fail at loading documents norms\n");
+  if (collection->maxFreqPerDoc == NULL) {
+    printf("Fail at loading Maximum frequency of each document\n");
     return COLLECTION_HANDLER_FAIL;
   }
 
@@ -61,13 +61,13 @@ Posting* getPostings(char* postingsPath, int terms){
   return postingsFromSeqFile(txtFilePtr, terms);
 }
 
-float* getDocsNorms(char* docsnormsPath, int docs){
-  FILE *txtFilePtr = fopen(docsnormsPath, "r");
+int* getMaxFreqPerDoc(char* filePath, int docs){
+  FILE *txtFilePtr = fopen(filePath, "r");
   if(txtFilePtr == NULL) {
-    printf("Error! No documents norm file in path %s\n", docsnormsPath);
+    printf("Error! No max. freq. per doc file in path %s\n", filePath);
     //return COLLECTION_HANDLER_FAIL;
   }
-  return docsNormFromSeqFile(txtFilePtr, docs);
+  return maxFreqFromSeqFile(txtFilePtr, docs);
 }
 
 int getCorpusMetadata(char *metadataFilePath, CorpusMetadata *metadata){

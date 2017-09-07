@@ -7,7 +7,7 @@
 
 int getCollection(Collection* collection);
 Posting* getPostings(char *postingsPath, int terms);
-float* getDocsNorms(char *docsNormsPath, int docs);
+int* getMaxFreqPerDoc(char *filePath, int docs);
 int getCorpusMetadata(char *metadataFilePath, CorpusMetadata *metadata);
 
 #endif
