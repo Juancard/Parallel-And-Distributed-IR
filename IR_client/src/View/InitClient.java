@@ -2,6 +2,7 @@ package View;
 
 import Common.CommonMain;
 import Common.PropertiesManager;
+import Controller.DocScores;
 import Controller.IRClientHandler;
 
 import java.io.IOException;
@@ -82,6 +83,10 @@ public class InitClient {
         String query = this.scanner.nextLine();
         try {
             HashMap<Integer, Double> docsScores = this.irClientHandler.query(query);
+            docsScores = DocScores.orderByScore(
+                    DocScores.removeBehindThreshold(docsScores, 0.0),
+                    false
+            );
             CommonMain.display("Docs Scores are: ");
             if (docsScores.isEmpty())
                 CommonMain.display("No documents match your query");
