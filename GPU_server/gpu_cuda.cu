@@ -55,20 +55,23 @@ __global__ void k_evaluateQuery (
 		do {
 			docIdsPos++;
 			currentDocId = termPosting.docIds[docIdsPos];
-			//printf("current doc id: %d\n", currentDocId);
+      //printf("current doc id: %d\n", currentDocId);
 		} while(currentDocId < myDocId && docIdsPos < termPosting.docsLength - 1);
 		if (myDocId == currentDocId) {
-			//printf("found my doc id: %d\n", currentDocId);
+      //printf("found my doc id: %d\n", currentDocId);
 			//printf("doc %d: weight to sum: %.2f * %.2f\n", myDocId, termPosting.weights[docIdsPos], q.weights[i]);
 			docScores[myDocId] += termPosting.weights[docIdsPos] * q.weights[i];
-			//printf("doc %d: current weight: %4.2f\n", myDocId, docScores[myDocId]);
+      //printf("doc %d: current weight: %4.2f\n", myDocId, docScores[myDocId]);
 		}
 	}
 	/*
 	docScore has a value that is scalar product.
 	next code turns scalar product into cosene similarity
 	*/
-	docScores[myDocId] /= q.norm * docsNorm[myDocId];
+  float normProduct = q.norm * docsNorm[myDocId];
+  if (normProduct != 0) {
+    docScores[myDocId] /= normProduct;
+  }
   //printf("final score doc %d: %4.2f\n", myDocId, docScores[myDocId]);
 }
 

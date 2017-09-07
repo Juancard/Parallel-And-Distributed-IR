@@ -98,7 +98,7 @@ int sendEvaluationResponse(int socketfd, DocScores docScores){
   // Sending docScores to client
   int i, docId, weightStrLength;
   for (i=0; i < docScores.size; i++){
-    printf("Sending doc %d: %.6f\n", i, docScores.scores[i]);
+    //printf("Sending doc %d: %.6f\n", i, docScores.scores[i]);
 
     // sending doc id
     //
