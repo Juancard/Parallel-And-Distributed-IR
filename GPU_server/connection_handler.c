@@ -43,28 +43,6 @@ void onQueryEvalRequest(int socketfd){
     freqs[i] = readInteger(socketfd);
   }
   DocScores ds = evaluateQueryInGPU(termIds, freqs, size);
-/*
-  Query q;
-  int size = readInteger(socketfd);
-  int *freqs = (int *) malloc(sizeof(int) * q.size);
-  q.weights = (float *) malloc(sizeof(float) * q.size);
-  q.termIds = (int *) malloc(sizeof(int) * q.size);
-
-  int i, freq;
-  int maxFreq = -1;
-  for (i=0; i<q.size; i++){
-    q.termIds[i] = readInteger(socketfd);
-    freqs[i] = readInteger(socketfd);
-    if (freqs[i] > maxFreq) maxFreq = freqs[i];
-  }
-
-  for (i=0; i<q.size; i++){
-    q.weights[i] = freqs[i] / maxFreq;
-  }
-  free(freqs);
-
-  DocScores ds = evaluateQueryInGPU(q);
-  */
   sendEvaluationResponse(socketfd, ds);
 
   free(ds.scores);
