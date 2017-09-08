@@ -17,5 +17,6 @@ PostingTfIdf *getPostingTfIdf(
   int docs,
   int terms
 );
+float *getDocsNorm(PostingTfIdf *postings, int docs, int terms);
 
 #endif

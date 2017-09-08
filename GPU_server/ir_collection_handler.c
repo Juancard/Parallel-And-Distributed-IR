@@ -64,6 +64,12 @@ int getCollection(Collection *collection){
     collection->terms
   );
 
+  collection -> docsNorms = getDocsNorm(
+    collection->postings,
+    collection->docs,
+    collection->terms
+  );
+
   free(maxFreqPerDoc);
   free(postingsFreq);
 
@@ -127,6 +133,24 @@ PostingTfIdf *getPostingTfIdf(
   return postingsTfIdf;
 }
 
+float *getDocsNorm(PostingTfIdf *postings, int docs, int terms){
+  float *docsNorm = (float *)calloc(docs, sizeof(float));
+  int termId, docId, docPos;
+  float weight;
+  for (termId = 0; termId < terms; termId++){
+    for (docPos = 0; docPos < postings[termId].docsLength; docPos++){
+      docId = postings[termId].docIds[docPos];
+      weight = postings[termId].weights[docPos];
+      docsNorm[docId] += weight * weight;
+    }
+  }
+
+  // Square root of each docId
+  for (docId = 0; docId < docs; docId++)
+    docsNorm[docId] = sqrt(docsNorm[docId]);
+
+  return docsNorm;
+}
 
 int getCorpusMetadata(char *metadataFilePath, CorpusMetadata *metadata){
   FILE *txtFilePtr = fopen(metadataFilePath, "r");
