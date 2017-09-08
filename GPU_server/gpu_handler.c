@@ -11,6 +11,8 @@
 extern int loadIndexInCuda(Collection irCollection);
 extern DocScores evaluateQueryInCuda(Query q);
 
+float *global_termsIdf;
+
 int loadIndexInGPUMemory(){
   printf("Loading IR collection\n");
   Collection irCollection;
@@ -20,13 +22,29 @@ int loadIndexInGPUMemory(){
   printf("Loading index in cuda\n");
   loadIndexInCuda(irCollection);
 
+  // Saves terms idf to calculate queries tf-idf
+  global_termsIdf = irCollection.idf;
+
   return INDEX_LOADING_SUCCESS;
 }
 
-struct DocScores evaluateQueryInGPU(Query q){
+struct DocScores evaluateQueryInGPU(int *termIds, int *termFreqs, int querySize){
+  Query q;
+  q.size = querySize;
+  q.termIds = termIds;
+  q.weights = queryTfIdf(
+    q.termIds,
+    termFreqs,
+    global_termsIdf,
+    q.size
+  );
+  q.norm = queryNorm(q.weights, q.size);
+
   printf("Searching for: \n");
   displayQuery(q);
+
   DocScores ds = evaluateQueryInCuda(q);
+
   return ds;
 }
 /*

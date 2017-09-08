@@ -5,7 +5,6 @@
 #include "connection_handler.h"
 #include "gpu_handler.h"
 #include "docscores.h"
-#include "query.h"
 
 // private functions
 char *readQueryString(int socketfd, int queryLength); // deprecated
@@ -36,8 +35,18 @@ void onIndexRequest(int socketfd){
 void onQueryEvalRequest(int socketfd){
   printf("Connection handler - Eval Request\n");
 
+  int size = readInteger(socketfd);
+  int *freqs = (int *) malloc(sizeof(int) * size);
+  int *termIds = (int *) malloc(sizeof(int) * size);
+  int i; for (i=0; i<size; i++){
+    termIds[i] = readInteger(socketfd);
+    freqs[i] = readInteger(socketfd);
+  }
+  printf("loaded\n");
+  DocScores ds = evaluateQueryInGPU(termIds, freqs, size);
+/*
   Query q;
-  q.size = readInteger(socketfd);
+  int size = readInteger(socketfd);
   int *freqs = (int *) malloc(sizeof(int) * q.size);
   q.weights = (float *) malloc(sizeof(float) * q.size);
   q.termIds = (int *) malloc(sizeof(int) * q.size);
@@ -56,11 +65,12 @@ void onQueryEvalRequest(int socketfd){
   free(freqs);
 
   DocScores ds = evaluateQueryInGPU(q);
+  */
   sendEvaluationResponse(socketfd, ds);
 
   free(ds.scores);
-  free(q.weights);
-  free(q.termIds);
+  free(freqs);
+  free(termIds);
 }
 
 int sendEvaluationResponse(int socketfd, DocScores docScores){

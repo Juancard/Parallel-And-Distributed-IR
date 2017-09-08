@@ -2,7 +2,6 @@
 #include <stdlib.h>
 #include <string.h>
 #include <errno.h>
-#include <math.h> // include only if kernel calculates query norm
 
 // nvcc compiles via C++, thus won't recognize
 // c header files withouut 'extern "C"' directive
@@ -15,7 +14,6 @@ extern "C" {
 void setBlocks(int docs);
 void loadPostingsInCuda(PostingTfIdf* postings, int terms);
 void loadDocsNormsInCuda(float* docsNorms, int docs);
-void loadTermsIdfInCuda(float* idf, int terms);
 
 void handleKernelError();
 cudaError_t checkCuda(cudaError_t result);
@@ -29,14 +27,12 @@ int blocks; // blocks number depend on nomber of docs in collection
 // and used during evaluation
 PostingTfIdf *dev_postings;
 float *dev_docsNorm;
-float *dev_terms_idf;
 int terms;
 int docs;
 
 // GPU KERNEL
 __global__ void k_evaluateQuery (
 		PostingTfIdf *postings,
-    float *termsIdf,
 		float *docsNorm,
 		int terms,
 		int docs,
@@ -53,8 +49,6 @@ __global__ void k_evaluateQuery (
 	PostingTfIdf termPosting;
 	for (i = 0; i < q.size; i++) {
 		termPosting = postings[q.termIds[i]];
-    q.weights[i] *= termsIdf[q.termIds[i]];
-    printf("tf-idf: %.4f\n", q.weights[i]);
 		//printf("term %d has %d docs.\n", q.termIds[i], termPosting.docsLength);
 		int docIdsPos = -1;
 		int currentDocId;
@@ -74,13 +68,7 @@ __global__ void k_evaluateQuery (
 	docScore has a value that is scalar product.
 	next code turns scalar product into cosene similarity
 	*/
-  float qNorm = 0;
-  for (i = 0; i < q.size; i++) {
-    qNorm += q.weights[i] * q.weights[i];
-  }
-  qNorm = sqrt(qNorm);
-  printf("query norm: %.4f\n", qNorm);
-  float normProduct = qNorm * docsNorm[myDocId];
+  float normProduct = q.norm * docsNorm[myDocId];
   if (normProduct != 0) {
     docScores[myDocId] /= normProduct;
   }
@@ -99,16 +87,11 @@ extern "C" int loadIndexInCuda(Collection irCollection) {
 	printf("Copying postings from host to device\n");
   loadPostingsInCuda(irCollection.postings, irCollection.terms);
 
-  // terms idf to device
-  printf("Copying terms IDF from host to device\n");
-  loadTermsIdfInCuda(irCollection.idf, irCollection.terms);
-
 	// docs norm to device
 	printf("Copying docs norm from host to device\n");
   loadDocsNormsInCuda(irCollection.docsNorms, irCollection.docs);
 
 	free(irCollection.postings);
-  free(irCollection.idf);
 	free(irCollection.docsNorms);
 
 	return 1;
@@ -142,12 +125,6 @@ void loadPostingsInCuda(PostingTfIdf* postings, int terms){
   }
 }
 
-void loadTermsIdfInCuda(float* idf, int terms){
-  checkCuda( cudaMalloc((void**)& dev_terms_idf, sizeof(float) * terms) );
-  checkCuda( cudaMemcpy(dev_terms_idf, idf, sizeof(float) * terms, cudaMemcpyHostToDevice) );
-}
-
-
 void loadDocsNormsInCuda(float* docsNorms, int docs){
   checkCuda( cudaMalloc((void**)& dev_docsNorm, sizeof(float) * docs) );
 	checkCuda( cudaMemcpy(dev_docsNorm, docsNorms, sizeof(float) * docs, cudaMemcpyHostToDevice) );
@@ -179,7 +156,6 @@ extern "C" DocScores evaluateQueryInCuda(Query q){
 	cudaEventRecord(resolveQueryStart);
 	k_evaluateQuery<<<blocks, THREADS_PER_BLOCK>>>(
 		dev_postings,
-    dev_terms_idf,
 		dev_docsNorm,
 		terms,
 		docs,
