@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <errno.h>
+#include <math.h> // include only if kernel calculates query norm
 
 // nvcc compiles via C++, thus won't recognize
 // c header files withouut 'extern "C"' directive
@@ -39,7 +40,7 @@ __global__ void k_evaluateQuery (
 		float *docsNorm,
 		int terms,
 		int docs,
-		Query2 q,
+		Query q,
 		float *docScores
 	){
 	int index = blockIdx.x * blockDim.x + threadIdx.x;
@@ -51,8 +52,10 @@ __global__ void k_evaluateQuery (
 
 	PostingTfIdf termPosting;
 	for (i = 0; i < q.size; i++) {
-		termPosting = postings[q.termsId[i]];
-		//printf("term %d has %d docs.\n", q.termsId[i], termPosting.docsLength);
+		termPosting = postings[q.termIds[i]];
+    q.weights[i] *= termsIdf[q.termIds[i]];
+    printf("tf-idf: %.4f\n", q.weights[i]);
+		//printf("term %d has %d docs.\n", q.termIds[i], termPosting.docsLength);
 		int docIdsPos = -1;
 		int currentDocId;
 		do {
@@ -63,7 +66,7 @@ __global__ void k_evaluateQuery (
 		if (myDocId == currentDocId) {
       //printf("found my doc id: %d\n", currentDocId);
 			//printf("doc %d: weight to sum: %.2f * %.2f\n", myDocId, termPosting.weights[docIdsPos], q.weights[i]);
-			docScores[myDocId] += termPosting.weights[docIdsPos] * q.weights[i];
+      docScores[myDocId] += termPosting.weights[docIdsPos] * q.weights[i];
       //printf("doc %d: current weight: %4.2f\n", myDocId, docScores[myDocId]);
 		}
 	}
@@ -71,7 +74,13 @@ __global__ void k_evaluateQuery (
 	docScore has a value that is scalar product.
 	next code turns scalar product into cosene similarity
 	*/
-  float normProduct = q.norm * docsNorm[myDocId];
+  float qNorm = 0;
+  for (i = 0; i < q.size; i++) {
+    qNorm += q.weights[i] * q.weights[i];
+  }
+  qNorm = sqrt(qNorm);
+  printf("query norm: %.4f\n", qNorm);
+  float normProduct = qNorm * docsNorm[myDocId];
   if (normProduct != 0) {
     docScores[myDocId] /= normProduct;
   }
@@ -145,7 +154,7 @@ void loadDocsNormsInCuda(float* docsNorms, int docs){
 }
 
 
-extern "C" DocScores evaluateQueryInCuda(Query2 q){
+extern "C" DocScores evaluateQueryInCuda(Query q){
 	cudaEvent_t resolveQueryStart, resolveQueryStop;
 	cudaEventCreate(&resolveQueryStart);
 	cudaEventCreate(&resolveQueryStop);
@@ -160,10 +169,10 @@ extern "C" DocScores evaluateQueryInCuda(Query2 q){
 	float* dev_weights;
   checkCuda( cudaMalloc((void**) &dev_termsId, sizeof(int) * q.size) );
   checkCuda( cudaMalloc((void**) &dev_weights, sizeof(float) * q.size) );
-  checkCuda( cudaMemcpy(dev_termsId, q.termsId, sizeof(int) * q.size, cudaMemcpyHostToDevice) );
+  checkCuda( cudaMemcpy(dev_termsId, q.termIds, sizeof(int) * q.size, cudaMemcpyHostToDevice) );
   checkCuda( cudaMemcpy(dev_weights, q.weights, sizeof(float) * q.size, cudaMemcpyHostToDevice) );
-	free(q.termsId); free(q.weights);
-	q.termsId = dev_termsId; // ?? no me acuerdo para que hice esto
+	free(q.termIds); free(q.weights);
+	q.termIds = dev_termsId; // ?? no me acuerdo para que hice esto
 	q.weights = dev_weights; // ??
 
 	printf("Starting evaluation...\n");

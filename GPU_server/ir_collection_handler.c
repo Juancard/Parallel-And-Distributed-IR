@@ -71,6 +71,10 @@ int getCollection(Collection *collection){
   );
 
   free(maxFreqPerDoc);
+
+  int i; for (i = 0; i < collection->terms; i++) {
+    free(postingsFreq[i].docIds); free(postingsFreq[i].freq);
+  }
   free(postingsFreq);
 
   return COLLECTION_HANDLER_SUCCESS;

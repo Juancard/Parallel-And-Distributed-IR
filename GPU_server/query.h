@@ -3,7 +3,7 @@
 
 typedef struct Query {
    int size;
-   int *freqs;
+   float *weights;
    int *termIds;
 	 int maxFreq;
  } Query;

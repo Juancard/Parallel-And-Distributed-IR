@@ -26,7 +26,7 @@ int loadIndexInGPUMemory(){
 struct DocScores evaluateQueryInGPU(Query q){
   printf("Searching for: \n");
   displayQuery(q);
-  //DocScores ds = evaluateQueryInCuda(q);
+  DocScores ds = evaluateQueryInCuda(q);
   return ds;
 }
 /*

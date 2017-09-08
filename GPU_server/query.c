@@ -35,7 +35,6 @@ void displayQuery(Query q){
   printf("Query: \n");
   int i;
 	for (i = 0; i < q.size; i++) {
-		printf("Term %d: %d\n", q.termIds[i], q.freqs[i]);
+		printf("Term %d: %.2f\n", q.termIds[i], q.weights[i]);
 	}
-	printf("Max Frequency: %d\n", q.maxFreq);
 }
