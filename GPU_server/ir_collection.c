@@ -3,12 +3,12 @@
 #include <string.h>
 #include "ir_collection.h"
 
-Posting* postingsFromSeqFile(FILE *postingsFile, int totalTerms) {
+PostingFreq* postingsFromSeqFile(FILE *postingsFile, int totalTerms) {
   const int MAX_BYTES_READ_PER_LINE = 1000000;
   char line[MAX_BYTES_READ_PER_LINE];
   int postingsCount = 0;
   int termId;
-  Posting* postings = (Posting *) malloc(sizeof(Posting) * totalTerms);
+  PostingFreq* postings = (PostingFreq *) malloc(sizeof(PostingFreq) * totalTerms);
   // ITERATE OVER EACH LINES OF THE POSTING FILE
   while (
     fgets(line, MAX_BYTES_READ_PER_LINE, postingsFile) != NULL
@@ -18,7 +18,7 @@ Posting* postingsFromSeqFile(FILE *postingsFile, int totalTerms) {
     // CHOP STRING
     strtok(line, "\n");
     // POSTING FOR THIS TERM
-    Posting termPosting;
+    PostingFreq termPosting;
     // SPLIT LINE IN TOKENS
     char* tokens = strtok(line, ":");
     // FIRST TOKEN IS TERM ID
@@ -26,25 +26,25 @@ Posting* postingsFromSeqFile(FILE *postingsFile, int totalTerms) {
     char *ptr;
     termId = strtol(tokens, &ptr, 10);
     // SECOND TOKEN IS DOCS AND WEIGHT OF TERM
-    char *termDocsAndWeight = strtok (NULL, ":");
+    char *termDocsAndFreq = strtok (NULL, ":");
     // COUNTING TO GET NUMBER OF DOCUMENTS THIS TERM APPEARS IN
     termPosting.docsLength = 0;
     int i;
-    for (i=0; i < strlen(termDocsAndWeight); i++)
-      if (termDocsAndWeight[i] == ';'){
+    for (i=0; i < strlen(termDocsAndFreq); i++)
+      if (termDocsAndFreq[i] == ';'){
         termPosting.docsLength++;
     }
     termPosting.docIds = (int*) malloc(sizeof(int) * termPosting.docsLength);
-    termPosting.weights = (float*) malloc(sizeof(float) * termPosting.docsLength);
-    char *doc, *weight, *saveptr;
-    tokens = strtok_r(termDocsAndWeight, ";", &saveptr);
+    termPosting.freq = (int*) malloc(sizeof(int) * termPosting.docsLength);
+    char *doc, *freq, *saveptr;
+    tokens = strtok_r(termDocsAndFreq, ";", &saveptr);
     int docPos = 0;
     while (tokens != NULL) {
-      char *saveptr2, *ptr2;
+      char *saveptr2, *ptr2, *ptr3;
       doc = strtok_r(tokens, ",", &saveptr2);
-      weight = strtok_r(NULL, ",", &saveptr2);
-      termPosting.weights[docPos] = atof(weight);
-      termPosting.docIds[docPos] = strtol(doc, &ptr2, 10);
+      freq = strtok_r(NULL, ",", &saveptr2);
+      termPosting.freq[docPos] = strtol(freq, &ptr2, 10);
+      termPosting.docIds[docPos] = strtol(doc, &ptr3, 10);
       tokens = strtok_r(NULL, ";", &saveptr);
       docPos++;
     }
@@ -133,11 +133,11 @@ int loadMetadataFromFile(FILE *metadataFile, CorpusMetadata *metadataStruct){
   return COLLECTION_OPERATION_SUCCESS;
 }
 
-void displayPosting(Posting* postings, int size){
+void displayPostingTfIdf(PostingTfIdf* postings, int size){
   int i,j;
   printf("total terms: %d\n", size);
   for (i = 0; i < size; i++) {
-    Posting termPosting = postings[i];
+    PostingTfIdf termPosting = postings[i];
     printf("Term: %d\n", i);
     for (j = 0; j < termPosting.docsLength; j++)
       printf(
@@ -146,14 +146,28 @@ void displayPosting(Posting* postings, int size){
         termPosting.weights[j]
       );
   }
+}
+void displayPostingFreq(PostingFreq* postings, int size){
+  int i,j;
+  printf("total terms: %d\n", size);
+  for (i = 0; i < size; i++) {
+    PostingFreq termPosting = postings[i];
+    printf("Term: %d\n", i);
+    for (j = 0; j < termPosting.docsLength; j++)
+      printf(
+        "doc: %d - weight: %d\n",
+        termPosting.docIds[j],
+        termPosting.freq[j]
+      );
   }
+}
 
 // load postings invented, just for testing
-Posting* LoadDummyPostings(int size){
+PostingTfIdf* LoadDummyPostings(int size){
   int i;
-  Posting* postings = (Posting *) malloc(sizeof(Posting) * size);
+  PostingTfIdf* postings = (PostingTfIdf *) malloc(sizeof(PostingTfIdf) * size);
   for (i = 0; i < size; i++) {
-    Posting p1;
+    PostingTfIdf p1;
     //p1.termId = i;
     p1.docsLength = 5;
     p1.docIds = (int *) malloc(sizeof(int) * p1.docsLength);
@@ -167,7 +181,7 @@ Posting* LoadDummyPostings(int size){
 }
 /*
 int main(int argc, char const *argv[]) {
-  displayPosting(LoadDummyPostings(3), 3);
+  displayPostingTfIdf(LoadDummyPostings(3), 3);
   return 0;
 }
 */

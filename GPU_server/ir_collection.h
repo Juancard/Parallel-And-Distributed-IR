@@ -4,19 +4,26 @@
 #define COLLECTION_OPERATION_FAIL 0
 #define COLLECTION_OPERATION_SUCCESS 1
 
-typedef struct Posting {
+typedef struct PostingTfIdf {
    //int termId;
    int docsLength;
    float *weights;
    int *docIds;
-} Posting;
+} PostingTfIdf;
+
+typedef struct PostingFreq {
+   //int termId;
+   int docsLength;
+   int *freq;
+   int *docIds;
+} PostingFreq;
 
 typedef struct Collection {
    int terms;
    int docs;
    float *docsNorms;
-   int *maxFreqPerDoc;
-   Posting *postings;
+   float *idf;
+   PostingTfIdf *postings;
  } Collection;
 
  typedef struct CorpusMetadata {
@@ -24,11 +31,12 @@ typedef struct Collection {
    int terms;
  } CorpusMetadata;
 
- void displayPosting(Posting *postings, int size);
- Posting* postingsFromSeqFile(FILE *postingsFile, int totalTerms);
+ void displayPostingTfIdf(PostingTfIdf *postings, int size);
+ void displayPostingFreq(PostingFreq *postings, int size);
+ PostingFreq* postingsFromSeqFile(FILE *postingsFile, int totalTerms);
  float* docsNormFromSeqFile(FILE *docsNormFile, int totalDocs);
  int* maxFreqFromSeqFile(FILE *filePath, int totalDocs);
  int loadMetadataFromFile(FILE *metadataFile, CorpusMetadata *metadataStruct);
- Posting* LoadDummyPostings(int size);
+ PostingTfIdf* LoadDummyPostings(int size);
 
  #endif

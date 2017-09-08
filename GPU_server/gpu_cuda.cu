@@ -12,7 +12,7 @@ extern "C" {
 }
 
 void setBlocks(int docs);
-void loadPostingsInCuda(Posting* postings, int terms);
+void loadPostingsInCuda(PostingTfIdf* postings, int terms);
 void loadDocsNormsInCuda(float* docsNorms, int docs);
 
 void handleKernelError();
@@ -25,14 +25,14 @@ int blocks; // blocks number depend on nomber of docs in collection
 // global variables that are allocated in device
 // during index allocating in gpu
 // and used during evaluation
-Posting *dev_postings;
+PostingTfIdf *dev_postings;
 float *dev_docsNorm;
 int terms;
 int docs;
 
 // GPU KERNEL
 __global__ void k_evaluateQuery (
-		Posting *postings,
+		PostingTfIdf *postings,
 		float *docsNorm,
 		int terms,
 		int docs,
@@ -46,7 +46,7 @@ __global__ void k_evaluateQuery (
 	int i;
 	//printf("docs norm: %.4f\n", docsNorm[myDocId]);
 
-	Posting termPosting;
+	PostingTfIdf termPosting;
 	for (i = 0; i < q.size; i++) {
 		termPosting = postings[q.termsId[i]];
 		//printf("term %d has %d docs.\n", q.termsId[i], termPosting.docsLength);
@@ -101,16 +101,16 @@ void setBlocks(int docs){
   blocks = (docs + THREADS_PER_BLOCK - 1) / THREADS_PER_BLOCK;
 }
 
-void loadPostingsInCuda(Posting* postings, int terms){
+void loadPostingsInCuda(PostingTfIdf* postings, int terms){
   // POSTINGS TO DEVICE
-  checkCuda( cudaMalloc((void**)&dev_postings, sizeof(Posting) * terms) );
-  checkCuda( cudaMemcpy(dev_postings, postings, sizeof(Posting) * terms, cudaMemcpyHostToDevice) );
+  checkCuda( cudaMalloc((void**)&dev_postings, sizeof(PostingTfIdf) * terms) );
+  checkCuda( cudaMemcpy(dev_postings, postings, sizeof(PostingTfIdf) * terms, cudaMemcpyHostToDevice) );
 
   int i;
   int *dev_docIds;
   float *dev_weights;
   for (i = 0; i < terms; i++) {
-    Posting p = postings[i];
+    PostingTfIdf p = postings[i];
 
     checkCuda( cudaMalloc((void**) &dev_docIds, sizeof(int) * p.docsLength) );
     checkCuda( cudaMalloc((void**) &dev_weights, sizeof(float) * p.docsLength) );

@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <errno.h>
+#include <math.h>
 #include "ir_collection_handler.h"
 #include "ir_collection.h"
 
@@ -30,29 +31,37 @@ int getCollection(Collection *collection){
   );
 
   printf("Loading postings\n");
-  collection->postings = getPostings(
+  PostingFreq *postingsFreq = getPostings(
     INDEX_PATH POSTINGS_FILENAME,
     collection->terms
   );
-  if (collection->postings == NULL) {
+  if (postingsFreq == NULL) {
     printf("Fail at loading postings\n");
     return COLLECTION_HANDLER_FAIL;
   }
 
   printf("Loading Maximum frequency of each document\n");
-  collection->maxFreqPerDoc = getMaxFreqPerDoc(
+  int *maxFreqPerDoc = getMaxFreqPerDoc(
     INDEX_PATH MAX_FREQ_PER_DOC_FILENAME,
     collection->docs
   );
-  if (collection->maxFreqPerDoc == NULL) {
+  if (maxFreqPerDoc == NULL) {
     printf("Fail at loading Maximum frequency of each document\n");
     return COLLECTION_HANDLER_FAIL;
   }
 
+  collection->idf = getTermsIdf(
+      postingsFreq,
+      collection->docs,
+      collection->terms
+    );
+    
+  //loadWeightsTfIdf()
+
   return COLLECTION_HANDLER_SUCCESS;
 }
 
-Posting* getPostings(char* postingsPath, int terms){
+PostingFreq* getPostings(char* postingsPath, int terms){
   FILE *txtFilePtr = fopen(postingsPath, "r");
   if(txtFilePtr == NULL) {
    printf("Error! No posting file in path %s\n", postingsPath);
@@ -70,6 +79,17 @@ int* getMaxFreqPerDoc(char* filePath, int docs){
   return maxFreqFromSeqFile(txtFilePtr, docs);
 }
 
+float *getTermsIdf(PostingFreq *postings, int numberOfDocs, int numberOfTerms){
+  int termId;
+  float* termsIdf = (float *) malloc(sizeof(float) * numberOfTerms);
+  int df;
+  for (termId < 0; termId < numberOfTerms; termId++) {
+    df = postings[termId].docsLength;
+    termsIdf[termId] = log10( (double) numberOfDocs / df);
+  }
+  return termsIdf;
+}
+
 int getCorpusMetadata(char *metadataFilePath, CorpusMetadata *metadata){
   FILE *txtFilePtr = fopen(metadataFilePath, "r");
   if(txtFilePtr == NULL) {
@@ -83,7 +103,7 @@ int getCorpusMetadata(char *metadataFilePath, CorpusMetadata *metadata){
 /* test
 int main(int argc, char const *argv[]) {
   getDefaultCollection();
-  displayPosting(LoadDummyPostings(3), 3);
+  displayPostingTfIdf(LoadDummyPostings(3), 3);
   return 0;
 }
 */

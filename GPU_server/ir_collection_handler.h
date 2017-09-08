@@ -6,8 +6,9 @@
 #define COLLECTION_HANDLER_FAIL -1
 
 int getCollection(Collection* collection);
-Posting* getPostings(char *postingsPath, int terms);
+PostingFreq* getPostings(char *postingsPath, int terms);
 int* getMaxFreqPerDoc(char *filePath, int docs);
 int getCorpusMetadata(char *metadataFilePath, CorpusMetadata *metadata);
+float *getTermsIdf(PostingFreq *postings, int docs, int terms);
 
 #endif
