@@ -24,7 +24,7 @@ docscores.o: docscores.c docscores.h
 	$(CC) -o $@ $< -c
 gpu_handler.o: gpu_handler.c gpu_handler.h query.h docscores.h ir_collection_handler.h
 	$(CC) -o $@ $< -c
-gpu_cuda.o: gpu_cuda.cu query.h docscores.h ir_collection.h
+gpu_cuda.o: gpu_cuda.cu cuda_error_handler.cu query.h docscores.h ir_collection.h
 	$(NVCC) -o $@ $< -c
 query.o: query.c query.h
 	$(CC) -o $@ $< -c

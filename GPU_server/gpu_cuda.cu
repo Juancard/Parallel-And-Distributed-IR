@@ -2,6 +2,8 @@
 #include <stdlib.h>
 #include <string.h>
 #include <errno.h>
+#include "cuda_error_handler.cu"
+
 
 // nvcc compiles via C++, thus won't recognize
 // c header files withouut 'extern "C"' directive
@@ -14,9 +16,6 @@ extern "C" {
 void setBlocks(int docs);
 void loadPostingsInCuda(PostingTfIdf* postings, int terms);
 void loadDocsNormsInCuda(float* docsNorms, int docs);
-
-void handleKernelError();
-cudaError_t checkCuda(cudaError_t result);
 
 // BLOCK SIZE OF GPU IN Cidetic
 const int THREADS_PER_BLOCK = 1024;
@@ -103,8 +102,8 @@ void setBlocks(int docs){
 
 void loadPostingsInCuda(PostingTfIdf* postings, int terms){
   // POSTINGS TO DEVICE
-  checkCuda( cudaMalloc((void**)&dev_postings, sizeof(PostingTfIdf) * terms) );
-  checkCuda( cudaMemcpy(dev_postings, postings, sizeof(PostingTfIdf) * terms, cudaMemcpyHostToDevice) );
+  CudaSafeCall( cudaMalloc((void**)&dev_postings, sizeof(PostingTfIdf) * terms) );
+  CudaSafeCall( cudaMemcpy(dev_postings, postings, sizeof(PostingTfIdf) * terms, cudaMemcpyHostToDevice) );
 
   int i;
   int *dev_docIds;
@@ -112,22 +111,22 @@ void loadPostingsInCuda(PostingTfIdf* postings, int terms){
   for (i = 0; i < terms; i++) {
     PostingTfIdf p = postings[i];
 
-    checkCuda( cudaMalloc((void**) &dev_docIds, sizeof(int) * p.docsLength) );
-    checkCuda( cudaMalloc((void**) &dev_weights, sizeof(float) * p.docsLength) );
+    CudaSafeCall( cudaMalloc((void**) &dev_docIds, sizeof(int) * p.docsLength) );
+    CudaSafeCall( cudaMalloc((void**) &dev_weights, sizeof(float) * p.docsLength) );
 
-    checkCuda( cudaMemcpy(&(dev_postings[i].docIds), &(dev_docIds), sizeof(int *), cudaMemcpyHostToDevice) );
-    checkCuda( cudaMemcpy(&(dev_postings[i].weights), &(dev_weights), sizeof(float *), cudaMemcpyHostToDevice) );
+    CudaSafeCall( cudaMemcpy(&(dev_postings[i].docIds), &(dev_docIds), sizeof(int *), cudaMemcpyHostToDevice) );
+    CudaSafeCall( cudaMemcpy(&(dev_postings[i].weights), &(dev_weights), sizeof(float *), cudaMemcpyHostToDevice) );
 
-    checkCuda( cudaMemcpy(dev_docIds, p.docIds, sizeof(int) * p.docsLength, cudaMemcpyHostToDevice) );
-    checkCuda( cudaMemcpy(dev_weights, p.weights, sizeof(float) * p.docsLength, cudaMemcpyHostToDevice) );
+    CudaSafeCall( cudaMemcpy(dev_docIds, p.docIds, sizeof(int) * p.docsLength, cudaMemcpyHostToDevice) );
+    CudaSafeCall( cudaMemcpy(dev_weights, p.weights, sizeof(float) * p.docsLength, cudaMemcpyHostToDevice) );
 
     free(p.weights); free(p.docIds);
   }
 }
 
 void loadDocsNormsInCuda(float* docsNorms, int docs){
-  checkCuda( cudaMalloc((void**)& dev_docsNorm, sizeof(float) * docs) );
-	checkCuda( cudaMemcpy(dev_docsNorm, docsNorms, sizeof(float) * docs, cudaMemcpyHostToDevice) );
+  CudaSafeCall( cudaMalloc((void**)& dev_docsNorm, sizeof(float) * docs) );
+	CudaSafeCall( cudaMemcpy(dev_docsNorm, docsNorms, sizeof(float) * docs, cudaMemcpyHostToDevice) );
 }
 
 
@@ -140,15 +139,15 @@ extern "C" DocScores evaluateQueryInCuda(Query q){
 	printf("Allocating memory for docs scores in GPU\n");
 	docScores = (float *) malloc(sizeof(float) * docs);
   printf("Sending to cuda\n");
-  checkCuda( cudaMalloc((void **) &dev_docScores, docs * sizeof(float)) );
+  CudaSafeCall( cudaMalloc((void **) &dev_docScores, docs * sizeof(float)) );
 
 	printf("Sending query to GPU\n");
 	int* dev_termsId;
 	float* dev_weights;
-  checkCuda( cudaMalloc((void**) &dev_termsId, sizeof(int) * q.size) );
-  checkCuda( cudaMalloc((void**) &dev_weights, sizeof(float) * q.size) );
-  checkCuda( cudaMemcpy(dev_termsId, q.termIds, sizeof(int) * q.size, cudaMemcpyHostToDevice) );
-  checkCuda( cudaMemcpy(dev_weights, q.weights, sizeof(float) * q.size, cudaMemcpyHostToDevice) );
+  CudaSafeCall( cudaMalloc((void**) &dev_termsId, sizeof(int) * q.size) );
+  CudaSafeCall( cudaMalloc((void**) &dev_weights, sizeof(float) * q.size) );
+  CudaSafeCall( cudaMemcpy(dev_termsId, q.termIds, sizeof(int) * q.size, cudaMemcpyHostToDevice) );
+  CudaSafeCall( cudaMemcpy(dev_weights, q.weights, sizeof(float) * q.size, cudaMemcpyHostToDevice) );
 	free(q.termIds); free(q.weights);
 	q.termIds = dev_termsId; // ?? no me acuerdo para que hice esto
 	q.weights = dev_weights; // ??
@@ -163,7 +162,7 @@ extern "C" DocScores evaluateQueryInCuda(Query q){
 		q,
 		dev_docScores
 	);
-	handleKernelError();
+	CudaCheckError();
 	cudaEventRecord(resolveQueryStop);
 
 	cudaMemcpy(docScores, dev_docScores, docs * sizeof(float), cudaMemcpyDeviceToHost);
@@ -203,25 +202,4 @@ extern "C" void freeCudaMemory(){
     cudaFree(&dev_postings[i].weights);
   }
   cudaFree(dev_postings);
-}
-
-void handleKernelError(){
-	cudaError_t errSync  = cudaGetLastError();
-	cudaError_t errAsync = cudaDeviceSynchronize();
-	if (errSync != cudaSuccess)
-	  printf("Sync kernel error: %s\n", cudaGetErrorString(errSync));
-	if (errAsync != cudaSuccess)
-	  printf("Async kernel error: %s\n", cudaGetErrorString(errAsync));
-}
-
-cudaError_t checkCuda(cudaError_t result)
-{
-#if defined(DEBUG) || defined(_DEBUG)
-  if (result != cudaSuccess) {
-    fprintf(stderr, "CUDA Runtime Error: %s\n",
-            cudaGetErrorString(result));
-    assert(result == cudaSuccess);
-  }
-#endif
-  return result;
 }
