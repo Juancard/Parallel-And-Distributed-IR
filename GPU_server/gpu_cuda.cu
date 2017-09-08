@@ -14,6 +14,7 @@ extern "C" {
 void setBlocks(int docs);
 void loadPostingsInCuda(PostingTfIdf* postings, int terms);
 void loadDocsNormsInCuda(float* docsNorms, int docs);
+void loadTermsIdfInCuda(float* idf, int terms);
 
 void handleKernelError();
 cudaError_t checkCuda(cudaError_t result);
@@ -27,12 +28,14 @@ int blocks; // blocks number depend on nomber of docs in collection
 // and used during evaluation
 PostingTfIdf *dev_postings;
 float *dev_docsNorm;
+float *dev_terms_idf;
 int terms;
 int docs;
 
 // GPU KERNEL
 __global__ void k_evaluateQuery (
 		PostingTfIdf *postings,
+    float *termsIdf,
 		float *docsNorm,
 		int terms,
 		int docs,
@@ -87,11 +90,16 @@ extern "C" int loadIndexInCuda(Collection irCollection) {
 	printf("Copying postings from host to device\n");
   loadPostingsInCuda(irCollection.postings, irCollection.terms);
 
+  // terms idf to device
+  printf("Copying terms IDF from host to device\n");
+  loadTermsIdfInCuda(irCollection.idf, irCollection.terms);
+
 	// docs norm to device
 	printf("Copying docs norm from host to device\n");
   loadDocsNormsInCuda(irCollection.docsNorms, irCollection.docs);
 
 	free(irCollection.postings);
+  free(irCollection.idf);
 	free(irCollection.docsNorms);
 
 	return 1;
@@ -125,6 +133,12 @@ void loadPostingsInCuda(PostingTfIdf* postings, int terms){
   }
 }
 
+void loadTermsIdfInCuda(float* idf, int terms){
+  checkCuda( cudaMalloc((void**)& dev_terms_idf, sizeof(float) * terms) );
+  checkCuda( cudaMemcpy(dev_terms_idf, idf, sizeof(float) * terms, cudaMemcpyHostToDevice) );
+}
+
+
 void loadDocsNormsInCuda(float* docsNorms, int docs){
   checkCuda( cudaMalloc((void**)& dev_docsNorm, sizeof(float) * docs) );
 	checkCuda( cudaMemcpy(dev_docsNorm, docsNorms, sizeof(float) * docs, cudaMemcpyHostToDevice) );
@@ -156,6 +170,7 @@ extern "C" DocScores evaluateQueryInCuda(Query q){
 	cudaEventRecord(resolveQueryStart);
 	k_evaluateQuery<<<blocks, THREADS_PER_BLOCK>>>(
 		dev_postings,
+    dev_terms_idf,
 		dev_docsNorm,
 		terms,
 		docs,
