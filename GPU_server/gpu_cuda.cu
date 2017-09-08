@@ -22,10 +22,19 @@ const int THREADS_PER_BLOCK = 1024;
 int blocks; // blocks number depend on nomber of docs in collection
 
 // global variables that are allocated in device
-// during index allocating in gpu
-// and used during evaluation
+// during index allocating in gpu,
+// used during evaluation
+// and freed afterwards
 PostingTfIdf *dev_postings;
+
+// these variables saves all pointers generated during
+// allocation of postings into gpu memory.
+// It is needed to copmletely deallocate postings from gpu memory
+float **dev_postings_weights_pointers;
+int **dev_postings_docIds_pointers;
+
 float *dev_docsNorm;
+
 int terms;
 int docs;
 
@@ -105,6 +114,11 @@ void loadPostingsInCuda(PostingTfIdf* postings, int terms){
   CudaSafeCall( cudaMalloc((void**)&dev_postings, sizeof(PostingTfIdf) * terms) );
   CudaSafeCall( cudaMemcpy(dev_postings, postings, sizeof(PostingTfIdf) * terms, cudaMemcpyHostToDevice) );
 
+  // these variables saves all pointers in postings
+  // needed to deallocate postings from gpu memory
+  dev_postings_docIds_pointers = (int **) malloc(sizeof(int *) * terms);
+  dev_postings_weights_pointers = (float **) malloc(sizeof(float *) * terms);
+
   int i;
   int *dev_docIds;
   float *dev_weights;
@@ -120,6 +134,8 @@ void loadPostingsInCuda(PostingTfIdf* postings, int terms){
     CudaSafeCall( cudaMemcpy(dev_docIds, p.docIds, sizeof(int) * p.docsLength, cudaMemcpyHostToDevice) );
     CudaSafeCall( cudaMemcpy(dev_weights, p.weights, sizeof(float) * p.docsLength, cudaMemcpyHostToDevice) );
 
+    dev_postings_docIds_pointers[i] = dev_docIds;
+    dev_postings_weights_pointers[i] = dev_weights;
     free(p.weights); free(p.docIds);
   }
 }
@@ -188,16 +204,16 @@ extern "C" void freeCudaMemory(){
   if (!terms && !docs) return;
 
   // free docs norm
-  printf("Cuda: Deallocating old docs norm memory\n");
+  printf("Cuda: Deallocating old docs norm from memory\n");
   cudaFree(dev_docsNorm);
 
   // free postings
   printf("Cuda: Deallocating old postings from memory\n");
-  // WARNING: THIS PROBABLY WILL NOT DEALLOCATE POSTINGS COMPLETELY
-  // NOT TESTED
   int i; for(i=0; i<terms; i++){
-    cudaFree(&dev_postings[i].docIds);
-    cudaFree(&dev_postings[i].weights);
+    cudaFree(dev_postings_weights_pointers[i]);
+    cudaFree(dev_postings_docIds_pointers[i]);
   }
   cudaFree(dev_postings);
+  free(dev_postings_weights_pointers);
+  free(dev_postings_docIds_pointers);
 }
