@@ -139,6 +139,7 @@ extern "C" DocScores evaluateQueryInCuda(Query q){
 
 	printf("Allocating memory for docs scores in GPU\n");
 	docScores = (float *) malloc(sizeof(float) * docs);
+  printf("Sending to cuda\n");
   checkCuda( cudaMalloc((void **) &dev_docScores, docs * sizeof(float)) );
 
 	printf("Sending query to GPU\n");
@@ -182,6 +183,26 @@ extern "C" DocScores evaluateQueryInCuda(Query q){
 	ds.scores = docScores;
 
 	return ds;
+}
+
+extern "C" void freeCudaMemory(){
+  // checks if cuda memory is allocated
+  // if not, then no memory to free
+  if (!terms && !docs) return;
+
+  // free docs norm
+  printf("Cuda: Deallocating old docs norm memory\n");
+  cudaFree(dev_docsNorm);
+
+  // free postings
+  printf("Cuda: Deallocating old postings from memory\n");
+  // WARNING: THIS PROBABLY WILL NOT DEALLOCATE POSTINGS COMPLETELY
+  // NOT TESTED
+  int i; for(i=0; i<terms; i++){
+    cudaFree(&dev_postings[i].docIds);
+    cudaFree(&dev_postings[i].weights);
+  }
+  cudaFree(dev_postings);
 }
 
 void handleKernelError(){

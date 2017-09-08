@@ -42,7 +42,6 @@ void onQueryEvalRequest(int socketfd){
     termIds[i] = readInteger(socketfd);
     freqs[i] = readInteger(socketfd);
   }
-  printf("loaded\n");
   DocScores ds = evaluateQueryInGPU(termIds, freqs, size);
 /*
   Query q;

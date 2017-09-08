@@ -87,14 +87,18 @@ public class InitClient {
                     DocScores.removeBehindThreshold(docsScores, 0.0),
                     false
             );
-            CommonMain.display("Docs Scores are: ");
+            CommonMain.display("RANK - DOC - SCORE");
             if (docsScores.isEmpty())
                 CommonMain.display("No documents match your query");
-            else
-                for (int d : docsScores.keySet())
+            else{
+                int rank = 1;
+                for (int d : docsScores.keySet()){
                     CommonMain.display(
-                            "Doc " + d + ": " + docsScores.get(d)
+                            rank + " - " + d + " - " + docsScores.get(d)
                     );
+                    rank++;
+                }
+            }
         } catch (Exception e) {
             CommonMain.display("Error on query: " + e.getMessage());
         }

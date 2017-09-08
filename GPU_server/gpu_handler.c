@@ -10,6 +10,7 @@
 
 extern int loadIndexInCuda(Collection irCollection);
 extern DocScores evaluateQueryInCuda(Query q);
+extern void freeCudaMemory();
 
 float *global_termsIdf;
 
@@ -20,6 +21,7 @@ int loadIndexInGPUMemory(){
   if (resultStatus != COLLECTION_HANDLER_SUCCESS) return INDEX_LOADING_FAIL;
 
   printf("Loading index in cuda\n");
+  freeCudaMemory();
   loadIndexInCuda(irCollection);
 
   // Saves terms idf to calculate queries tf-idf
