@@ -55,8 +55,17 @@ int getCollection(Collection *collection){
       collection->docs,
       collection->terms
     );
-    
-  //loadWeightsTfIdf()
+
+  collection->postings = getPostingTfIdf(
+    postingsFreq,
+    maxFreqPerDoc,
+    collection->idf,
+    collection->docs,
+    collection->terms
+  );
+
+  free(maxFreqPerDoc);
+  free(postingsFreq);
 
   return COLLECTION_HANDLER_SUCCESS;
 }
@@ -89,6 +98,35 @@ float *getTermsIdf(PostingFreq *postings, int numberOfDocs, int numberOfTerms){
   }
   return termsIdf;
 }
+
+PostingTfIdf *getPostingTfIdf(
+  PostingFreq *postingFreq,
+  int *maxFreqPerDoc,
+  float *termsIdf,
+  int docs,
+  int terms
+){
+  PostingTfIdf *postingsTfIdf = (PostingTfIdf *) malloc(sizeof(PostingTfIdf) * terms);
+  int termId, docId, docPos, docsInPosting, freq;
+  float tf, idf, weight;
+  for (termId = 0; termId < terms; termId++) {
+    docsInPosting = postingFreq[termId].docsLength;
+    idf = termsIdf[termId];
+    postingsTfIdf[termId].docsLength = docsInPosting;
+    postingsTfIdf[termId].docIds = (int *) malloc(sizeof(int) * docsInPosting);
+    postingsTfIdf[termId].weights = (float *) malloc(sizeof(float) * docsInPosting);
+    for (docPos = 0; docPos < docsInPosting; docPos++){
+      docId = postingFreq[termId].docIds[docPos];
+      postingsTfIdf[termId].docIds[docPos] =  docId;
+      freq = postingFreq[termId].freq[docPos];
+      tf = (double) freq / maxFreqPerDoc[docId];
+      weight = tf * idf;
+      postingsTfIdf[termId].weights[docPos] = weight;
+    }
+  }
+  return postingsTfIdf;
+}
+
 
 int getCorpusMetadata(char *metadataFilePath, CorpusMetadata *metadata){
   FILE *txtFilePtr = fopen(metadataFilePath, "r");

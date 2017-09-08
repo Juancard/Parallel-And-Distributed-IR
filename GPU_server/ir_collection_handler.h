@@ -10,5 +10,12 @@ PostingFreq* getPostings(char *postingsPath, int terms);
 int* getMaxFreqPerDoc(char *filePath, int docs);
 int getCorpusMetadata(char *metadataFilePath, CorpusMetadata *metadata);
 float *getTermsIdf(PostingFreq *postings, int docs, int terms);
+PostingTfIdf *getPostingTfIdf(
+  PostingFreq *postings,
+  int *maxFreqPerDoc,
+  float *termsIdf,
+  int docs,
+  int terms
+);
 
 #endif
