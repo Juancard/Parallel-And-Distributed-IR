@@ -39,7 +39,7 @@ __global__ void k_evaluateQuery (
 		float *docsNorm,
 		int terms,
 		int docs,
-		Query q,
+		Query2 q,
 		float *docScores
 	){
 	int index = blockIdx.x * blockDim.x + threadIdx.x;
@@ -145,7 +145,7 @@ void loadDocsNormsInCuda(float* docsNorms, int docs){
 }
 
 
-extern "C" DocScores evaluateQueryInCuda(Query q){
+extern "C" DocScores evaluateQueryInCuda(Query2 q){
 	cudaEvent_t resolveQueryStart, resolveQueryStop;
 	cudaEventCreate(&resolveQueryStart);
 	cudaEventCreate(&resolveQueryStop);

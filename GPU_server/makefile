@@ -18,7 +18,7 @@ init.o: init.c gpu_handler.h server_socket.h
 	$(CC) -o $@ $< -c
 server_socket.o: server_socket.c server_socket.h my_socket.h connection_handler.h
 	$(CC) -o $@ $< -c
-connection_handler.o: connection_handler.c connection_handler.h gpu_handler.h my_socket.h docscores.h
+connection_handler.o: connection_handler.c connection_handler.h gpu_handler.h my_socket.h docscores.h query.h
 	$(CC) -o $@ $< -c
 docscores.o: docscores.c docscores.h
 	$(CC) -o $@ $< -c

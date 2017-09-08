@@ -23,10 +23,10 @@ int loadIndexInGPUMemory(){
   return INDEX_LOADING_SUCCESS;
 }
 
-struct DocScores evaluateQueryInGPU(char *queryStr){
-  printf("Searching for: %s\n", queryStr);
-  Query q = parseQuery(queryStr);
-  DocScores ds = evaluateQueryInCuda(q);
+struct DocScores evaluateQueryInGPU(Query q){
+  printf("Searching for: \n");
+  displayQuery(q);
+  //DocScores ds = evaluateQueryInCuda(q);
   return ds;
 }
 /*

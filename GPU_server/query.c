@@ -3,8 +3,8 @@
 #include <string.h>
 #include "query.h"
 
-Query parseQuery(char* queryStr){
- 	Query q;
+Query2 parseQuery(char* queryStr){
+ 	Query2 q;
  	char *tokens = strtok(queryStr, "#");
  	q.norm = atof(tokens);
  	char *termToWeight = strtok(NULL, "#");
@@ -35,7 +35,7 @@ void displayQuery(Query q){
   printf("Query: \n");
   int i;
 	for (i = 0; i < q.size; i++) {
-		printf("Term %d: %.4f\n", q.termsId[i], q.weights[i]);
+		printf("Term %d: %d\n", q.termIds[i], q.freqs[i]);
 	}
-	printf("Query norm: %.4f\n", q.norm);
+	printf("Max Frequency: %d\n", q.maxFreq);
 }

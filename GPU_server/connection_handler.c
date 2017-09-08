@@ -5,10 +5,10 @@
 #include "connection_handler.h"
 #include "gpu_handler.h"
 #include "docscores.h"
+#include "query.h"
 
 // private functions
-int readQueryLength(int socketfd);
-char *readQueryString(int socketfd, int queryLength);
+char *readQueryString(int socketfd, int queryLength); // deprecated
 int sendEvaluationResponse(int socketfd, DocScores docScores);
 int readInteger(int socketfd);
 
@@ -33,55 +33,31 @@ void onIndexRequest(int socketfd){
     perror("send indexing result status");
 }
 
-int readInteger(int socketfd){
-  int numbytes, integerValue;
-  numbytes = read_socket(
-    socketfd,
-    (char *)&integerValue,
-    sizeof(int)
-  );
-  return ntohl(integerValue);
-}
-
 void onQueryEvalRequest(int socketfd){
   printf("Connection handler - Eval Request\n");
 
-  int qLength = readQueryLength(socketfd);
-  char *query = readQueryString(socketfd, qLength);
-  DocScores ds = evaluateQueryInGPU(query);
+  Query q;
+  q.size = readInteger(socketfd);
+  q.freqs = (int *) malloc(sizeof(int) * q.size);
+  q.termIds = (int *) malloc(sizeof(int) * q.size);
+
+  int i;
+  for (i=0; i<q.size; i++){
+    q.termIds[i] = readInteger(socketfd);
+    q.freqs[i] = readInteger(socketfd);
+  }
+
+  q.maxFreq = -1;
+  for (i=0; i<q.size; i++)
+    if (q.freqs[i] > q.maxFreq)
+      q.maxFreq = q.freqs[i];
+
+  DocScores ds = evaluateQueryInGPU(q);
   sendEvaluationResponse(socketfd, ds);
 
   free(ds.scores);
-  free(query);
-}
-
-int readQueryLength(int socketfd){
-  // Reading length of query
-  int numbytes, queryLength;
-  numbytes = read_socket(
-    socketfd,
-    (char *)&queryLength,
-    sizeof(int)
-  );
-  queryLength = ntohl(queryLength);
-  printf("Query size: %d\n", queryLength);
-  return queryLength;
-}
-
-char *readQueryString(int socketfd, int queryLength){
-  int numbytes;
-  char *query = malloc(queryLength + 1);;
-  memset(query, 0, queryLength + 1);  //clear the variable
-  if ((numbytes = read_socket(
-    socketfd,
-    query,
-    queryLength
-  )) == -1) {
-      perror("recv");
-      exit(1);
-  }
-  query[numbytes] = '\0';
-  return query;
+  free(q.freqs);
+  free(q.termIds);
 }
 
 int sendEvaluationResponse(int socketfd, DocScores docScores){
@@ -117,4 +93,31 @@ int sendEvaluationResponse(int socketfd, DocScores docScores){
   }
 
   return 0;
+}
+
+int readInteger(int socketfd){
+  int numbytes, integerValue;
+  numbytes = read_socket(
+    socketfd,
+    (char *)&integerValue,
+    sizeof(int)
+  );
+  return ntohl(integerValue);
+}
+
+//deprecated
+char *readQueryString(int socketfd, int queryLength){
+  int numbytes;
+  char *query = malloc(queryLength + 1);;
+  memset(query, 0, queryLength + 1);  //clear the variable
+  if ((numbytes = read_socket(
+    socketfd,
+    query,
+    queryLength
+  )) == -1) {
+      perror("recv");
+      exit(1);
+  }
+  query[numbytes] = '\0';
+  return query;
 }

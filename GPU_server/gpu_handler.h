@@ -2,11 +2,12 @@
 #define GPU_HANDLER_UNIQUE_NAME
 
 #include "docscores.h"
+#include "query.h"
 
 #define INDEX_LOADING_SUCCESS 1
 #define INDEX_LOADING_FAIL -1
 
 int loadIndexInGPUMemory();
-DocScores evaluateQueryInGPU(char *queryStr);
+DocScores evaluateQueryInGPU(Query q);
 
 #endif
