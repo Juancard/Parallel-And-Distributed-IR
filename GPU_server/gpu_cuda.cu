@@ -137,20 +137,18 @@ extern "C" DocScores evaluateQueryInCuda(Query q){
 	float *docScores, *dev_docScores;
 
 	printf("Allocating memory for docs scores in GPU\n");
-	docScores = (float *) malloc(sizeof(float) * docs);
+  int a = sizeof(float) * docs;
+  printf("docs: %d\n", a);
+	docScores = (float *) malloc(a);
   printf("Sending to cuda\n");
   CudaSafeCall( cudaMalloc((void **) &dev_docScores, docs * sizeof(float)) );
 
 	printf("Sending query to GPU\n");
-	int* dev_termsId;
-	float* dev_weights;
-  CudaSafeCall( cudaMalloc((void**) &dev_termsId, sizeof(int) * q.size) );
-  CudaSafeCall( cudaMalloc((void**) &dev_weights, sizeof(float) * q.size) );
-  CudaSafeCall( cudaMemcpy(dev_termsId, q.termIds, sizeof(int) * q.size, cudaMemcpyHostToDevice) );
-  CudaSafeCall( cudaMemcpy(dev_weights, q.weights, sizeof(float) * q.size, cudaMemcpyHostToDevice) );
-	free(q.termIds); free(q.weights);
-	q.termIds = dev_termsId; // ?? no me acuerdo para que hice esto
-	q.weights = dev_weights; // ??
+  Query dev_query = q;
+  CudaSafeCall( cudaMalloc((void**) &dev_query.termIds, sizeof(int) * q.size) );
+  CudaSafeCall( cudaMalloc((void**) &dev_query.weights, sizeof(float) * q.size) );
+  CudaSafeCall( cudaMemcpy(dev_query.termIds, q.termIds, sizeof(int) * q.size, cudaMemcpyHostToDevice) );
+  CudaSafeCall( cudaMemcpy(dev_query.weights, q.weights, sizeof(float) * q.size, cudaMemcpyHostToDevice) );
 
 	printf("Starting evaluation...\n");
 	cudaEventRecord(resolveQueryStart);
@@ -159,7 +157,7 @@ extern "C" DocScores evaluateQueryInCuda(Query q){
 		dev_docsNorm,
 		terms,
 		docs,
-		q,
+		dev_query,
 		dev_docScores
 	);
 	CudaCheckError();
@@ -174,8 +172,8 @@ extern "C" DocScores evaluateQueryInCuda(Query q){
 	printf("Time elapsed: %10.4f ms\n", milliseconds);
 
 	cudaFree(dev_docScores);
-	cudaFree(dev_termsId);
-	cudaFree(dev_weights);
+	cudaFree(dev_query.termIds);
+	cudaFree(dev_query.weights);
 
 	DocScores ds;
 	ds.size = docs;

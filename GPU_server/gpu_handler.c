@@ -45,7 +45,9 @@ struct DocScores evaluateQueryInGPU(int *termIds, int *termFreqs, int querySize)
   printf("Searching for: \n");
   displayQuery(q);
 
+
   DocScores ds = evaluateQueryInCuda(q);
+  free(q.weights);
 
   return ds;
 }

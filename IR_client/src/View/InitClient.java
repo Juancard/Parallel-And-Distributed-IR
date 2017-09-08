@@ -87,10 +87,10 @@ public class InitClient {
                     DocScores.removeBehindThreshold(docsScores, 0.0),
                     false
             );
-            CommonMain.display("RANK - DOC - SCORE");
             if (docsScores.isEmpty())
                 CommonMain.display("No documents match your query");
             else{
+                CommonMain.display("RANK - DOC - SCORE");
                 int rank = 1;
                 for (int d : docsScores.keySet()){
                     CommonMain.display(
