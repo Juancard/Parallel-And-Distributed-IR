@@ -59,13 +59,16 @@ public class GpuServerHandler {
 		DataOutputStream out = new DataOutputStream(connection.getSocketOutput());
         DataInputStream in = new DataInputStream(connection.getSocketInput());
 
-        String qStr = query.toSocketString();
-        this.out("Sending query: " + qStr);
+        this.out("Sending query: " + query.toString());
         try {
             out.writeInt(EVALUATE.length());
     		out.writeBytes(EVALUATE);
-    		out.writeInt(qStr.length());
-    		out.writeBytes(qStr);
+            HashMap<Integer, Integer> termsFreq = query.getTermsAndFrequency();
+    		out.writeInt(termsFreq.size());
+    		for (Integer termId : termsFreq.keySet()){
+                out.writeInt(termId);
+                out.writeInt(termsFreq.get(termId));
+            }
         } catch(IOException e) {
         	String m = "Could not send query to GPU. Cause: " + e.getMessage();
 			this.out(m);

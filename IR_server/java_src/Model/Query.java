@@ -4,12 +4,13 @@ import java.io.DataInputStream;
 import java.util.HashMap;
 
 public class Query{
-    private HashMap<Integer, Double> termsToWeight;
+
+    private HashMap<Integer, Integer> termsFreq;
     private IRNormalizer normalizer;
     private HashMap<String, Integer> vocabulary;
 
-    public Query(HashMap<Integer, Double> termsToWeight){
-        this.termsToWeight = termsToWeight;
+    public Query(HashMap<Integer, Integer> termsFreq){
+        this.termsFreq = termsFreq;
     }
 
     public Query(
@@ -19,7 +20,7 @@ public class Query{
     ){
         this.vocabulary = vocabulary;
         this.normalizer = normalizer;
-        this.termsToWeight = new HashMap<Integer, Double>();
+        this.termsFreq = new HashMap<Integer, Integer>();
         String queryNormalized = normalize(query);
         this.setTermsAndWeights(this.tokenize(queryNormalized));
     }
@@ -44,32 +45,32 @@ public class Query{
 
     private void addQueryTerm(String token){
         int termId = this.vocabulary.get(token);
-        double weight = this.termsToWeight.containsKey(termId) ? this.termsToWeight.get(termId) : 0.0;
-        this.termsToWeight.put(termId, weight + 1);
+        int weight = this.termsFreq.containsKey(termId) ? this.termsFreq.get(termId) : 0;
+        this.termsFreq.put(termId, weight + 1);
     }
 
     public boolean isEmptyOfTerms(){
-        return this.termsToWeight.isEmpty();
-    }
-
-    public double getNorm(){
-        double norm = 0;
-        for (int term : termsToWeight.keySet()){
-            norm += termsToWeight.get(term);
-        }
-        return Math.sqrt(norm);
+        return this.termsFreq.isEmpty();
     }
 
 	public void socketRead(DataInputStream out) {}
 
-    public String toSocketString(){
-        String out = String.format("%.6f", this.getNorm()) + "#";
-        double weight;
-        for (int term : termsToWeight.keySet()){
-            weight = termsToWeight.get(term);
-            out += term + ":" + String.format("%.4f", weight) + ";";
-        }
-        return out;
+    public int getNumberOfTerms(){
+        return this.termsFreq.size();
     }
-	
+
+    @Override
+    public String toString() {
+        String qStr = "";
+        for (Integer termId : this.termsFreq.keySet()){
+            qStr += termId + ":" + this.termsFreq.get(termId) + ";";
+        }
+        return "Query{" +
+                qStr +
+                '}';
+    }
+
+    public HashMap<Integer, Integer> getTermsAndFrequency() {
+        return termsFreq;
+    }
 }
