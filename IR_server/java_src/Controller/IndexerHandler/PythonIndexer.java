@@ -23,7 +23,7 @@ public class PythonIndexer {
         this.indexerScript = indexerScript;
     }
 
-    public void callScriptIndex() throws IOException {
+    public synchronized void callScriptIndex() throws IOException {
         List<String> command = new ArrayList<String>();
         command.add("python");
         command.add(this.indexerScript);

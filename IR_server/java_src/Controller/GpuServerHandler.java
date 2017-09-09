@@ -106,7 +106,7 @@ public class GpuServerHandler {
         return docsScore;
 	}
 
-	public boolean loadIndexInGpu() throws IOException{
+	public synchronized boolean loadIndexInGpu() throws IOException{
         this.out(this.connectionMessage());
 		SocketConnection connection = this.connect();
         DataOutputStream out = new DataOutputStream(connection.getSocketOutput());
@@ -122,7 +122,7 @@ public class GpuServerHandler {
         return result == 1;
 	}
 
-    public void sendIndex() throws Exception {
+    public synchronized void sendIndex() throws Exception {
         this.out("Setting up secure connection to Gpu Server");
         JSch jsch = new JSch();
         Session session = null;
