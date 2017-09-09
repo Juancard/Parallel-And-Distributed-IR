@@ -7,7 +7,8 @@
 #include "ir_collection.h"
 
 #define INDEX_PATH "resources/index/"
-#define POSTINGS_FILENAME "seq_posting.txt"
+#define POSTINGS_FILENAME "postings.bin"
+#define POSTINGS_POINTERS_FILENAME "postings_pointers.bin"
 #define MAX_FREQ_PER_DOC_FILENAME "max_freq_in_docs.txt"
 #define METADATA_FILENAME "metadata.txt"
 
@@ -31,11 +32,14 @@ int getCollection(Collection *collection){
   );
 
   printf("Loading postings\n");
-  PostingFreq *postingsFreq = getPostings(
+  PostingFreq *postingsFreq = (PostingFreq *) malloc(sizeof(PostingFreq) * collection->terms);
+  int status = getPostingsBin(
     INDEX_PATH POSTINGS_FILENAME,
+    INDEX_PATH POSTINGS_POINTERS_FILENAME,
+    postingsFreq,
     collection->terms
   );
-  if (postingsFreq == NULL) {
+  if (status != COLLECTION_HANDLER_SUCCESS) {
     printf("Fail at loading postings\n");
     return COLLECTION_HANDLER_FAIL;
   }
@@ -80,7 +84,7 @@ int getCollection(Collection *collection){
   return COLLECTION_HANDLER_SUCCESS;
 }
 
-PostingFreq* getPostings(char* postingsPath, int terms){
+PostingFreq* getPostingsSeq(char* postingsPath, int terms){
   FILE *txtFilePtr = fopen(postingsPath, "r");
   if(txtFilePtr == NULL) {
    printf("Error! No posting file in path %s\n", postingsPath);
@@ -88,6 +92,25 @@ PostingFreq* getPostings(char* postingsPath, int terms){
   }
   return postingsFromSeqFile(txtFilePtr, terms);
 }
+
+int getPostingsBin(
+  char *postingsPath,
+  char *postingsPointersPath,
+  PostingFreq *postings,
+  int terms
+){
+  FILE *pointersFile = fopen(postingsPointersPath, "rb");
+  if(pointersFile == NULL) {
+   printf("Error! No posting pointers file in path %s\n", postingsPath);
+   return COLLECTION_HANDLER_FAIL;
+  }
+  PointerToPosting *pointers = (PointerToPosting *) malloc(sizeof(PointerToPosting) * terms);
+  postingsPointersFromBinFile(pointersFile, pointers, terms);
+  displayPointers(pointers, terms);
+  free(pointers);
+  return COLLECTION_HANDLER_SUCCESS;
+}
+
 
 int* getMaxFreqPerDoc(char* filePath, int docs){
   FILE *txtFilePtr = fopen(filePath, "r");

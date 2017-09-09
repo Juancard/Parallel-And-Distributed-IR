@@ -3,6 +3,19 @@
 #include <string.h>
 #include "ir_collection.h"
 
+int postingsPointersFromBinFile(
+  FILE *pointersFile,
+  PointerToPosting *pointers,
+  int terms
+){
+  int df, pointer;
+  int i; for(i=0; i<terms; i++){
+    fread(&pointers[i].df, sizeof(int), 1, pointersFile);
+    fread(&pointers[i].pointer, sizeof(int), 1, pointersFile);
+  }
+  return 0;
+}
+
 PostingFreq* postingsFromSeqFile(FILE *postingsFile, int totalTerms) {
   const int MAX_BYTES_READ_PER_LINE = 1000000;
   char line[MAX_BYTES_READ_PER_LINE];
@@ -159,6 +172,16 @@ void displayPostingFreq(PostingFreq* postings, int size){
         termPosting.docIds[j],
         termPosting.freq[j]
       );
+  }
+}
+
+void displayPointers(PointerToPosting *pointers, int size){
+  int i;
+  printf("total terms: %d\n", size);
+  printf("tId - df - pointer\n");
+  for (i = 0; i < size; i++) {
+    PointerToPosting pp = pointers[i];
+    printf("%d - %d - %d\n", i, pp.df, pp.pointer);
   }
 }
 

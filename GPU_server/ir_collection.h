@@ -24,19 +24,33 @@ typedef struct Collection {
    float *docsNorms;
    float *idf;
    PostingTfIdf *postings;
- } Collection;
+} Collection;
 
- typedef struct CorpusMetadata {
-   int docs;
-   int terms;
- } CorpusMetadata;
+typedef struct CorpusMetadata {
+ int docs;
+ int terms;
+} CorpusMetadata;
 
- void displayPostingTfIdf(PostingTfIdf *postings, int size);
- void displayPostingFreq(PostingFreq *postings, int size);
- PostingFreq* postingsFromSeqFile(FILE *postingsFile, int totalTerms);
- float* docsNormFromSeqFile(FILE *docsNormFile, int totalDocs);
- int* maxFreqFromSeqFile(FILE *filePath, int totalDocs);
- int loadMetadataFromFile(FILE *metadataFile, CorpusMetadata *metadataStruct);
- PostingTfIdf* LoadDummyPostings(int size);
+typedef struct PointerToPosting {
+ int pointer;
+ int df;
+} PointerToPosting;
 
- #endif
+void displayPostingTfIdf(PostingTfIdf *postings, int size);
+void displayPostingFreq(PostingFreq *postings, int size);
+void displayPointers(PointerToPosting *pointers, int size);
+
+int postingsPointersFromBinFile(
+  FILE *pointersFile,
+  PointerToPosting *pointers,
+  int terms
+);
+
+PostingFreq* postingsFromSeqFile(FILE *postingsFile, int totalTerms);
+float* docsNormFromSeqFile(FILE *docsNormFile, int totalDocs);
+int* maxFreqFromSeqFile(FILE *filePath, int totalDocs);
+int loadMetadataFromFile(FILE *metadataFile, CorpusMetadata *metadataStruct);
+
+PostingTfIdf* LoadDummyPostings(int size);
+
+#endif
