@@ -45,6 +45,13 @@ int postingsPointersFromBinFile(
   PointerToPosting *pointers,
   int terms
 );
+int loadBinaryPostings(
+  FILE *postingsFile,
+  PostingFreq *p,
+  PointerToPosting *pointers,
+  int terms
+);
+
 
 PostingFreq* postingsFromSeqFile(FILE *postingsFile, int totalTerms);
 float* docsNormFromSeqFile(FILE *docsNormFile, int totalDocs);

@@ -15,6 +15,23 @@ int postingsPointersFromBinFile(
   }
   return 0;
 }
+int loadBinaryPostings(
+  FILE *postingsFile,
+  PostingFreq *p,
+  PointerToPosting *pointers,
+  int terms
+){
+  int df;
+  int i; for(i=0; i<terms; i++){
+    p[i].docsLength = pointers[i].df;
+    p[i].docIds = (int *) malloc(sizeof(int) * p[i].docsLength);
+    p[i].freq = (int *) malloc(sizeof(int) * p[i].docsLength);
+    fseek(postingsFile, pointers[i].pointer, SEEK_SET);
+    fread(p[i].docIds, sizeof(int), p[i].docsLength, postingsFile);
+    fread(p[i].freq, sizeof(int), p[i].docsLength, postingsFile);
+  }
+  return 0;
+}
 
 PostingFreq* postingsFromSeqFile(FILE *postingsFile, int totalTerms) {
   const int MAX_BYTES_READ_PER_LINE = 1000000;

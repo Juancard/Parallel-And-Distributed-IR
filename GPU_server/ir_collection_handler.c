@@ -105,8 +105,24 @@ int getPostingsBin(
    return COLLECTION_HANDLER_FAIL;
   }
   PointerToPosting *pointers = (PointerToPosting *) malloc(sizeof(PointerToPosting) * terms);
-  postingsPointersFromBinFile(pointersFile, pointers, terms);
-  displayPointers(pointers, terms);
+  postingsPointersFromBinFile(
+    pointersFile,
+    pointers,
+    terms
+  );
+
+  FILE *postingsFile = fopen(postingsPath, "rb");
+  if(postingsFile == NULL) {
+   printf("Error! No postings file in path %s\n", postingsPath);
+   return COLLECTION_HANDLER_FAIL;
+  }
+  loadBinaryPostings(
+    postingsFile,
+    postings,
+    pointers,
+    terms
+  );
+
   free(pointers);
   return COLLECTION_HANDLER_SUCCESS;
 }
