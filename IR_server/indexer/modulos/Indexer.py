@@ -5,7 +5,6 @@ import os
 import codecs
 import numpy as np
 import logging
-logging.basicConfig(format='%(levelname)s: %(message)s')
 
 from LexAnalyser import LexAnalyser
 from Vocabulary import Vocabulary

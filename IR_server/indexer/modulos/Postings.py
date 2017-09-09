@@ -213,7 +213,7 @@ class BinaryPostings(object):
 	@classmethod
 	# CUIDADO: DGAPS AUN NO COMPLETO, NO IMPLEMENTAR
 	def create(self, postings, path="index_data/",
-			title="binary_postings.dat", dgaps=False):
+			title="binary_postings.bin", dgaps=False):
 		path = path + title
 		termToPointer = collections.OrderedDict()
 		pointer = 0
@@ -224,15 +224,38 @@ class BinaryPostings(object):
 					"lenDocs": len(postings[pId])
 				}
 				docIds = postings[pId].keys()
+				freqs = postings[pId].values()
 				if dgaps:
 					docsToWrite = self.deltaEncode(self, docIds)
 				else:
 					docsToWrite = docIds
 				f.write(struct.pack('<%sI' % len(docsToWrite), *docsToWrite))
-				for docId in docIds:
-					f.write(struct.pack('<f', postings[pId][docId]))
+				f.write(struct.pack('<%sI' % len(freqs), *freqs))
 				pointer += len(docIds) * 4 * 2
 		return BinaryPostings(path, termToPointer, dgaps)
+
+	def storeTermToPointer(self, path="index_data/",
+			title="term_to_pointer.bin"):
+		file_path = path + title
+		with open(file_path, "wb") as f:
+			for tId in self.termToPointer:
+				pointer = self.termToPointer[tId]["pointer"]
+				df = self.termToPointer[tId]["lenDocs"]
+				f.write(struct.pack('<I', df))
+				f.write(struct.pack('<I', pointer))
+		return file_path
+	def readTermToPointerBinaryFile(self, terms, path="index_data/",
+			title="term_to_pointer.bin"):
+		file_path = path + title
+		tp = {}
+		with open(file_path, "rb") as f:
+			for t in range(terms):
+				tp[t] = {}
+				bDf = f.read(4)
+				bPointer = f.read(4)
+				tp[t]["lenDocs"] = struct.unpack('<I', bDf)[0]
+				tp[t]["pointer"] = struct.unpack('<I', bPointer)[0]
+		return tp
 
 	@staticmethod
 	# NO IMPLEMENTAR
@@ -264,7 +287,7 @@ class BinaryPostings(object):
 
 			# Leo frecuencias
 			bFreqs = f.read(lenDocs * 4)
-			freqs = struct.unpack('<%if' % lenDocs, bFreqs)
+			freqs = struct.unpack('<%iI' % lenDocs, bFreqs)
 
 			# Armo posting
 			for i in range(len(docIds)):

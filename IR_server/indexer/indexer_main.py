@@ -10,7 +10,7 @@ sys.path.insert(0, os.path.abspath(os.getcwd()))
 from modulos.Collection import Collection
 from modulos.Indexer import Indexer
 from modulos.PicklePersist import PicklePersist
-from modulos.Postings import SequentialPostings
+from modulos.Postings import SequentialPostings, BinaryPostings
 
 def loadIni():
 	INI_PATH = os.path.dirname(os.path.realpath(__file__)) + "/indexer.ini"
@@ -74,9 +74,9 @@ def main():
 		f.write(tStr)
 	logging.info("Vocabulario guardado en: %s" % vocabularyFile)
 
-	sp = SequentialPostings.create(indexer.postings.getAll(),
-		path=INDEX_DIR, title="seq_posting.txt")
-	logging.info("Postings guardadas en: %s" % sp.path)
+	bp = BinaryPostings.create(indexer.postings.getAll(), path=INDEX_DIR, title="postings.bin")
+	logging.info("Postings guardadas en: %s" % bp.path)
+	logging.info("Pointers to postings guardadas en: %s" % bp.storeTermToPointer(path=INDEX_DIR, title="postings_pointers.bin"))
 
 	docStr = ""
 	with open(INDEX_DIR + "max_freq_in_docs.txt", "w") as f:
