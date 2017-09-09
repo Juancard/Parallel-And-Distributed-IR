@@ -4,6 +4,7 @@ import sys
 import os
 import codecs
 import numpy as np
+import logging
 from LexAnalyser import LexAnalyser
 from Vocabulary import Vocabulary
 from Postings import DictionaryPostings
@@ -40,7 +41,7 @@ class Indexer(object):
 
 			#----------LEER-ARCHIVO--------------------#
 
-			print "Cargando " + actualDoc["name"]
+			logging.info("Cargando " + actualDoc["name"])
 			with codecs.open(filePath, mode='rt', encoding='utf-8') as f:
 
 				# Guardo tokens y terminos del documento
@@ -68,11 +69,11 @@ class Indexer(object):
 			#------FIN-LEER-ARCHIVO--------------------#
 
 		#----------------FIN-LEER-COLECCION---------#
-		print "Generando stats"
+		logging.info("Generando stats")
 		self.endStats()
-		print u"Ordenando vocabulario alfabeticamente"
+		logging.info(u"Ordenando vocabulario alfabeticamente")
 		self.vocabulary.setAlphabeticalOrder()
-		print u"Generando id de los terminos"
+		logging.info(u"Generando id de los terminos")
 		self.setTermsId()
 		self.postings.sortByKey()
 		#self.positions.sortByKey()
