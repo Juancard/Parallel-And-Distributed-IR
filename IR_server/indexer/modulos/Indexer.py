@@ -12,16 +12,18 @@ from Documents import Documents
 
 class Indexer(object):
 
-	def __init__(self, collection):
+	def __init__(self, collection, doStats=False):
 		self.collection = collection
 		self.lexAnalyser = False
-		self.stats = self.getInitStats()
+		self.calculateStats = doStats
 		self.vocabulary = Vocabulary()
 		self.postings = DictionaryPostings({})
 		self.documents = Documents()
 		self.documentsTerms = {}
 		self.maxFreqInDocs = {}
 		#self.positions = DictionaryPostings({})
+		if self.calculateStats:
+			self.stats = self.getInitStats()
 
 	def index(self, config):
 		"""Indexa la coleccion dada"""
@@ -32,6 +34,9 @@ class Indexer(object):
 		#-----------------LEER-COLECCION--------------#
 		docId = 0
 		for filePath in self.collection.allFiles():
+			if (not filePath.lower().endswith('.txt')):
+				logging.warning("following file will not be indexed: " + filePath)
+				continue
 
 			# Guardo los datos del archivo actual
 			actualDoc = {
@@ -63,14 +68,17 @@ class Indexer(object):
 			# Actualizo vocabulario
 			self.updateIndex(docId, terms)
 			#Actualizo stats
-			self.updateStats(tokens, terms)
+			if self.calculateStats:
+				self.updateStats(tokens, terms)
 
 			docId += 1
 			#------FIN-LEER-ARCHIVO--------------------#
 
 		#----------------FIN-LEER-COLECCION---------#
-		logging.info("Generando stats")
-		self.endStats()
+		if self.calculateStats:
+			logging.info("Generando stats")
+			self.endStats()
+			
 		logging.info(u"Ordenando vocabulario alfabeticamente")
 		self.vocabulary.setAlphabeticalOrder()
 		logging.info(u"Generando id de los terminos")
@@ -150,10 +158,17 @@ class Indexer(object):
 			self.stats["shortestDoc"]["terms_count"] = termsLength
 
 	def endStats(self):
-		self.stats["terms_count"] = len(self.vocabulary.content)
-		self.stats["avg_tokens_by_doc"] = self.stats["tokens_count"] / self.stats["docs_count"]
-		self.stats["avg_terms_by_doc"] = self.stats["terms_count"] / self.stats["docs_count"]
-		self.stats["avg_term_length"] = sum([len(key) for key in self.vocabulary.content]) / (len(self.vocabulary.content) + 0.0)
+		nuberOfTerms = len(self.vocabulary.content)
+		self.stats["terms_count"] = nuberOfTerms
+
+		if self.stats["docs_count"] == 0:
+			self.stats["avg_tokens_by_doc"] = 0
+			self.stats["avg_terms_by_doc"] = 0
+		else:
+			self.stats["avg_tokens_by_doc"] = self.stats["tokens_count"] / self.stats["docs_count"]
+			self.stats["avg_terms_by_doc"] = self.stats["terms_count"] / self.stats["docs_count"]
+
+		self.stats["avg_term_length"] = 0 if nuberOfTerms == 0 else sum([len(key) for key in self.vocabulary.content]) / (nuberOfTerms + 0.0)
 		self.stats["terms_freq_one"] = len([key for key in self.vocabulary.content if self.vocabulary.getCF(key) == 1])
 
 

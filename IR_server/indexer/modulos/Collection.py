@@ -21,10 +21,10 @@ class Collection(object):
 	def filesAndDirectories(self):
 		"""Devuelve archivos y subdirectorios de la coleccion"""
 		return self.content
-	
+
 	def allFiles(self):
 		"""Devuelve todos los archivos incluyendo archivos en todos los subdirectorios"""
-		allFiles = []		
+		allFiles = []
 		for dirpath, dirnames, filenames in os.walk(self.path):
 			for filename in filenames:
         			allFiles.append(os.path.join(dirpath, filename))
@@ -33,5 +33,5 @@ class Collection(object):
 	def getName(self):
 		return os.path.basename(os.path.normpath(self.path))
 
-	def onlyFilesName(self):		
+	def onlyFilesName(self):
 		return [f for f in self.content if os.path.isfile(os.path.join(self.path, f))]
