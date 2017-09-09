@@ -5,6 +5,7 @@ import json
 import ConfigParser
 import logging
 import argparse
+import struct
 
 sys.path.insert(0, os.path.abspath(os.getcwd()))
 from modulos.Collection import Collection
@@ -78,17 +79,15 @@ def main():
 	logging.info("Postings guardadas en: %s" % bp.path)
 	logging.info("Pointers to postings guardadas en: %s" % bp.storeTermToPointer(path=INDEX_DIR, title="postings_pointers.bin"))
 
-	docStr = ""
-	with open(INDEX_DIR + "max_freq_in_docs.txt", "w") as f:
-		for docId in indexer.maxFreqInDocs:
-			docStr += "%d:%d\n" % (docId, indexer.maxFreqInDocs[docId])
-		f.write(docStr)
-	logging.info("Max freq per doc guardadas en: " + INDEX_DIR + "max_freq_in_docs.txt")
+	with open(INDEX_DIR + "max_freq_in_docs.bin", "wb") as f:
+		max_freqs = indexer.maxFreqInDocs.values()
+		f.write(struct.pack('<%sI' % len(max_freqs), *max_freqs))
+	logging.info("Max freq per doc guardadas en: " + INDEX_DIR + "max_freq_in_docs.bin")
 
-	with open(INDEX_DIR + "metadata.txt", "w") as f:
-		f.write("docs:%d\n" % len(indexer.documents.content));
-		f.write("terms:%d\n" % len(indexer.vocabulary.content));
-	logging.info("Metadata guardada en: " + INDEX_DIR + "metadata.txt")
+	with open(INDEX_DIR + "metadata.bin", "wb") as f:
+		f.write(struct.pack('<I', len(indexer.documents.content)))
+		f.write(struct.pack('<I', len(indexer.vocabulary.content)))
+	logging.info("Metadata guardada en: " + INDEX_DIR + "metadata.bin")
 
 if __name__ == "__main__":
 	main()
