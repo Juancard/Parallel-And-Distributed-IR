@@ -67,7 +67,7 @@ public class IRWorker extends MyCustomWorker{
             this.display("Calling python script");
             this.pythonIndexer.callScriptIndex();
         } catch (IOException e) {
-            String m = "Error calling indexer script: " + e.getMessage();
+            String m = "Error on indexer script: " + e.getMessage();
             this.display(m);
             return new IOException(m);
         }

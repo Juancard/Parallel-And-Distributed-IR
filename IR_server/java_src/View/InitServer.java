@@ -78,9 +78,15 @@ public class InitServer {
         }
     }
 
-    private void setupPythonIndexer(Properties properties) {
+    private void setupPythonIndexer(Properties properties) throws IndexerException{
+
         String corpus = properties.getProperty("IR_CORPUS_PATH");
+        if (!this.isValidDirectory(corpus))
+            throw new IndexerException("Loading python indexer: IR_CORPUS_PATH is not a valid path");
+
         String indexerScript = properties.getProperty("IR_INDEXER_SCRIPT");
+        if (!this.isValidFile(indexerScript))
+            throw new IndexerException("Loading python indexer: IR_INDEXER_SCRIPT was not set");
 
         this.pyIndexer = new PythonIndexer(
                 indexerScript,
@@ -128,5 +134,18 @@ public class InitServer {
             System.out.println("setting tunnel at " + sshTunnelHost + ":" + sshTunnelPort);
             this.gpuHandler.setSshTunnel(sshTunnelHost, new Integer(sshTunnelPort));
         }
+    }
+
+    private boolean isValidDirectory(String path){
+        return path != null
+                && !path.isEmpty()
+                && (new File(path)).exists()
+                && (new File(path)).isDirectory();
+    }
+    private boolean isValidFile(String path){
+        return path != null
+                && !path.isEmpty()
+                && (new File(path)).exists()
+                && (new File(path)).isFile();
     }
 }

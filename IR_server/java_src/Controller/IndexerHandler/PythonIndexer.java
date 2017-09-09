@@ -41,13 +41,11 @@ public class PythonIndexer {
         StringBuilder stderr = commandExecutor.getStandardErrorFromCommand();
 
         // print the output from the command
-        System.out.println("STDOUT");
-        System.out.println(stdout);
-        System.out.println("STDERR");
-        System.out.println(stderr);
-        /*
-            TODO: HANDLE STDERR
-         */
+        if (stdout.length() > 0)
+            System.out.println(stdout);
+        if (stderr.length() > 0){
+            throw new IOException(stderr.toString());
+        }
     }
 
 }
