@@ -44,7 +44,17 @@ public class PythonIndexer {
         if (stdout.length() > 0)
             System.out.println(stdout);
         if (stderr.length() > 0){
-            throw new IOException(stderr.toString());
+            String[] errors = stderr.toString().split("\n");
+            String exceptions = "";
+            for (String err : errors){
+                if (err.startsWith("WARNING"))
+                    System.out.println(err);
+                else {
+                    exceptions += err;
+                }
+            }
+            if (!exceptions.isEmpty())
+                throw new IOException(exceptions);
         }
     }
 

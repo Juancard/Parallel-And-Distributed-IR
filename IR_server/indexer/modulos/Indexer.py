@@ -5,6 +5,8 @@ import os
 import codecs
 import numpy as np
 import logging
+logging.basicConfig(format='%(levelname)s: %(message)s')
+
 from LexAnalyser import LexAnalyser
 from Vocabulary import Vocabulary
 from Postings import DictionaryPostings
@@ -24,6 +26,7 @@ class Indexer(object):
 		#self.positions = DictionaryPostings({})
 		if self.calculateStats:
 			self.stats = self.getInitStats()
+
 
 	def index(self, config):
 		"""Indexa la coleccion dada"""
@@ -78,7 +81,7 @@ class Indexer(object):
 		if self.calculateStats:
 			logging.info("Generando stats")
 			self.endStats()
-			
+
 		logging.info(u"Ordenando vocabulario alfabeticamente")
 		self.vocabulary.setAlphabeticalOrder()
 		logging.info(u"Generando id de los terminos")

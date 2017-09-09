@@ -45,7 +45,7 @@ def loadArgParser():
 def main():
 	args = loadArgParser()
 	if args.verbose:
-		logging.basicConfig(format='%(asctime)s %(levelname)s: %(message)s', level=logging.DEBUG)
+		logging.basicConfig(format='%(levelname)s: %(message)s', level=logging.DEBUG)
 
 	try:
 		collection = Collection(args.corpus_path)
