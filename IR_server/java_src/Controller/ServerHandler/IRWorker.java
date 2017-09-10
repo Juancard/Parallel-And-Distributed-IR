@@ -80,7 +80,7 @@ public class IRWorker extends MyCustomWorker{
                     + ":"
                     + this.gpuHandler.getPort()
             );
-            this.gpuHandler.sendIndex();
+            this.gpuHandler.sendIndexViaSsh();
         } catch (Exception e) {
             String m = "Error on communication with Gpu : " + e.getMessage();
             this.display(m);

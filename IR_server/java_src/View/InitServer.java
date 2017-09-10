@@ -8,10 +8,12 @@ import Controller.GpuServerHandler;
 import Controller.IndexerHandler.IndexerConfig;
 import Controller.IndexerHandler.IndexerException;
 import Controller.ServerHandler.IRWorkerFactory;
+import Controller.SshHandler;
 import Model.IRNormalizer;
 import Controller.ServerHandler.IRServer;
 import Controller.IndexerHandler.PythonIndexer;
 import Model.Vocabulary;
+import com.jcraft.jsch.JSchException;
 import org.ini4j.Ini;
 
 public class InitServer {
@@ -110,7 +112,7 @@ public class InitServer {
         }
     }
 
-    private void setupGpuServer(Properties properties) {
+    private void setupGpuServer(Properties properties) throws IOException {
         String host = properties.getProperty("GPU_HOST");
         int port = new Integer(properties.getProperty("GPU_PORT"));
         String username = properties.getProperty("GPU_USERNAME");
@@ -120,18 +122,20 @@ public class InitServer {
         int sshPort = new Integer(properties.getProperty("GPU_SSH_PORT"));
         String gpuIndexPath = properties.getProperty("GPU_INDEX_PATH");
 
+        SshHandler ssh = new SshHandler(host, port, username, pass, sshPort);
+        if (!ssh.directoryIsInRemote(gpuIndexPath))
+            throw new IOException("GPU_INDEX_PATH directory does not exists in Gpu Server");
+
         this.gpuHandler = new GpuServerHandler(
                 host,
                 port,
-                username,
-                pass,
-                sshPort,
                 gpuIndexPath
         );
         if (sshTunnelHost != null & sshTunnelPort!=null){
             System.out.println("setting tunnel at " + sshTunnelHost + ":" + sshTunnelPort);
             this.gpuHandler.setSshTunnel(sshTunnelHost, new Integer(sshTunnelPort));
         }
+        this.gpuHandler.setSshHandler(ssh);
 
         File irIndexPath = this.indexerConfiguration.getIndexPath();
         File vocabularyFile = this.vocabulary.getVocabularyFile();

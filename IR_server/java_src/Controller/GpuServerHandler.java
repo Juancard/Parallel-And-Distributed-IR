@@ -12,17 +12,12 @@ import com.jcraft.jsch.*;
 public class GpuServerHandler {
 	private static final String INDEX = "IND";
 	private static final String EVALUATE = "EVA";
-    private final String username;
-    private final String pass;
-    private final int sshPort;
-    private final String indexPath;
+
+    private String host;
+    private int port;
+    private final String gpuIndexPath;
 
     private ArrayList<String> indexFiles;
-
-    private int port;
-	private String host;
-
-
 
 	// Implements Ssh tunnel to connect to GPU server
     // Reason: Cuda gpu in Cidetic can not be accessed outside their private network
@@ -30,20 +25,17 @@ public class GpuServerHandler {
     private int sshTunnelPort;
 	private String sshTunnelHost;
 
-	public GpuServerHandler(
+	// Used when sending index via ssh
+    private SshHandler sshHandler;
+
+    public GpuServerHandler(
             String host,
             int port,
-            String username,
-            String pass,
-            int sshPort,
             String gpuIndexPath
     ) {
 		this.host = host;
 		this.port = port;
-        this.username = username;
-        this.pass = pass;
-        this.sshPort = sshPort;
-        this.indexPath = gpuIndexPath;
+		this.gpuIndexPath = gpuIndexPath;
 
         this.isSshTunnel = false;
         this.indexFiles = new ArrayList<String>();
@@ -125,63 +117,25 @@ public class GpuServerHandler {
         return result == 1;
 	}
 
-    public synchronized void sendIndex() throws Exception {
-        this.out("Setting up secure connection to Gpu Server");
-        JSch jsch = new JSch();
-        Session session = null;
-        try {
-            session = jsch.getSession(this.username, this.host,this.sshPort);
-        } catch (JSchException e) {
-            String m = "Stablishing session on remote GPU. Cause: " + e.getMessage();
-            throw new JSchException(m);
-        }
-        session.setPassword(this.pass);
-        java.util.Properties config = new java.util.Properties();
-        config.put("StrictHostKeyChecking", "no");
-        session.setConfig(config);
-        this.out("Connecting via ssh to Gpu server at " + this.host + ":" + this.port);
-        try {
-            session.connect();
-        } catch (JSchException e) {
-            String m = "Starting session on remote GPU. Cause: " + e.getMessage();
-            throw new JSchException(m);
-        }
-        this.out("Opening sftp channel");
-        Channel channel = null;
-        try {
-            channel = session.openChannel("sftp");
-        } catch (JSchException e) {
-            String m = "Opening sftp channel on remote GPU. Cause: " + e.getMessage();
-            throw new JSchException(m);
-        }
-        try {
-            channel.connect();
-        } catch (JSchException e) {
-            String m = "Connecting sftp channel on remote GPU. Cause: " + e.getMessage();
-            throw new JSchException(m);
-        }
-        ChannelSftp channelSftp = (ChannelSftp)channel;
-
-        try {
-            this.out(
-                    "Changing directory from "
-                            + channelSftp.pwd()
-                            + " to: "
-                            + this.indexPath);
-            channelSftp.cd(this.indexPath);
-        } catch (SftpException e) {
-            System.err.println(e);
-            String m = "Could not find index folder in gpu. Cause: " + e.getMessage();
-            throw new Exception(m);
-        }
-
-        for (String filePath : this.indexFiles){
-            File f = new File(filePath);
-            this.out("Sending index: transfering " + f.getName());
-            channelSftp.put(new FileInputStream(f), f.getName());
-        }
+	public synchronized void sendIndexViaSocket() throws IOException{
+	                /*
+            String fname = "/home/juan/Documentos/unlu/sis_dis/trabajo_final/parallel-and-distributed-IR/IR_server/Resources/Index/metadata.bin";
+            File file = new File(fname);
+            byte[] fileData = new byte[(int) file.length()];
+            DataInputStream dis = new DataInputStream(new FileInputStream(file));
+            System.out.println(Integer.reverseBytes(dis.readInt()) + " " + Integer.reverseBytes(dis.readInt()));
+            //dis.readFully(fileData);
+            dis.close();
+                        */
     }
 
+    public void setSshHandler(SshHandler sshHandler){
+        this.sshHandler = sshHandler;
+    }
+
+    public synchronized void sendIndexViaSsh() throws IOException {
+        this.sshHandler.sendViaSftp(this.gpuIndexPath, this.indexFiles);
+    }
 
     private SocketConnection connect() throws IOException {
 	    String host = (this.isSshTunnel)? this.sshTunnelHost : this.host;
@@ -205,12 +159,9 @@ public class GpuServerHandler {
     @Override
     public String toString() {
         return "GpuServerHandler{" +
-                "username='" + username + '\'' +
-                ", pass='" + pass + '\'' +
-                ", sshPort=" + sshPort +
-                ", indexPath='" + indexPath + '\'' +
+                " host='" + host + '\'' +
                 ", port=" + port +
-                ", host='" + host + '\'' +
+                ", indexPath='" + gpuIndexPath + '\'' +
                 '}';
     }
 
