@@ -92,7 +92,10 @@ PostingFreq* getPostingsSeq(char* postingsPath, int terms){
    printf("Error! No posting file in path %s\n", postingsPath);
    //return COLLECTION_HANDLER_FAIL;
   }
-  return postingsFromSeqFile(txtFilePtr, terms);
+  PostingFreq* p = postingsFromSeqFile(txtFilePtr, terms);
+  fclose(txtFilePtr);
+
+  return p;
 }
 
 int getPostingsBin(
@@ -116,6 +119,7 @@ int getPostingsBin(
     printf("Error while loading postings pointers from file");
     return COLLECTION_HANDLER_FAIL;
   }
+  fclose(pointersFile);
 
   FILE *postingsFile = fopen(postingsPath, "rb");
   if(postingsFile == NULL) {
@@ -129,11 +133,12 @@ int getPostingsBin(
     terms
   );
   free(pointers);
+  fclose(pointersFile);
+
   if (status != COLLECTION_OPERATION_SUCCESS){
     printf("Error while loading postings from file");
     return COLLECTION_HANDLER_FAIL;
   }
-
   return COLLECTION_HANDLER_SUCCESS;
 }
 
@@ -144,8 +149,9 @@ int getMaxFreqPerDoc(char* filePath, int *maxFreq, int docs){
     printf("Error! No max. freq. per doc file in path %s\n", filePath);
     return COLLECTION_HANDLER_FAIL;
   }
-
   int status = maxFreqFromBinFile(maxFreqFile, maxFreq, docs);
+  fclose(maxFreqFile);
+
   return (status == COLLECTION_OPERATION_SUCCESS)? COLLECTION_HANDLER_SUCCESS : COLLECTION_HANDLER_FAIL;
 }
 
@@ -214,6 +220,8 @@ int getCorpusMetadata(char *metadataFilePath, CorpusMetadata *metadata){
     return COLLECTION_HANDLER_FAIL;
   }
   int status = loadMetadataFromBinFile(metadataFile, metadata);
+  fclose(metadataFile);
+
   return (status == COLLECTION_OPERATION_SUCCESS)? COLLECTION_HANDLER_SUCCESS : COLLECTION_HANDLER_FAIL;
 }
 
