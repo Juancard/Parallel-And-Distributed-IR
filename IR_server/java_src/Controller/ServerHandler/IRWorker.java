@@ -63,6 +63,7 @@ public class IRWorker extends MyCustomWorker{
     }
 
     private Object index() {
+
         try {
             this.display("Calling python script");
             this.pythonIndexer.callScriptIndex();
@@ -72,7 +73,6 @@ public class IRWorker extends MyCustomWorker{
             return new IOException(m);
         }
 
-        //HARDCODE: ASSUMING PYTHON SCRIPT WILL NOT FAIL
         try {
             this.display(
                     "Connecting to Gpu server at "

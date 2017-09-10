@@ -8,10 +8,15 @@ int postingsPointersFromBinFile(
   PointerToPosting *pointers,
   int terms
 ){
-  int df, pointer;
+  int df, pointerAcum=0;
   int i; for(i=0; i<terms; i++){
     fread(&pointers[i].df, sizeof(int), 1, pointersFile);
-    fread(&pointers[i].pointer, sizeof(int), 1, pointersFile);
+    pointers[i].pointer = pointerAcum;
+
+    // moves pointer to total bytes read
+    // 4 bytes is size of integers
+    // 2 refers to both docIds and freqs lists
+    pointerAcum += pointers[i].df * 4 * 2;
   }
   return COLLECTION_OPERATION_SUCCESS;
 }

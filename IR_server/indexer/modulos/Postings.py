@@ -238,12 +238,10 @@ class BinaryPostings(object):
 			title="term_to_pointer.bin"):
 		file_path = path + title
 		with open(file_path, "wb") as f:
-			for tId in self.termToPointer:
-				pointer = self.termToPointer[tId]["pointer"]
-				df = self.termToPointer[tId]["lenDocs"]
-				f.write(struct.pack('<I', df))
-				f.write(struct.pack('<I', pointer))
+			dfs = [self.termToPointer[t]["lenDocs"] for t in self.termToPointer]
+			f.write(struct.pack('<%sI' % len(dfs), *dfs))
 		return file_path
+		
 	def readTermToPointerBinaryFile(self, terms, path="index_data/",
 			title="term_to_pointer.bin"):
 		file_path = path + title
