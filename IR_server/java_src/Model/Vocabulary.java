@@ -40,4 +40,8 @@ public class Vocabulary {
         }
         return vocabulary;
     }
+
+    public File getVocabularyFile(){
+        return this.vocabularyFile;
+    }
 }

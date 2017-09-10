@@ -1,6 +1,7 @@
 package Controller;
 
 import java.io.*;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Vector;
 
@@ -15,10 +16,13 @@ public class GpuServerHandler {
     private final String pass;
     private final int sshPort;
     private final String indexPath;
-    private final File irIndexPath;
+
+    private ArrayList<String> indexFiles;
 
     private int port;
 	private String host;
+
+
 
 	// Implements Ssh tunnel to connect to GPU server
     // Reason: Cuda gpu in Cidetic can not be accessed outside their private network
@@ -32,8 +36,7 @@ public class GpuServerHandler {
             String username,
             String pass,
             int sshPort,
-            String gpuIndexPath,
-            File irIndexPath
+            String gpuIndexPath
     ) {
 		this.host = host;
 		this.port = port;
@@ -41,9 +44,9 @@ public class GpuServerHandler {
         this.pass = pass;
         this.sshPort = sshPort;
         this.indexPath = gpuIndexPath;
-        this.irIndexPath = irIndexPath;
 
         this.isSshTunnel = false;
+        this.indexFiles = new ArrayList<String>();
 	}
 
 	public HashMap<Integer, Double> sendQuery(Query query) throws IOException{
@@ -172,8 +175,8 @@ public class GpuServerHandler {
             throw new Exception(m);
         }
 
-        File[] indexFiles = this.irIndexPath.listFiles();
-        for (File f : indexFiles){
+        for (String filePath : this.indexFiles){
+            File f = new File(filePath);
             this.out("Sending index: transfering " + f.getName());
             channelSftp.put(new FileInputStream(f), f.getName());
         }
@@ -206,7 +209,6 @@ public class GpuServerHandler {
                 ", pass='" + pass + '\'' +
                 ", sshPort=" + sshPort +
                 ", indexPath='" + indexPath + '\'' +
-                ", irIndexPath='" + irIndexPath + '\'' +
                 ", port=" + port +
                 ", host='" + host + '\'' +
                 '}';
@@ -224,6 +226,21 @@ public class GpuServerHandler {
         this.sshTunnelHost = host;
         this.sshTunnelPort = port;
         this.isSshTunnel = true;
+    }
+
+    public boolean addIndexFile(String filePath){
+        boolean isValidFile = filePath != null
+                && !filePath.isEmpty()
+                && new File(filePath).exists()
+                && new File(filePath).isFile();
+        if (!isValidFile)
+            return false;
+        this.indexFiles.add(filePath);
+        return true;
+    }
+    public boolean removeIndexFile(String filePath){
+        return this.indexFiles.contains(filePath)
+                && this.indexFiles.remove(filePath);
     }
 
 }

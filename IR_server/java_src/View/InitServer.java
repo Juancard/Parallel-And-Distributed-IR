@@ -119,7 +119,6 @@ public class InitServer {
         String sshTunnelPort = properties.getProperty("GPU_TUNNEL_PORT");
         int sshPort = new Integer(properties.getProperty("GPU_SSH_PORT"));
         String gpuIndexPath = properties.getProperty("GPU_INDEX_PATH");
-        File irIndexPath = this.indexerConfiguration.getIndexPath();
 
         this.gpuHandler = new GpuServerHandler(
                 host,
@@ -127,13 +126,18 @@ public class InitServer {
                 username,
                 pass,
                 sshPort,
-                gpuIndexPath,
-                irIndexPath
+                gpuIndexPath
         );
         if (sshTunnelHost != null & sshTunnelPort!=null){
             System.out.println("setting tunnel at " + sshTunnelHost + ":" + sshTunnelPort);
             this.gpuHandler.setSshTunnel(sshTunnelHost, new Integer(sshTunnelPort));
         }
+
+        File irIndexPath = this.indexerConfiguration.getIndexPath();
+        File vocabularyFile = this.vocabulary.getVocabularyFile();
+        for (File f : irIndexPath.listFiles())
+            if (!vocabularyFile.equals(f))
+                this.gpuHandler.addIndexFile(f.toString());
     }
 
     private boolean isValidDirectory(String path){
