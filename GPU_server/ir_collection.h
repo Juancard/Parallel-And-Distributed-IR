@@ -51,7 +51,15 @@ int loadBinaryPostings(
   PointerToPosting *pointers,
   int terms
 );
-
+int loadMetadataFromBinFile(
+  FILE *metadataFile,
+  CorpusMetadata *metadataStruct
+);
+int maxFreqFromBinFile(
+  FILE *maxFreqFile,
+  int *maxFreq,
+  int totalDocs
+);
 
 PostingFreq* postingsFromSeqFile(FILE *postingsFile, int totalTerms);
 float* docsNormFromSeqFile(FILE *docsNormFile, int totalDocs);

@@ -13,7 +13,7 @@ int postingsPointersFromBinFile(
     fread(&pointers[i].df, sizeof(int), 1, pointersFile);
     fread(&pointers[i].pointer, sizeof(int), 1, pointersFile);
   }
-  return 0;
+  return COLLECTION_OPERATION_SUCCESS;
 }
 int loadBinaryPostings(
   FILE *postingsFile,
@@ -30,7 +30,7 @@ int loadBinaryPostings(
     fread(p[i].docIds, sizeof(int), p[i].docsLength, postingsFile);
     fread(p[i].freq, sizeof(int), p[i].docsLength, postingsFile);
   }
-  return 0;
+  return COLLECTION_OPERATION_SUCCESS;
 }
 
 PostingFreq* postingsFromSeqFile(FILE *postingsFile, int totalTerms) {
@@ -110,6 +110,11 @@ float* docsNormFromSeqFile(FILE *docsNormFile, int totalDocs){
   return docsNorm;
 }
 
+int maxFreqFromBinFile(FILE *maxFreqFile, int *maxFreq, int totalDocs){
+  fread(maxFreq, sizeof(int), totalDocs, maxFreqFile);
+  return COLLECTION_OPERATION_SUCCESS;
+}
+
 int* maxFreqFromSeqFile(FILE *seqFile, int totalDocs){
   const int MAX_BYTES_READ_PER_LINE = 1000;
   char line[MAX_BYTES_READ_PER_LINE];
@@ -135,8 +140,13 @@ int* maxFreqFromSeqFile(FILE *seqFile, int totalDocs){
   return maxFreqPerDocs;
 }
 
+int loadMetadataFromBinFile(FILE *metadataFile, CorpusMetadata *metadataStruct){
+  fread(&metadataStruct->docs, sizeof(int), 1, metadataFile);
+  fread(&metadataStruct->terms, sizeof(int), 1, metadataFile);
+  return COLLECTION_OPERATION_SUCCESS;
+}
 
-int loadMetadataFromFile(FILE *metadataFile, CorpusMetadata *metadataStruct){
+int loadMetadataFromSeqFile(FILE *metadataFile, CorpusMetadata *metadataStruct){
   char* DOCS_PROP = "docs";
   char* TERMS_PROP = "terms";
   const int TOTAL_PROPERTIES = 2;
