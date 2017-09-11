@@ -29,8 +29,9 @@ public class MyLogger {
         }
 
         logger.setLevel(Level.INFO);
-        fileTxt = new FileHandler("Logging.txt");
-        fileHTML = new FileHandler("Logging.html");
+        fileTxt = new FileHandler("Logging.txt", true);
+        fileHTML = new FileHandler("Logging.html", true);
+        consoleHandler = new ConsoleHandler();
 
         // create a TXT formatter
         formatterTxt = new SimpleFormatter();
@@ -42,7 +43,6 @@ public class MyLogger {
         fileHTML.setFormatter(formatterHTML);
         logger.addHandler(fileHTML);
 
-        consoleHandler = new ConsoleHandler();
         consoleHandler.setFormatter(formatterTxt);
         logger.addHandler(consoleHandler);
     }
