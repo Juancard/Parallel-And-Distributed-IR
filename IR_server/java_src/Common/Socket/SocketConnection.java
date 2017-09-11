@@ -49,8 +49,7 @@ public class SocketConnection {
 
     public Object read() throws ClassNotFoundException, IOException {
         try {
-            Object read = new ObjectInputStream(this.socketInput).readObject();
-            return read;
+            return new ObjectInputStream(this.socketInput).readObject();
         } catch(EOFException e){
             this.close();
             throw new EOFException("Connection lost.");

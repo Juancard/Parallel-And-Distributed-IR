@@ -104,21 +104,32 @@ public class GpuServerHandler {
         return docsScore;
 	}
 
+    public boolean sendIndex() throws IOException {
+        String m = "Sending index files ";
+        if (this.sshHandler != null){
+            LOGGER.info( m + "via ssh");
+            this.sendIndexViaSsh();
+            return this.loadIndexInGpu();
+        }
+        LOGGER.info( m + "via sockets");
+        return this.sendIndexViaSocket();
+    }
+
 	public synchronized boolean loadIndexInGpu() throws IOException{
+
         LOGGER.info(this.connectionMessage());
 		SocketConnection connection = this.connect();
         DataOutputStream out = new DataOutputStream(connection.getSocketOutput());
         DataInputStream in = new DataInputStream(connection.getSocketInput());
 
         LOGGER.info("Sending load index message to Gpu");
-        out.writeInt((IRProtocol.INDEX).length());
-		out.writeBytes(IRProtocol.INDEX);
+        out.writeInt((IRProtocol.INDEX_LOAD).length());
+		out.writeBytes(IRProtocol.INDEX_LOAD);
 		int result = in.readInt();
 
         LOGGER.info("Closing connection with Gpu Server");
         connection.close();
-        out.close();
-        in.close();
+
         return result == IRProtocol.INDEX_SUCCESS;
 	}
 
@@ -126,7 +137,7 @@ public class GpuServerHandler {
         this.sshHandler = sshHandler;
     }
 
-    public synchronized void sendIndexViaSsh() throws IOException {
+    private synchronized void sendIndexViaSsh() throws IOException {
         try {
             LOGGER.info("Sending index");
             this.sshHandler.sendViaSftp(
@@ -137,16 +148,57 @@ public class GpuServerHandler {
             throw new IOException("Could not send index files to gpu server. Cause: " + e.getMessage());
         }
     }
-    public synchronized void sendIndexViaSocket() throws IOException{
-	                /*
-            String fname = "/home/juan/Documentos/unlu/sis_dis/trabajo_final/parallel-and-distributed-IR/IR_server/Resources/Index/metadata.bin";
-            File file = new File(fname);
-            byte[] fileData = new byte[(int) file.length()];
-            DataInputStream dis = new DataInputStream(new FileInputStream(file));
-            System.out.println(Integer.reverseBytes(dis.readInt()) + " " + Integer.reverseBytes(dis.readInt()));
-            //dis.readFully(fileData);
-            dis.close();
-                        */
+    public synchronized boolean sendIndexViaSocket() throws IOException{
+        LOGGER.info(this.connectionMessage());
+        SocketConnection connection = this.connect();
+        DataOutputStream out = new DataOutputStream(connection.getSocketOutput());
+        DataInputStream in = new DataInputStream(connection.getSocketInput());
+        DataInputStream dis;
+
+        LOGGER.info("Sending index files request message to Gpu");
+        out.writeInt((IRProtocol.INDEX_FILES).length());
+        out.writeBytes(IRProtocol.INDEX_FILES);
+
+        LOGGER.info("Sending Metadata file");
+        dis = this.indexFilesHandler.loadMetadata();
+        int docs = Integer.reverseBytes(dis.readInt());
+        int terms = Integer.reverseBytes(dis.readInt());
+        out.writeInt(docs);
+        out.writeInt(terms);
+
+        LOGGER.info("Sending Max freqs file");
+        dis = this.indexFilesHandler.loadMaxFreqs();
+        for (int i=0; i<docs; i++)
+            out.writeInt(Integer.reverseBytes(dis.readInt()));
+
+        LOGGER.info("Sending pointers file");
+        dis = this.indexFilesHandler.loadPointers();
+        int[] df = new int[terms];
+        for (int i=0; i<terms; i++)
+            df[i] = Integer.reverseBytes(dis.readInt());
+
+        LOGGER.info("Sending postings file");
+        dis = this.indexFilesHandler.loadPostings();
+        for (int i=0; i<terms; i++){
+            out.writeInt(df[i]);
+            // sends docIds
+            for (int j=0; j<df[i]; j++)
+                out.writeInt(Integer.reverseBytes(dis.readInt()));
+            // sends freqs
+            for (int j=0; j<df[i]; j++)
+                out.writeInt(Integer.reverseBytes(dis.readInt()));
+        }
+
+        return in.readInt() == IRProtocol.INDEX_SUCCESS;
+        /*
+        String fname = "/home/juan/Documentos/unlu/sis_dis/trabajo_final/parallel-and-distributed-IR/IR_server/Resources/Index/metadata.bin";
+        File file = new File(fname);
+        byte[] fileData = new byte[(int) file.length()];
+        DataInputStream dis = new DataInputStream(new FileInputStream(file));
+        System.out.println(Integer.reverseBytes(dis.readInt()) + " " + Integer.reverseBytes(dis.readInt()));
+        //dis.readFully(fileData);
+        dis.close();
+        */
     }
 
     private SocketConnection connect() throws IOException {
@@ -178,8 +230,6 @@ public class GpuServerHandler {
         }
 
         connection.close();
-        out.close();
-        in.close();
         return testResult == IRProtocol.TEST_OK;
     }
 

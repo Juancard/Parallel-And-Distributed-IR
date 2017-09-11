@@ -6,7 +6,8 @@ package Common;
  * Time: 19:52
  */
 public class IRProtocol {
-    public static final String INDEX = "IND";
+    public static final String INDEX_LOAD = "I_L";
+    public static final String INDEX_FILES= "I_F";
     public static final String EVALUATE = "EVA";
     public static final String TEST = "TEST";
 

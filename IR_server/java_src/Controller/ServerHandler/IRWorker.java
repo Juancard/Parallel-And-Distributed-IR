@@ -49,7 +49,7 @@ public class IRWorker extends MyCustomWorker{
         Object out = new Object();
 
         LOGGER.info("Request - " + request);
-        if (request.equals(IRProtocol.INDEX)) {
+        if (request.equals(IRProtocol.INDEX_LOAD)) {
             out = this.index();
         } else if (request.equals(IRProtocol.EVALUATE)){
             try {
@@ -85,13 +85,13 @@ public class IRWorker extends MyCustomWorker{
                     + ":"
                     + this.gpuHandler.getPort()
             );
-            this.gpuHandler.sendIndexViaSsh();
+            this.gpuHandler.sendIndex();
         } catch (IOException e) {
             String m = "Error on communication with Gpu : " + e.getMessage();
             LOGGER.warning(m);
             return new IOException(m);
         }
-
+/*
         boolean indexWasLoaded = false;
         try {
             LOGGER.info("Loading index in Gpu");
@@ -101,11 +101,10 @@ public class IRWorker extends MyCustomWorker{
             LOGGER.warning(m);
             return new IOException(m);
         }
-
+*/
         try {
             LOGGER.info("Update index in IR server");
-            if (indexWasLoaded) this.irServer.updateIndex();
-            else return false;
+            this.irServer.updateIndex();
         } catch (IOException e) {
             String m = "Error updating index in IR server: " + e.getMessage();
             LOGGER.warning(m);
