@@ -4,20 +4,26 @@ import java.io.*;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Vector;
+import java.util.logging.*;
 
 import Common.Socket.SocketConnection;
+import Controller.IndexerHandler.IndexFilesHandler;
 import Model.Query;
 import com.jcraft.jsch.*;
+import com.jcraft.jsch.Logger;
+import com.sun.xml.internal.ws.policy.privateutil.PolicyUtils;
 
 public class GpuServerHandler {
-	private static final String INDEX = "IND";
+    // classname for the logger
+    private final static java.util.logging.Logger LOGGER = java.util.logging.Logger.getLogger(java.util.logging.Logger.GLOBAL_LOGGER_NAME);
+
+    private static final String INDEX = "IND";
 	private static final String EVALUATE = "EVA";
 
     private String host;
     private int port;
     private final String gpuIndexPath;
-
-    private ArrayList<String> indexFiles;
+    private final IndexFilesHandler indexFilesHandler;
 
 	// Implements Ssh tunnel to connect to GPU server
     // Reason: Cuda gpu in Cidetic can not be accessed outside their private network
@@ -31,30 +37,30 @@ public class GpuServerHandler {
     public GpuServerHandler(
             String host,
             int port,
-            String gpuIndexPath
+            String gpuIndexPath,
+            IndexFilesHandler indexFilesHandler
     ) {
 		this.host = host;
 		this.port = port;
 		this.gpuIndexPath = gpuIndexPath;
+		this.indexFilesHandler = indexFilesHandler;
 
         this.isSshTunnel = false;
-        this.indexFiles = new ArrayList<String>();
 	}
 
 	public HashMap<Integer, Double> sendQuery(Query query) throws IOException{
         SocketConnection connection;
 		try {
-            this.out(this.connectionMessage());
+            LOGGER.info(this.connectionMessage());
             connection = this.connect();
 		} catch (IOException e) {
 			String m = "Could not connect to Gpu server. Cause: " + e.getMessage(); 
-			this.out(m);
-			throw new IOException(e);
+			throw new IOException(m);
 		}
 		DataOutputStream out = new DataOutputStream(connection.getSocketOutput());
         DataInputStream in = new DataInputStream(connection.getSocketInput());
 
-        this.out("Sending query: " + query.toString());
+        LOGGER.info("Sending query: " + query.toString());
         try {
             out.writeInt(EVALUATE.length());
     		out.writeBytes(EVALUATE);
@@ -66,21 +72,18 @@ public class GpuServerHandler {
             }
         } catch(IOException e) {
         	String m = "Could not send query to GPU. Cause: " + e.getMessage();
-			this.out(m);
 			throw new IOException(m);
         }
 
-        this.out("Receiving documents scores...");
+        LOGGER.info("Receiving documents scores...");
         HashMap<Integer, Double> docsScore = new HashMap<Integer, Double>();
         int docs;
 		try {
 			docs = in.readInt();
 		} catch (IOException e) {
         	String m = "Error while receiving docs size. Cause: " + e.getMessage();
-			this.out(m);
 			throw new IOException(m);
 		}
-        this.out("Docs size: " + docs);
         int doc, weightLength;
         String weightStr;
         byte [] weightBytes = null;
@@ -95,29 +98,44 @@ public class GpuServerHandler {
             docsScore.put(doc, new Double(weightStr));
         }
 
-        this.out("Closing connection with Gpu Server");
+        LOGGER.info("Closing connection with Gpu Server");
         connection.close();
 
         return docsScore;
 	}
 
 	public synchronized boolean loadIndexInGpu() throws IOException{
-        this.out(this.connectionMessage());
+        LOGGER.info(this.connectionMessage());
 		SocketConnection connection = this.connect();
         DataOutputStream out = new DataOutputStream(connection.getSocketOutput());
         DataInputStream in = new DataInputStream(connection.getSocketInput());
 
-        this.out("Sending load index message to Gpu");
+        LOGGER.info("Sending load index message to Gpu");
         out.writeInt(INDEX.length());
 		out.writeBytes(INDEX);
 		int result = in.readInt();
 
-        this.out("Closing connection with Gpu Server");
+        LOGGER.info("Closing connection with Gpu Server");
         connection.close();
         return result == 1;
 	}
 
-	public synchronized void sendIndexViaSocket() throws IOException{
+    public void setSshHandler(SshHandler sshHandler){
+        this.sshHandler = sshHandler;
+    }
+
+    public synchronized void sendIndexViaSsh() throws IOException {
+        try {
+            LOGGER.info("Sending index");
+            this.sshHandler.sendViaSftp(
+                    this.gpuIndexPath,
+                    this.indexFilesHandler.getAllFiles()
+            );
+        } catch (IOException e) {
+            throw new IOException("Could not send index files to gpu server. Cause: " + e.getMessage());
+        }
+    }
+    public synchronized void sendIndexViaSocket() throws IOException{
 	                /*
             String fname = "/home/juan/Documentos/unlu/sis_dis/trabajo_final/parallel-and-distributed-IR/IR_server/Resources/Index/metadata.bin";
             File file = new File(fname);
@@ -127,14 +145,6 @@ public class GpuServerHandler {
             //dis.readFully(fileData);
             dis.close();
                         */
-    }
-
-    public void setSshHandler(SshHandler sshHandler){
-        this.sshHandler = sshHandler;
-    }
-
-    public synchronized void sendIndexViaSsh() throws IOException {
-        this.sshHandler.sendViaSftp(this.gpuIndexPath, this.indexFiles);
     }
 
     private SocketConnection connect() throws IOException {
@@ -150,10 +160,6 @@ public class GpuServerHandler {
         else
             message += " at " + this.host + ":" + this.port;
         return message;
-    }
-
-    private void out(String m){
-        System.out.println("GPU server handler - " + m);
     }
 
     @Override
@@ -177,21 +183,6 @@ public class GpuServerHandler {
         this.sshTunnelHost = host;
         this.sshTunnelPort = port;
         this.isSshTunnel = true;
-    }
-
-    public boolean addIndexFile(String filePath){
-        boolean isValidFile = filePath != null
-                && !filePath.isEmpty()
-                && new File(filePath).exists()
-                && new File(filePath).isFile();
-        if (!isValidFile)
-            return false;
-        this.indexFiles.add(filePath);
-        return true;
-    }
-    public boolean removeIndexFile(String filePath){
-        return this.indexFiles.contains(filePath)
-                && this.indexFiles.remove(filePath);
     }
 
 }

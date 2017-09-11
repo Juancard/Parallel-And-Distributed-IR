@@ -11,6 +11,7 @@ import Model.Vocabulary;
 import java.io.IOException;
 import java.net.Socket;
 import java.util.HashMap;
+import java.util.logging.Logger;
 
 /**
  * User: juan
@@ -19,6 +20,8 @@ import java.util.HashMap;
  */
 public class IRWorker extends MyCustomWorker{
 
+    // classname for the logger
+    private final static Logger LOGGER = Logger.getLogger(Logger.GLOBAL_LOGGER_NAME);
 
     private IRServerForConnections irServer;
     private final Vocabulary vocabulary;
@@ -45,7 +48,7 @@ public class IRWorker extends MyCustomWorker{
     protected Object onClientRequest(String request) {
         Object out = new Object();
 
-        this.display("Request - " + request);
+        LOGGER.info("Request - " + request);
         if (request.equals(IRProtocol.INDEX)) {
             out = this.index();
         } else if (request.equals(IRProtocol.QUERY)){
@@ -53,11 +56,13 @@ public class IRWorker extends MyCustomWorker{
                 String query = this.readFromClient().toString();
                 out = this.query(query);
             } catch (Exception e) {
-                return new Exception("Error reading user query: " + e.getMessage());
+                String m = "Error reading user query: " + e.getMessage();
+                LOGGER.warning(m);
+                return new Exception(m);
             }
         }
 
-        this.display("Response - " + out);
+        LOGGER.info("Response - " + out);
 
         return out;
     }
@@ -65,45 +70,45 @@ public class IRWorker extends MyCustomWorker{
     private Object index() {
 
         try {
-            this.display("Calling python script");
+            LOGGER.info("Calling python script");
             this.pythonIndexer.callScriptIndex();
         } catch (IOException e) {
             String m = "Error on indexer script: " + e.getMessage();
-            this.display(m);
+            LOGGER.warning(m);
             return new IOException(m);
         }
 
         try {
-            this.display(
+            LOGGER.info(
                     "Connecting to Gpu server at "
                     + this.gpuHandler.getHost()
                     + ":"
                     + this.gpuHandler.getPort()
             );
             this.gpuHandler.sendIndexViaSsh();
-        } catch (Exception e) {
+        } catch (IOException e) {
             String m = "Error on communication with Gpu : " + e.getMessage();
-            this.display(m);
-            return new Exception(m);
+            LOGGER.warning(m);
+            return new IOException(m);
         }
 
         boolean indexWasLoaded = false;
         try {
-            this.display("Loading index in Gpu");
+            LOGGER.info("Loading index in Gpu");
             indexWasLoaded = this.gpuHandler.loadIndexInGpu();
         } catch (IOException e) {
             String m = "Error on loading index : " + e.getMessage();
-            this.display(m);
+            LOGGER.warning(m);
             return new IOException(m);
         }
 
         try {
-            this.display("Update index in IR server");
+            LOGGER.info("Update index in IR server");
             if (indexWasLoaded) this.irServer.updateIndex();
             else return false;
         } catch (IOException e) {
             String m = "Error updating index in IR server: " + e.getMessage();
-            this.display(m);
+            LOGGER.warning(m);
             return new IOException(m);
         }
 
@@ -125,7 +130,7 @@ public class IRWorker extends MyCustomWorker{
             return docsScore;
         } catch (IOException e) {
             String m = "Sending query to Gpu server: " + e.getMessage();
-            this.display(m);
+            LOGGER.warning(m);
             return new IOException(m);
         }
 

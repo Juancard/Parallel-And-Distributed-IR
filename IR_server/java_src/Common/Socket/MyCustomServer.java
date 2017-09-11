@@ -5,6 +5,8 @@ import java.io.PrintStream;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.*;
+import java.util.logging.Logger;
+
 import Common.LogManager;
 
 /**
@@ -13,11 +15,12 @@ import Common.LogManager;
  * Time: 14:14
  */
 public class MyCustomServer {
+    // classname for the logger
+    private final static Logger LOGGER = Logger.getLogger(Logger.GLOBAL_LOGGER_NAME);
 
     private int port;
     private ServerSocket serverSocket;
     private Map<Thread, Runnable> threadsPool;
-    protected LogManager logManager;
     private WorkerFactory workerFactory;
 
     public <T extends MyCustomWorker> MyCustomServer(int port, WorkerFactory workerFactory) {
@@ -27,7 +30,6 @@ public class MyCustomServer {
     private <T extends MyCustomWorker> void prepareServer(int port, WorkerFactory workerFactory) {
         this.port = port;
         this.threadsPool = new HashMap<Thread, Runnable>();
-        this.logManager = new LogManager(System.out);
         this.workerFactory = workerFactory;
     }
 
@@ -39,11 +41,11 @@ public class MyCustomServer {
     private void instantiateServer() throws IOException {
         try {
             this.serverSocket = new ServerSocket(this.port);
-            String toPrint = String.format("Listening on port: %d...", this.port);
-            this.out(toPrint);
+            String toPrint = "Listening on port " + this.port + " ...";
+            LOGGER.info(toPrint);
         } catch (IOException e) {
             String m = "Error in creating new server socket. Cause:" + e.getMessage();
-            this.out(m);
+            LOGGER.severe(m);
             this.closeServer();
             throw new IOException(m);
         }
@@ -57,15 +59,15 @@ public class MyCustomServer {
                 this.newConnection(clientSocket);
             } catch (IOException e) {
                 String m = "Error in establishing connection with client. Cause: " + e.getMessage();
-                this.out(m);
+                LOGGER.severe(m);
                 throw new IOException(m);
             } catch (InstantiationException e) {
                 String m = "Error in establishing connection with client. Cause: " + e.getMessage();
-                this.out(m);
+                LOGGER.severe(m);
                 throw new IOException(m);
             } catch (IllegalAccessException e) {
                 String m = "Error in establishing connection with client. Cause: " + e.getMessage();
-                this.out(m);
+                LOGGER.severe(m);
                 throw new IOException(m);
             }
         }
@@ -77,7 +79,7 @@ public class MyCustomServer {
         this.threadsPool.put(t, runnable);
         t.start();
         String toPrint = "New connection with client: " + clientSocket.getRemoteSocketAddress();
-        this.out(toPrint);
+        LOGGER.info(toPrint);
     }
 
     private Thread newThread(Runnable runnable){
@@ -101,15 +103,4 @@ public class MyCustomServer {
         this.port = port;
     }
 
-    public void setLogWriter(PrintStream writer){
-        this.logManager.setLogPrinter(writer);
-    }
-
-    public void setLogManager(LogManager logManager){
-        this.logManager = logManager;
-    }
-
-    public void out(String toPrint){
-        this.logManager.log(toPrint);
-    }
 }

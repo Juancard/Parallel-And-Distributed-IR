@@ -7,6 +7,7 @@ import java.io.IOException;
 import java.io.PrintStream;
 import java.net.Socket;
 import java.net.SocketException;
+import java.util.logging.Logger;
 
 /**
  * User: juan
@@ -15,21 +16,17 @@ import java.net.SocketException;
  */
 public class MyCustomWorker implements Runnable{
 
+    // classname for the logger
+    private final static Logger LOGGER = Logger.getLogger(Logger.GLOBAL_LOGGER_NAME);
+
     protected SocketConnection clientConnection;
-    protected LogManager logManager;
 
     public MyCustomWorker(SocketConnection clientConnection) {
         this.clientConnection = clientConnection;
-        this.logManager = new LogManager(System.out);
     }
 
     public MyCustomWorker(Socket clientSocket) {
         this.clientConnection = new SocketConnection(clientSocket);
-        this.logManager = new LogManager(System.out);
-    }
-
-    public void setLogs(PrintStream writer){
-        this.logManager.setLogPrinter(writer);
     }
 
     @Override
@@ -46,13 +43,13 @@ public class MyCustomWorker implements Runnable{
             }
 
         } catch (SocketException e) {
-            this.display("Connection lost with client");
+            LOGGER.warning("Connection lost with client");
         } catch (EOFException e) {
-            this.display("Client disconnected");
+            LOGGER.warning("Client disconnected");
         } catch (IOException e) {
-            this.display(e.getMessage());
+            LOGGER.severe(e.getMessage());
         } catch (Exception e) {
-            this.display(e.getMessage());
+            LOGGER.severe(e.getMessage());
         } finally {
             this.close();
         }
@@ -87,10 +84,6 @@ public class MyCustomWorker implements Runnable{
 
     public String clientIdentity() {
         return this.clientConnection.getIdentity();
-    }
-
-    public void display (String message){
-        this.logManager.log(this.clientIdentity(), message);
     }
 
     public void close(){

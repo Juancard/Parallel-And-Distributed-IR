@@ -3,6 +3,7 @@ package Common.Socket;
 import java.io.*;
 import java.net.Socket;
 import java.net.UnknownHostException;
+import java.util.logging.Logger;
 
 /**
  * User: juan
@@ -10,6 +11,8 @@ import java.net.UnknownHostException;
  * Time: 18:18
  */
 public class SocketConnection {
+    // classname for the logger
+    private final static Logger LOGGER = Logger.getLogger(Logger.GLOBAL_LOGGER_NAME);
 
     private Socket clientSocket;
     private OutputStream socketOutput;
@@ -39,7 +42,7 @@ public class SocketConnection {
             this.socketOutput = clientSocket.getOutputStream();
             this.socketInput = clientSocket.getInputStream();
         } catch (IOException e) {
-            this.out("Error in instantiating new server thread");
+            LOGGER.severe("Error in instantiating new server thread");
             this.close();
         }
     }
@@ -101,10 +104,6 @@ public class SocketConnection {
         try {
             this.clientSocket.close ();
         } catch (Exception e) {}
-    }
-
-    public void out(String message){
-        System.out.println(message);
     }
 
     public Socket getClientSocket() {

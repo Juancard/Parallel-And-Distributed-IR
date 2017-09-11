@@ -36,4 +36,8 @@ public class PropertiesManager {
         return properties.contains(property)
                 && new File(properties.getProperty(property)).isDirectory();
     }
+
+    public static boolean stringPropIsSet(String prop){
+        return prop != null && !prop.isEmpty();
+    }
 }

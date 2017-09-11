@@ -1,16 +1,20 @@
 package Controller;
 
 import com.jcraft.jsch.*;
+import com.jcraft.jsch.Logger;
 
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.logging.*;
 
 /**
  * Created by juan on 10/09/17.
  */
 public class SshHandler {
+    // classname for the logger
+    private final static java.util.logging.Logger LOGGER = java.util.logging.Logger.getLogger(java.util.logging.Logger.GLOBAL_LOGGER_NAME);
 
     private final String remoteHost;
     private final int remotePort;
@@ -55,7 +59,7 @@ public class SshHandler {
         try {
             session.connect();
         } catch (JSchException e) {
-            String m = "Starting session on remote GPU. Cause: " + e.getMessage();
+            String m = "Could not start session. Cause: " + e.getMessage();
             throw new JSchException(m);
         }
         return session;
@@ -66,13 +70,13 @@ public class SshHandler {
         try {
             channel = session.openChannel("sftp");
         } catch (JSchException e) {
-            String m = "Opening sftp channel on remote host. Cause: " + e.getMessage();
+            String m = "Could not open sftp channel. Cause: " + e.getMessage();
             throw new JSchException(m);
         }
         try {
             channel.connect();
         } catch (JSchException e) {
-            String m = "Connecting sftp channel on remote host. Cause: " + e.getMessage();
+            String m = "Could not connect to openned sftp channel. Cause: " + e.getMessage();
             throw new JSchException(m);
         }
         return (ChannelSftp)channel;
@@ -86,25 +90,22 @@ public class SshHandler {
         try {
             channelSftp = this.sftpConnection(this.sshConnection());
         } catch (JSchException e) {
-            System.err.println(e);
-            String m = "Could not connect to remote host. Cause: " + e.getMessage();
+            String m = "Could not set up sftp connection. Cause: " + e.getMessage();
             throw new IOException(m);
         }
         try {
             channelSftp.cd(remoteDestination);
         } catch (SftpException e) {
-            System.err.println(e);
-            String m = "Could not find remote folder in host. Cause: " + e.getMessage();
+            String m = "Could not change directory to " + remoteDestination +". Cause: " + e.getMessage();
             throw new IOException(m);
         }
 
         for (String filePath : filesToSend){
             File f = new File(filePath);
-            this.out("Sending files: transfering " + f.getName());
+            LOGGER.info("Sending files: transfering " + f.getName());
             try {
                 channelSftp.put(new FileInputStream(f), f.getName());
             } catch (SftpException e) {
-                System.err.println(e);
                 String m = "Could not send file '" + f.getName() + "'. Cause: " + e.getMessage();
                 throw new IOException(m);
             }
@@ -115,22 +116,24 @@ public class SshHandler {
 
     public boolean directoryIsInRemote(String dirPath) throws IOException {
         ChannelSftp channelSftp = null;
+        Session session = null;
         try {
-            channelSftp = this.sftpConnection(this.sshConnection());
+            session = this.sshConnection();
+            channelSftp = this.sftpConnection(session);
         } catch (JSchException e) {
-            System.err.println(e);
             String m = "Could not connect to remote host. Cause: " + e.getMessage();
             throw new IOException(m);
         }
         try {
             channelSftp.cd(dirPath);
         } catch (SftpException e) {
+            channelSftp.disconnect();
+            session.disconnect();
             return false;
         }
+        channelSftp.disconnect();
+        session.disconnect();
         return true;
     }
 
-    public void out(String toDisplay){
-        System.out.println(toDisplay);
-    }
 }

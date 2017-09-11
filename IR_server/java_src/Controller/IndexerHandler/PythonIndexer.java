@@ -4,6 +4,7 @@ import java.io.*;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.logging.Logger;
 
 /**
  * User: juan
@@ -11,6 +12,8 @@ import java.util.List;
  * Time: 14:40
  */
 public class PythonIndexer {
+    // classname for the logger
+    private final static Logger LOGGER = Logger.getLogger(Logger.GLOBAL_LOGGER_NAME);
 
     private final String corpusPath;
     private final String indexerScript;
@@ -48,7 +51,7 @@ public class PythonIndexer {
             String exceptions = "";
             for (String err : errors){
                 if (err.startsWith("WARNING"))
-                    System.out.println(err);
+                    LOGGER.warning(err);
                 else {
                     exceptions += err;
                 }
