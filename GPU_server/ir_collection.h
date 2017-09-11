@@ -61,6 +61,12 @@ int maxFreqFromBinFile(
   int totalDocs
 );
 
+int writeMetadataFile(FILE *file, int docs, int terms);
+int writeMaxFreqsFile(FILE *file, int *maxFreqs, int size);
+int writePostingsFile(FILE *file, PostingFreq *postings, int size);
+int writePointersToPostings(FILE *file, PostingFreq *postings, int size);
+
+
 PostingFreq* postingsFromSeqFile(FILE *postingsFile, int totalTerms);
 float* docsNormFromSeqFile(FILE *docsNormFile, int totalDocs);
 int* maxFreqFromSeqFile(FILE *filePath, int totalDocs);

@@ -3,6 +3,81 @@
 #include <string.h>
 #include "ir_collection.h"
 
+int writeMetadataFile(FILE *file, int docs, int terms){
+  size_t written;
+
+  written = fwrite(&docs, sizeof(int), 1, file);
+  if (written != 1){
+    printf("Error writing metadata: number of docs could not be written\n");
+    return COLLECTION_OPERATION_FAIL;
+  }
+
+  written = fwrite(&terms, sizeof(int), 1, file);
+  if (written != 1){
+    printf("Error writing metadata: number of terms could not be written\n");
+    return COLLECTION_OPERATION_FAIL;
+  }
+
+  return COLLECTION_OPERATION_SUCCESS;
+}
+int writeMaxFreqsFile(FILE *file, int *maxFreqs, int size){
+  size_t written;
+
+  written = fwrite(maxFreqs, sizeof(int), size, file);
+  if (written != size){
+    printf("Error writing max freqs: tried to write: %d records, but wrote: %zu\n", size, written);
+    return COLLECTION_OPERATION_FAIL;
+  }
+
+  return COLLECTION_OPERATION_SUCCESS;
+}
+int writePostingsFile(FILE *file, PostingFreq *postings, int size){
+  size_t written;
+  int df;
+  int *docIds, *freqs;
+  int i; for ( i=0; i < size; i++) {
+    df = postings[i].docsLength;
+    docIds = postings[i].docIds;
+    freqs = postings[i].freq;
+    written = fwrite(docIds, sizeof(int), df, file);
+    if (written != df){
+      printf(
+        "Error writing postings: writing docIds of term %d: tried to write: %d, but wrote: %d \n",
+        i, df, written
+      );
+      return COLLECTION_OPERATION_FAIL;
+    }
+
+    written = fwrite(freqs, sizeof(int), df, file);
+    if (written != df){
+      printf(
+        "Error writing postings: writing freqs of term %d: tried to write: %d, but wrote: %d \n",
+        i, df, written
+      );
+      return COLLECTION_OPERATION_FAIL;
+    }
+  }
+
+  return COLLECTION_OPERATION_SUCCESS;
+}
+
+int writePointersToPostings(FILE *file, PostingFreq *postings, int size){
+  size_t written;
+  int i, df;
+  for ( i=0; i < size; i++) {
+    df = postings[i].docsLength;
+    written = fwrite(&df, sizeof(int), 1, file);
+    if (written != 1){
+      printf(
+        "Error writing postings: writing pointer df of term %d: tried to write: %d, but wrote: %d \n",
+        i, 1, written
+      );
+      return COLLECTION_OPERATION_FAIL;
+    }
+  }
+  return COLLECTION_OPERATION_SUCCESS;
+}
+
 int postingsPointersFromBinFile(
   FILE *pointersFile,
   PointerToPosting *pointers,

@@ -12,6 +12,58 @@
 #define MAX_FREQ_PER_DOC_FILENAME "max_freq_in_docs.bin"
 #define METADATA_FILENAME "metadata.bin"
 
+int writeIndexFiles(
+  int docs,
+  int terms,
+  int *maxFreqs,
+  PostingFreq *postings
+){
+  int status;
+  FILE *file;
+
+  /*
+    TODO READ METADATA FILE BEFORE WRITING SO
+    IF WRITING FAILS I DO NOT LOSE OLD METADATA
+  */
+  file = fopen(INDEX_PATH METADATA_FILENAME, "wb");
+  printf("Writing metadata file ...\n");
+  status = writeMetadataFile(file, docs, terms);
+  fclose(file);
+  if (status != COLLECTION_OPERATION_SUCCESS)
+    return COLLECTION_HANDLER_FAIL;
+
+    /*
+      TODO READ MAX_FREQ FILE BEFORE WRITING SO
+      IF WRITING FAILS I DO NOT LOSE OLD MAX_FREQ
+    */
+  file = fopen(INDEX_PATH MAX_FREQ_PER_DOC_FILENAME, "wb");
+  printf("Writing Max freqs file ...\n");
+  status = writeMaxFreqsFile(file, maxFreqs, docs);
+  fclose(file);
+  if (status != COLLECTION_OPERATION_SUCCESS)
+    return COLLECTION_HANDLER_FAIL;
+
+  /*
+    TODO READ POSTINGS FILE BEFORE WRITING SO
+    IF WRITING FAILS I DO NOT LOSE OLD POSTINGS
+  */
+  file = fopen(INDEX_PATH POSTINGS_FILENAME, "wb");
+  printf("Writing Postings file ...\n");
+  status = writePostingsFile(file, postings, terms);
+  fclose(file);
+  if (status != COLLECTION_OPERATION_SUCCESS)
+    return COLLECTION_HANDLER_FAIL;
+
+  file = fopen(INDEX_PATH POSTINGS_POINTERS_FILENAME, "wb");
+  printf("Writing POinters to postings file ...\n");
+  status = writePointersToPostings(file, postings, terms);
+  fclose(file);
+  if (status != COLLECTION_OPERATION_SUCCESS)
+    return COLLECTION_HANDLER_FAIL;
+
+  return COLLECTION_OPERATION_SUCCESS;
+}
+
 int getCollection(Collection *collection){
   CorpusMetadata corpusMetadata;
   if (getCorpusMetadata(
@@ -56,12 +108,14 @@ int getCollection(Collection *collection){
     return COLLECTION_HANDLER_FAIL;
   }
 
+  printf("Calculating idf...\n");
   collection->idf = getTermsIdf(
       postingsFreq,
       collection->docs,
       collection->terms
     );
 
+  printf("Setting up postings with tf-idf weights...\n");
   collection->postings = getPostingTfIdf(
     postingsFreq,
     maxFreqPerDoc,
@@ -70,6 +124,7 @@ int getCollection(Collection *collection){
     collection->terms
   );
 
+  printf("Calculating docs norms...\n");
   collection -> docsNorms = getDocsNorm(
     collection->postings,
     collection->docs,
@@ -159,9 +214,13 @@ float *getTermsIdf(PostingFreq *postings, int numberOfDocs, int numberOfTerms){
   int termId;
   float* termsIdf = (float *) malloc(sizeof(float) * numberOfTerms);
   int df;
-  for (termId < 0; termId < numberOfTerms; termId++) {
+  for (termId = 0; termId < numberOfTerms; termId++) {
     df = postings[termId].docsLength;
-    termsIdf[termId] = log10( (double) numberOfDocs / df);
+    if (df == 0)
+      termsIdf[termId] = 0;
+    else
+      termsIdf[termId] = log10( (double) numberOfDocs / df);
+    //printf("term %d: log10(%d/%d) = %.2f\n", termId, numberOfDocs, df, termsIdf[termId]);
   }
   return termsIdf;
 }
@@ -179,6 +238,7 @@ PostingTfIdf *getPostingTfIdf(
   for (termId = 0; termId < terms; termId++) {
     docsInPosting = postingFreq[termId].docsLength;
     idf = termsIdf[termId];
+    //printf("term %d - df: %d - idf: %.2f\n", termId, docsInPosting, idf);
     postingsTfIdf[termId].docsLength = docsInPosting;
     postingsTfIdf[termId].docIds = (int *) malloc(sizeof(int) * docsInPosting);
     postingsTfIdf[termId].weights = (float *) malloc(sizeof(float) * docsInPosting);
@@ -224,6 +284,7 @@ int getCorpusMetadata(char *metadataFilePath, CorpusMetadata *metadata){
 
   return (status == COLLECTION_OPERATION_SUCCESS)? COLLECTION_HANDLER_SUCCESS : COLLECTION_HANDLER_FAIL;
 }
+
 
 /* test
 int main(int argc, char const *argv[]) {

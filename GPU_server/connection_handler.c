@@ -30,15 +30,18 @@ void onIndexFilesRequest(int socketfd){
   printf("Connection handler - Read Index files Request\n");
   int i;
   // READS METADATA
+  printf("Receiving metadata...\n");
   int docs = readInteger(socketfd);
   int terms = readInteger(socketfd);
 
   // READS MAX freqs
+  printf("Receiving maximum frequencies per doc...\n");
   int *maxFreqs = (int *) malloc(sizeof(int) * docs);
   for (i=0; i<docs; i++)
     maxFreqs[i] = readInteger(socketfd);
 
   // READS postings
+  printf("Receiving postings...\n");
   PostingFreq *postings = (PostingFreq *) malloc(sizeof(PostingFreq) * terms);
   int j;
   for (i=0; i<terms; i++){
@@ -65,13 +68,16 @@ void onIndexFilesRequest(int socketfd){
   }
   free(postings);
 
-  if (status != COLLECTION_HANDLER_SUCCESS){
-    if (sendInteger(socketfd, status) == -1)
-      perror("send indexing result status");
-  } else {
-    onIndexLoadRequest(socketfd);
+  int finalStatus = INDEX_FAIL;
+  if (
+    status == COLLECTION_HANDLER_SUCCESS
+    && loadIndexInGPUMemory() == INDEX_LOADING_SUCCESS
+  ){
+      finalStatus = INDEX_SUCCESS;
   }
 
+  if (sendInteger(socketfd, INDEX_FAIL) == -1)
+    perror("send indexing result status");
 }
 
 

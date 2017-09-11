@@ -5,6 +5,12 @@
 #define COLLECTION_HANDLER_SUCCESS 1
 #define COLLECTION_HANDLER_FAIL -1
 
+int writeIndexFiles(
+  int docs,
+  int terms,
+  int *maxFreqs,
+  PostingFreq *postings
+);
 int getCollection(Collection* collection);
 PostingFreq* getPostingsSeq(char *postingsPath, int terms);
 int getPostingsBin(
