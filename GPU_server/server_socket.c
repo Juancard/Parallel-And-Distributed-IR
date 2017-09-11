@@ -34,8 +34,10 @@ void onAccept(int socketfd){
 
   if (strcmp(action, "0") == 0){
     printf("Closing connection on socket %d\n", socketfd);
-  } else if (strcmp(action, REQUEST_INDEX) == 0){
-    onIndexRequest(socketfd);
+  } else if (strcmp(action, REQUEST_INDEX_LOAD) == 0){
+    onIndexLoadRequest(socketfd);
+  } else if (strcmp(action, REQUEST_INDEX_FILES) == 0){
+    onIndexFilesRequest(socketfd);
   } else if (strcmp(action, REQUEST_QUERY_EVAL) == 0){
     onQueryEvalRequest(socketfd);
   } else if (strcmp(action, REQUEST_TEST_CONNECTION) == 0){

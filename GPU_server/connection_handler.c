@@ -5,15 +5,16 @@
 #include "connection_handler.h"
 #include "gpu_handler.h"
 #include "docscores.h"
+#include "ir_collection_handler.h"
 
 // private functions
 char *readQueryString(int socketfd, int queryLength); // deprecated
 int sendEvaluationResponse(int socketfd, DocScores docScores);
 int readInteger(int socketfd);
+int sendInteger(int socketfd, int toSend);
 
-void onIndexRequest(int socketfd){
-  printf("Connection handler - Index Request\n");
-
+void onIndexLoadRequest(int socketfd){
+  printf("Connection handler - Load Index Request\n");
 
   int result = loadIndexInGPUMemory();
   if (result == INDEX_LOADING_SUCCESS){
@@ -21,16 +22,58 @@ void onIndexRequest(int socketfd){
   } else {
     result = INDEX_FAIL;
   }
-  result = htonl(result);
-  if (
-    send(
-      socketfd,
-      (char *)&result,
-      sizeof(int),
-      0)
-      == -1)
+  if (sendInteger(socketfd, result) == -1)
     perror("send indexing result status");
 }
+
+void onIndexFilesRequest(int socketfd){
+  printf("Connection handler - Read Index files Request\n");
+  int i;
+  // READS METADATA
+  int docs = readInteger(socketfd);
+  int terms = readInteger(socketfd);
+
+  // READS MAX freqs
+  int *maxFreqs = (int *) malloc(sizeof(int) * docs);
+  for (i=0; i<docs; i++)
+    maxFreqs[i] = readInteger(socketfd);
+
+  // READS postings
+  PostingFreq *postings = (PostingFreq *) malloc(sizeof(PostingFreq) * terms);
+  int j;
+  for (i=0; i<terms; i++){
+    postings[i].docsLength = readInteger(socketfd);
+    postings[i].docIds = (int *) malloc(sizeof(int) * postings[i].docsLength);
+    postings[i].freq = (int *) malloc(sizeof(int) * postings[i].docsLength);
+    for (j=0; j<postings[i].docsLength; j++)
+      postings[i].docIds[j] = readInteger(socketfd);
+    for (j=0; j<postings[i].docsLength; j++)
+      postings[i].freq[j] = readInteger(socketfd);
+  }
+
+  int status = writeIndexFiles(
+    docs,
+    terms,
+    maxFreqs,
+    postings
+  );
+
+  free(maxFreqs);
+  for (i=0; i<terms; i++) {
+    free(postings[i].docIds);
+    free(postings[i].freq);
+  }
+  free(postings);
+
+  if (status != COLLECTION_HANDLER_SUCCESS){
+    if (sendInteger(socketfd, status) == -1)
+      perror("send indexing result status");
+  } else {
+    onIndexLoadRequest(socketfd);
+  }
+
+}
+
 
 void onQueryEvalRequest(int socketfd){
   printf("Connection handler - Eval Request\n");
@@ -51,26 +94,14 @@ void onQueryEvalRequest(int socketfd){
 }
 
 void onTestConnectionRequest(int socketfd){
-  int result = htonl(TEST_OK);
-  if (
-    send(
-      socketfd,
-      (char *)&result,
-      sizeof(int),
-      0)
-      == -1)
+  if (sendInteger(socketfd, TEST_OK) == -1)
     perror("send indexing result status");
 }
 
 int sendEvaluationResponse(int socketfd, DocScores docScores){
   // first sends docs
   // (could be removed if the client knows number of docs in collection)
-  int docs = htonl(docScores.size);
-  if (send(
-      socketfd,
-      (char *)&docs,
-      sizeof(int),
-      0) == -1)
+  if (sendInteger(socketfd, docScores.size) == -1)
     perror("send docscores length");
 
   // Sending docScores to client
@@ -83,15 +114,16 @@ int sendEvaluationResponse(int socketfd, DocScores docScores){
     //could be removed if server always send every doc score
     // needed if gpu server decides to send only those docs
     // whose score exceeds some threshold (not currently the case)
-    docId = htonl(i);
-    if ( send(socketfd, (char *)&docId, sizeof(docId), 0) == -1) perror("send doc");
+    if ( sendInteger(socketfd, i) == -1) perror("send doc");
 
     // sending weight as string
     char weightStr[10];
     snprintf(weightStr, 10, "%.4f", docScores.scores[i]);
-    weightStrLength = htonl(strlen(weightStr));
-    if ( send(socketfd, (char *)&(weightStrLength), sizeof(int), 0) == -1) perror("send doc");
-    if ( send(socketfd, weightStr, strlen(weightStr), 0) == -1) perror("send doc");
+    weightStrLength = strlen(weightStr);
+    if ( sendInteger(socketfd, weightStrLength) == -1)
+      perror("send doc");
+    if ( send(socketfd, weightStr, strlen(weightStr), 0) == -1)
+      perror("send doc");
   }
 
   return 0;
@@ -105,6 +137,11 @@ int readInteger(int socketfd){
     sizeof(int)
   );
   return ntohl(integerValue);
+}
+
+int sendInteger(int socketfd, int toSend){
+  toSend = htonl(toSend);
+  return send(socketfd, (char *)&toSend, sizeof(int), 0);
 }
 
 //deprecated
