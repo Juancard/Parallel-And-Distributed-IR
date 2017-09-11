@@ -6,6 +6,7 @@ import java.util.HashMap;
 import java.util.Vector;
 import java.util.logging.*;
 
+import Common.IRProtocol;
 import Common.Socket.SocketConnection;
 import Controller.IndexerHandler.IndexFilesHandler;
 import Model.Query;
@@ -16,9 +17,6 @@ import com.sun.xml.internal.ws.policy.privateutil.PolicyUtils;
 public class GpuServerHandler {
     // classname for the logger
     private final static java.util.logging.Logger LOGGER = java.util.logging.Logger.getLogger(java.util.logging.Logger.GLOBAL_LOGGER_NAME);
-
-    private static final String INDEX = "IND";
-	private static final String EVALUATE = "EVA";
 
     private String host;
     private int port;
@@ -62,8 +60,8 @@ public class GpuServerHandler {
 
         LOGGER.info("Sending query: " + query.toString());
         try {
-            out.writeInt(EVALUATE.length());
-    		out.writeBytes(EVALUATE);
+            out.writeInt((IRProtocol.EVALUATE).length());
+    		out.writeBytes(IRProtocol.EVALUATE);
             HashMap<Integer, Integer> termsFreq = query.getTermsAndFrequency();
     		out.writeInt(termsFreq.size());
     		for (Integer termId : termsFreq.keySet()){
@@ -100,6 +98,8 @@ public class GpuServerHandler {
 
         LOGGER.info("Closing connection with Gpu Server");
         connection.close();
+        out.close();
+        in.close();
 
         return docsScore;
 	}
@@ -111,13 +111,15 @@ public class GpuServerHandler {
         DataInputStream in = new DataInputStream(connection.getSocketInput());
 
         LOGGER.info("Sending load index message to Gpu");
-        out.writeInt(INDEX.length());
-		out.writeBytes(INDEX);
+        out.writeInt((IRProtocol.INDEX).length());
+		out.writeBytes(IRProtocol.INDEX);
 		int result = in.readInt();
 
         LOGGER.info("Closing connection with Gpu Server");
         connection.close();
-        return result == 1;
+        out.close();
+        in.close();
+        return result == IRProtocol.INDEX_SUCCESS;
 	}
 
     public void setSshHandler(SshHandler sshHandler){
@@ -151,6 +153,34 @@ public class GpuServerHandler {
 	    String host = (this.isSshTunnel)? this.sshTunnelHost : this.host;
 	    int port = (this.isSshTunnel)? this.sshTunnelPort : this.port;
         return new SocketConnection(host, port);
+    }
+
+    public boolean testConnection() throws IOException {
+        SocketConnection connection = null;
+        try {
+            connection = this.connect();
+        } catch (IOException e) {
+            throw new IOException("Could not stablish connection.");
+        }
+        DataOutputStream out = new DataOutputStream(connection.getSocketOutput());
+        DataInputStream in = new DataInputStream(connection.getSocketInput());
+        try {
+            out.writeInt((IRProtocol.TEST).length());
+            out.writeBytes(IRProtocol.TEST);
+        } catch (IOException e) {
+            throw new IOException("Could not write in socket.");
+        }
+        int testResult = 0;
+        try {
+            testResult = in.readInt();
+        } catch (IOException e) {
+            throw new IOException("Could not read from socket.");
+        }
+
+        connection.close();
+        out.close();
+        in.close();
+        return testResult == IRProtocol.TEST_OK;
     }
 
     private String connectionMessage(){

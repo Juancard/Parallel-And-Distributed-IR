@@ -51,7 +51,7 @@ public class IRWorker extends MyCustomWorker{
         LOGGER.info("Request - " + request);
         if (request.equals(IRProtocol.INDEX)) {
             out = this.index();
-        } else if (request.equals(IRProtocol.QUERY)){
+        } else if (request.equals(IRProtocol.EVALUATE)){
             try {
                 String query = this.readFromClient().toString();
                 out = this.query(query);

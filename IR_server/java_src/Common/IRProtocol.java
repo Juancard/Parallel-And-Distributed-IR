@@ -6,6 +6,12 @@ package Common;
  * Time: 19:52
  */
 public class IRProtocol {
-    public static final String INDEX = "INDEX";
-    public static final String QUERY = "QUERY";
+    public static final String INDEX = "IND";
+    public static final String EVALUATE = "EVA";
+    public static final String TEST = "TEST";
+
+    public static final int INDEX_SUCCESS = 1;
+    public static final int INDEX_FAIL = -1;
+
+    public static final int TEST_OK = 1;
 }

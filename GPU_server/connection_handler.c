@@ -50,6 +50,18 @@ void onQueryEvalRequest(int socketfd){
   free(termIds);
 }
 
+void onTestConnectionRequest(int socketfd){
+  int result = htonl(TEST_OK);
+  if (
+    send(
+      socketfd,
+      (char *)&result,
+      sizeof(int),
+      0)
+      == -1)
+    perror("send indexing result status");
+}
+
 int sendEvaluationResponse(int socketfd, DocScores docScores){
   // first sends docs
   // (could be removed if the client knows number of docs in collection)

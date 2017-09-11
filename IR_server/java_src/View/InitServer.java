@@ -47,10 +47,6 @@ public class InitServer {
     private GpuServerHandler gpuHandler;
     private IndexFilesHandler indexFilesHandler;
 
-    private boolean sshToGpuEnabled = false;
-    private SshHandler sshHandler;
-
-
     public InitServer(String propertiesPath){
         Properties properties = null;
         try {
@@ -68,13 +64,23 @@ public class InitServer {
             this.setupNormalizer(properties);
             this.setupVocabulary(properties);
             this.setupIndexFilesHandler(properties);
-            this.setupSshHandler(properties);
             this.setupGpuServer(properties);
+
+            // these are only set up when properties needed exists
+            this.setupTunnelToGpuServer(properties);
+            this.setupSshHandler(properties);
         } catch (IndexerException e) {
             LOGGER.severe("Error setting up server: " + e.getMessage());
             System.exit(1);
         } catch (IOException e) {
             LOGGER.severe("Error setting up server: " + e.getMessage());
+            System.exit(1);
+        }
+
+        try {
+            this.testConfiguration();
+        } catch (IOException e) {
+            LOGGER.severe("Error testing server configuration: " + e.getMessage());
             System.exit(1);
         }
 
@@ -148,7 +154,7 @@ public class InitServer {
         } catch (IOException e) {
             throw new IOException("Loading vocabulary: " + e.getMessage());
         }
-        LOGGER.info("Loaded vocabulary at: " + vocabularyFilePath);
+        LOGGER.info("Loaded vocabulary FROM: " + vocabularyFilePath);
     }
 
     private void setupIndexFilesHandler(Properties properties) throws IOException {
@@ -188,44 +194,9 @@ public class InitServer {
         );
     }
 
-    private void setupSshHandler(Properties properties) throws IOException {
-        String host = properties.getProperty("GPU_HOST");
-        String portStr = properties.getProperty("GPU_PORT");
-        String username = properties.getProperty("GPU_USERNAME");
-        String pass = properties.getProperty("GPU_PASS");
-        String sshPortStr = properties.getProperty("GPU_SSH_PORT");
-        String gpuIndexPath = properties.getProperty("GPU_INDEX_PATH");
-
-        this.sshToGpuEnabled = PropertiesManager.stringPropIsSet(host)
-                && PropertiesManager.stringPropIsSet(portStr)
-                && PropertiesManager.stringPropIsSet(username)
-                && PropertiesManager.stringPropIsSet(pass)
-                && PropertiesManager.stringPropIsSet(sshPortStr)
-                && PropertiesManager.stringPropIsSet(gpuIndexPath);
-
-        String m = "Remote connection to Gpu Server is ";
-
-        if (!this.sshToGpuEnabled){
-            LOGGER.info(m + "disabled");
-        } else {
-            LOGGER.info(m + "enabled");
-            this.sshHandler = new SshHandler(
-                    host,
-                    new Integer(portStr),
-                    username,
-                    pass,
-                    new Integer(sshPortStr)
-            );
-            if (!this.sshHandler.directoryIsInRemote(gpuIndexPath))
-                throw new IOException("GPU_INDEX_PATH directory does not exists in Gpu Server");
-        }
-    }
-
     private void setupGpuServer(Properties properties) throws IOException {
         String host = properties.getProperty("GPU_HOST");
         int port = new Integer(properties.getProperty("GPU_PORT"));
-        String sshTunnelHost = properties.getProperty("GPU_TUNNEL_HOST");
-        String sshTunnelPort = properties.getProperty("GPU_TUNNEL_PORT");
         String gpuIndexPath = properties.getProperty("GPU_INDEX_PATH");
 
         this.gpuHandler = new GpuServerHandler(
@@ -234,12 +205,57 @@ public class InitServer {
                 gpuIndexPath,
                 this.indexFilesHandler
         );
+    }
+
+    private void setupSshHandler(Properties properties) throws IOException {
+        String host = properties.getProperty("GPU_HOST");
+        String portStr = properties.getProperty("GPU_PORT");
+        String username = properties.getProperty("GPU_USERNAME");
+        String pass = properties.getProperty("GPU_PASS");
+        String sshPortStr = properties.getProperty("GPU_SSH_PORT");
+        String gpuIndexPath = properties.getProperty("GPU_INDEX_PATH");
+
+        boolean sshToGpuEnabled = PropertiesManager.stringPropIsSet(host)
+                && PropertiesManager.stringPropIsSet(portStr)
+                && PropertiesManager.stringPropIsSet(username)
+                && PropertiesManager.stringPropIsSet(pass)
+                && PropertiesManager.stringPropIsSet(sshPortStr)
+                && PropertiesManager.stringPropIsSet(gpuIndexPath);
+
+        String m = "Remote connection to Gpu Server is ";
+
+        if (!sshToGpuEnabled){
+            LOGGER.info(m + "disabled");
+        } else {
+            LOGGER.info(m + "enabled");
+            SshHandler sshHandler = new SshHandler(
+                    host,
+                    new Integer(portStr),
+                    username,
+                    pass,
+                    new Integer(sshPortStr)
+            );
+            if (!sshHandler.directoryIsInRemote(gpuIndexPath))
+                throw new IOException("GPU_INDEX_PATH directory does not exists in Gpu Server");
+            this.gpuHandler.setSshHandler(sshHandler);
+        }
+    }
+
+    private void setupTunnelToGpuServer(Properties properties) {
+        String sshTunnelHost = properties.getProperty("GPU_TUNNEL_HOST");
+        String sshTunnelPort = properties.getProperty("GPU_TUNNEL_PORT");
         if (sshTunnelHost != null & sshTunnelPort!=null){
-            LOGGER.info("setting tunnel at " + sshTunnelHost + ":" + sshTunnelPort);
+            LOGGER.info("Setting tunnel at " + sshTunnelHost + ":" + sshTunnelPort);
             this.gpuHandler.setSshTunnel(sshTunnelHost, new Integer(sshTunnelPort));
         }
-        if (this.sshToGpuEnabled){
-            this.gpuHandler.setSshHandler(this.sshHandler);
+    }
+
+    private void testConfiguration() throws IOException {
+        LOGGER.info("Testing connection to Gpu Server");
+        try {
+            this.gpuHandler.testConnection();
+        } catch (IOException e) {
+            throw new IOException("Gpu connection test failed. Cause: " + e.getMessage());
         }
     }
 

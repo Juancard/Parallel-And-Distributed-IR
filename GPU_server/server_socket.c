@@ -38,7 +38,9 @@ void onAccept(int socketfd){
     onIndexRequest(socketfd);
   } else if (strcmp(action, REQUEST_QUERY_EVAL) == 0){
     onQueryEvalRequest(socketfd);
-  } else {
+  } else if (strcmp(action, REQUEST_TEST_CONNECTION) == 0){
+    onTestConnectionRequest(socketfd);
+  }else {
     printf("No action\n");
   }
 
