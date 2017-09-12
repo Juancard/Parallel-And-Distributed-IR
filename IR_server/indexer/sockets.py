@@ -3,6 +3,7 @@
 import socket
 import struct
 import sys
+import indexer_main
 
 REQUEST_INDEX = 'IND'
 RESPONSE_SUCCESS = "OK"
@@ -62,19 +63,32 @@ def readSocket(conn, size):
         print "Exiting connection"
         return False
 
-def onRequest(conn, addr):
+def readLengthThenMsg(conn):
     read = readSocket(conn, SIZE_OF_INT)
     if not read: return False
     messageLength = struct.unpack('<i', read)[0];
-    print "Message size:", messageLength
     message = readSocket(conn, messageLength)
     if not message: return False
+    return message
+def sendLengthThenMsg(conn, msg):
+    conn.sendall(struct.pack('<i', len(msg)))
+    conn.sendall(msg)
+
+def onRequest(conn, addr):
+    message = readLengthThenMsg(conn)
+    if not message: return False
     if (message == REQUEST_INDEX):
-        print "Indexing..."
-        print "sending message length", len(RESPONSE_SUCCESS)
-        conn.sendall(struct.pack('<i', len(RESPONSE_SUCCESS)))
-        print "sending response ok", RESPONSE_SUCCESS
-        conn.sendall(RESPONSE_SUCCESS)
+        print "REQUEST - INDEX"
+        corpusPath = readLengthThenMsg(conn)
+        print "Corpus to be indexed:", corpusPath
+        try:
+            indexer_main.index(corpusPath)
+        except OSError, e:
+            logging.error(e)
+            sendLengthThenMsg(conn, RESPONSE_FAIL)
+            sendLengthThenMsg(conn, "Corpus path is not a valid directory")
+        sendLengthThenMsg(conn, RESPONSE_SUCCESS)
+
     else:
         print "No action"
 
