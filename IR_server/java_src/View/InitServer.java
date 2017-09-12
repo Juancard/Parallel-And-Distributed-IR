@@ -128,13 +128,16 @@ public class InitServer {
         String corpus = properties.getProperty("IR_CORPUS_PATH");
         if (!this.isValidDirectory(corpus))
             throw new IndexerException("Loading python indexer: IR_CORPUS_PATH is not a valid path");
-
+        /*
         String indexerScript = properties.getProperty("IR_INDEXER_SCRIPT");
         if (!this.isValidFile(indexerScript))
             throw new IndexerException("Loading python indexer: IR_INDEXER_SCRIPT was not set");
-
+        */
+        String indexerHost = properties.getProperty("INDEXER_HOST");
+        String indexerPort = properties.getProperty("INDEXER_PORT");
         this.pyIndexer = new PythonIndexer(
-                indexerScript,
+                indexerHost,
+                Integer.parseInt(indexerPort),
                 corpus
         );
     }

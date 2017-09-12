@@ -1,9 +1,12 @@
 package Controller.IndexerHandler;
 
+import Common.Socket.SocketConnection;
+
 import java.io.*;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.logging.Level;
 import java.util.logging.Logger;
 
 /**
@@ -15,18 +18,41 @@ public class PythonIndexer {
     // classname for the logger
     private final static Logger LOGGER = Logger.getLogger(Logger.GLOBAL_LOGGER_NAME);
 
-    private final String corpusPath;
-    private final String indexerScript;
+    private final static String REQUEST_INDEX = "IND";
+    private final static String RESPONSE_INDEX_SUCCESS = "OK";
+    private final static String RESPONSE_INDEX_FAIL = "NOK";
+
+    private String corpusPath;
+    private String indexerScript;
+
+    String host;
+    int port;
+    private boolean isScript;
+    private boolean isSocket;
 
     public PythonIndexer(
-            String indexerScript,
-            String corpus
+            String host,
+            int port,
+            String corpusPath
+    ) {
+        this.host = host;
+        this.port = port;
+        this.corpusPath = corpusPath;
+        this.isScript = false;
+        this.isSocket = true;
+    }
+
+    public PythonIndexer(
+            String corpus,
+            String indexerScript
     ) {
         this.corpusPath = corpus;
         this.indexerScript = indexerScript;
+        this.isSocket = false;
+        this.isScript = true;
     }
 
-    public synchronized void callScriptIndex() throws IOException {
+    public synchronized boolean callScriptIndex() throws IOException {
         List<String> command = new ArrayList<String>();
         command.add("python");
         command.add(this.indexerScript);
@@ -46,10 +72,10 @@ public class PythonIndexer {
         // print the output from the command
         if (stdout.length() > 0)
             System.out.println(stdout);
-        if (stderr.length() > 0){
+        if (stderr.length() > 0) {
             String[] errors = stderr.toString().split("\n");
             String exceptions = "";
-            for (String err : errors){
+            for (String err : errors) {
                 if (err.startsWith("WARNING"))
                     LOGGER.warning(err);
                 else {
@@ -59,6 +85,21 @@ public class PythonIndexer {
             if (!exceptions.isEmpty())
                 throw new IOException(exceptions);
         }
+        return true;
     }
 
+    public synchronized boolean indexViaSocket() throws IOException {
+        SocketConnection sc = null;
+        try {
+            sc = new SocketConnection(host, port);
+        } catch (IOException e) {
+            LOGGER.log(Level.SEVERE, e.getMessage(), e);
+            throw new IOException("Could not connect to indexer host. Cause: " + e.getMessage());
+        }
+        sc.writeInt("IND".length());
+        sc.writeBytes("IND");
+        int messageLength = sc.readInt();
+        String status = sc.readString(messageLength);
+        return status.equals(this.RESPONSE_INDEX_SUCCESS);
+    }
 }

@@ -7,6 +7,7 @@ import Controller.IndexerHandler.PythonIndexer;
 import Model.IRNormalizer;
 import Model.Query;
 import Model.Vocabulary;
+import com.sun.xml.internal.ws.policy.privateutil.PolicyUtils;
 
 import java.io.IOException;
 import java.net.Socket;
@@ -70,14 +71,17 @@ public class IRWorker extends MyCustomWorker{
     private Object index() {
 
         try {
-            LOGGER.info("Calling python script");
-            this.pythonIndexer.callScriptIndex();
+            LOGGER.info("Calling python indexer");
+            //this.pythonIndexer.callScriptIndex();
+            boolean status = this.pythonIndexer.indexViaSocket();
+            if (!status)
+                return false;
         } catch (IOException e) {
-            String m = "Error on indexer script: " + e.getMessage();
+            String m = "Error on indexer: " + e.getMessage();
             LOGGER.warning(m);
             return new IOException(m);
         }
-
+        /*
         try {
             LOGGER.info(
                     "Connecting to Gpu server at "
@@ -91,17 +95,7 @@ public class IRWorker extends MyCustomWorker{
             LOGGER.warning(m);
             return new IOException(m);
         }
-/*
-        boolean indexWasLoaded = false;
-        try {
-            LOGGER.info("Loading index in Gpu");
-            indexWasLoaded = this.gpuHandler.loadIndexInGpu();
-        } catch (IOException e) {
-            String m = "Error on loading index : " + e.getMessage();
-            LOGGER.warning(m);
-            return new IOException(m);
-        }
-*/
+
         try {
             LOGGER.info("Update index in IR server");
             this.irServer.updateIndex();
@@ -110,7 +104,7 @@ public class IRWorker extends MyCustomWorker{
             LOGGER.warning(m);
             return new IOException(m);
         }
-
+        */
         return true;
     }
 
