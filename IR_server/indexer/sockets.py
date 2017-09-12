@@ -68,10 +68,13 @@ def readLengthThenMsg(conn):
     if not read: return False
     messageLength = struct.unpack('<i', read)[0];
     message = readSocket(conn, messageLength)
+    print "Read: ", message
     if not message: return False
     return message
 def sendLengthThenMsg(conn, msg):
+    print "Sending msg size: %d" % len(msg)
     conn.sendall(struct.pack('<i', len(msg)))
+    print "Sending msg:", msg
     conn.sendall(msg)
 
 def onRequest(conn, addr):
@@ -88,7 +91,6 @@ def onRequest(conn, addr):
             sendLengthThenMsg(conn, RESPONSE_FAIL)
             sendLengthThenMsg(conn, "Corpus path is not a valid directory")
         sendLengthThenMsg(conn, RESPONSE_SUCCESS)
-
     else:
         print "No action"
 

@@ -1,6 +1,7 @@
 package Controller.IndexerHandler;
 
 import Common.Socket.SocketConnection;
+import org.omg.CORBA.INITIALIZE;
 
 import java.io.*;
 
@@ -88,26 +89,25 @@ public class PythonIndexer {
         return true;
     }
 
-    public synchronized boolean indexViaSocket() throws IOException {
-        SocketConnection sc = null;
+    public synchronized boolean indexViaSocket() throws IndexerException, IOException {
+        IndexerSocketConnection sc = null;
         try {
-            sc = new SocketConnection(host, port);
+            sc = new IndexerSocketConnection(host, port);
         } catch (IOException e) {
             LOGGER.log(Level.SEVERE, e.getMessage(), e);
-            throw new IOException("Could not connect to indexer host. Cause: " + e.getMessage());
+            throw new IndexerException("Could not connect to indexer host. Cause: " + e.getMessage());
         }
-        sc.writeInt("IND".length());
-        sc.writeBytes("IND");
-        sc.writeInt(this.corpusPath.length());
-        sc.writeBytes(this.corpusPath);
 
-        int msgLength = sc.readInt();
-        String status = sc.readString(msgLength);
-        if (status == RESPONSE_INDEX_FAIL){
-            msgLength = sc.readInt();
-            String errorMsg = sc.readString(msgLength);
-            throw new IOException("At Indexer host: '" + errorMsg + "'");
+        sc.sendMessage(this.REQUEST_INDEX);
+        sc.sendMessage(this.corpusPath);
+
+        String status = sc.readMessage();
+        if (status.equals(RESPONSE_INDEX_FAIL)){
+            String errorMsg = sc.readMessage();
+            sc.close();
+            throw new IndexerException("At Indexer host: " + errorMsg);
         }
+        sc.close();
         return status.equals(this.RESPONSE_INDEX_SUCCESS);
     }
 }

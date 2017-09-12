@@ -72,35 +72,6 @@ public class SocketConnection {
         }
     }
 
-    public int readInt() throws IOException {
-        return Integer.reverseBytes(
-                new DataInputStream(
-                        this.socketInput
-                ).readInt()
-        );
-    }
-    public void writeInt(int toWrite) throws IOException {
-        new DataOutputStream(
-                this.getSocketOutput()
-        ).writeInt(
-                Integer.reverseBytes(toWrite)
-        );
-    }
-    public void writeBytes(String toWrite) throws IOException {
-        new DataOutputStream(
-                this.getSocketOutput()
-        ).writeBytes(toWrite);
-    }
-    public String readString(int size) throws IOException {
-        char[] buff = new char[size];
-        new BufferedReader(
-                new InputStreamReader(
-                    this.getSocketInput()
-            )
-        ).read(buff, 0, size);
-        return String.valueOf(buff);
-    }
-
     public String getIdentity(){
         return this.clientSocket.getRemoteSocketAddress().toString();
     }

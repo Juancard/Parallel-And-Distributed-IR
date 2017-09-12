@@ -3,6 +3,7 @@ package Controller.ServerHandler;
 import Common.IRProtocol;
 import Common.Socket.MyCustomWorker;
 import Controller.GpuServerHandler;
+import Controller.IndexerHandler.IndexerException;
 import Controller.IndexerHandler.PythonIndexer;
 import Model.IRNormalizer;
 import Model.Query;
@@ -77,6 +78,11 @@ public class IRWorker extends MyCustomWorker{
             if (!status)
                 return false;
         } catch (IOException e) {
+            String m = "Error on indexer socket: " + e.getMessage();
+            LOGGER.warning(m);
+            e.printStackTrace();
+            return new IOException(m);
+        } catch (IndexerException e) {
             String m = "Error on indexer: " + e.getMessage();
             LOGGER.warning(m);
             return new IOException(m);
@@ -104,7 +110,7 @@ public class IRWorker extends MyCustomWorker{
             LOGGER.warning(m);
             return new IOException(m);
         }
-        
+
         return true;
     }
 
