@@ -39,13 +39,24 @@ def openSocket():
         sys.exit(1)
     return s
 
+def recvall(sock, size):
+    msg = ''
+    while len(msg) < size:
+        part = sock.recv(size-len(msg))
+        if part == '':
+            break # the connection is closed
+        msg += part
+    return msg
 def readSocket(conn, size):
+    msg = ''
     try:
-        read = conn.recv(size)
-        if not read:
-            print "Could not read any data from socket"
-            return False
-        return read
+        while len(msg) < size:
+            read = conn.recv(size-len(msg))
+            if not read:
+                print "Could not read any data from socket"
+                return False
+            msg += read
+        return msg
     except socket.error as msg:
         print "Broken socket: ", msg
         print "Exiting connection"
@@ -60,7 +71,9 @@ def onRequest(conn, addr):
     if not message: return False
     if (message == REQUEST_INDEX):
         print "Indexing..."
+        print "sending message length", len(RESPONSE_SUCCESS)
         conn.sendall(struct.pack('<i', len(RESPONSE_SUCCESS)))
+        print "sending response ok", RESPONSE_SUCCESS
         conn.sendall(RESPONSE_SUCCESS)
     else:
         print "No action"
