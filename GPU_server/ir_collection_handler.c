@@ -55,7 +55,7 @@ int writeIndexFiles(
     return COLLECTION_HANDLER_FAIL;
 
   file = fopen(INDEX_PATH POSTINGS_POINTERS_FILENAME, "wb");
-  printf("Writing POinters to postings file ...\n");
+  printf("Writing Pointers to postings file ...\n");
   status = writePointersToPostings(file, postings, terms);
   fclose(file);
   if (status != COLLECTION_OPERATION_SUCCESS)
@@ -84,7 +84,9 @@ int getCollection(Collection *collection){
   );
 
   printf("Loading postings\n");
-  PostingFreq *postingsFreq = (PostingFreq *) malloc(sizeof(PostingFreq) * collection->terms);
+  int postingsSize = sizeof(PostingFreq) * collection->terms;
+  printf("Postings size: %.6f mb\n", postingsSize / 1000000);
+  PostingFreq *postingsFreq = (PostingFreq *) malloc(postingsSize);
   int status = getPostingsBin(
     INDEX_PATH POSTINGS_FILENAME,
     INDEX_PATH POSTINGS_POINTERS_FILENAME,
@@ -175,7 +177,6 @@ int getPostingsBin(
     return COLLECTION_HANDLER_FAIL;
   }
   fclose(pointersFile);
-
   FILE *postingsFile = fopen(postingsPath, "rb");
   if(postingsFile == NULL) {
    printf("Error! No postings file in path %s\n", postingsPath);
@@ -188,8 +189,8 @@ int getPostingsBin(
     terms
   );
   free(pointers);
-  fclose(pointersFile);
 
+  fclose(postingsFile);
   if (status != COLLECTION_OPERATION_SUCCESS){
     printf("Error while loading postings from file");
     return COLLECTION_HANDLER_FAIL;
