@@ -98,8 +98,16 @@ public class PythonIndexer {
         }
         sc.writeInt("IND".length());
         sc.writeBytes("IND");
-        int messageLength = sc.readInt();
-        String status = sc.readString(messageLength);
+        sc.writeInt(this.corpusPath.length());
+        sc.writeBytes(this.corpusPath);
+
+        int msgLength = sc.readInt();
+        String status = sc.readString(msgLength);
+        if (status == RESPONSE_INDEX_FAIL){
+            msgLength = sc.readInt();
+            String errorMsg = sc.readString(msgLength);
+            throw new IOException("At Indexer host: '" + errorMsg + "'");
+        }
         return status.equals(this.RESPONSE_INDEX_SUCCESS);
     }
 }

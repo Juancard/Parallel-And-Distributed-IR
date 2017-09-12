@@ -81,7 +81,7 @@ public class IRWorker extends MyCustomWorker{
             LOGGER.warning(m);
             return new IOException(m);
         }
-        /*
+
         try {
             LOGGER.info(
                     "Connecting to Gpu server at "
@@ -104,7 +104,7 @@ public class IRWorker extends MyCustomWorker{
             LOGGER.warning(m);
             return new IOException(m);
         }
-        */
+        
         return true;
     }
 
