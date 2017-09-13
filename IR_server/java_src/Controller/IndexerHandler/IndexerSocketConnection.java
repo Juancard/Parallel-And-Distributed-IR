@@ -5,6 +5,7 @@ import Common.Socket.SocketConnection;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
+import java.nio.charset.Charset;
 
 /**
  * Created by juan on 12/09/17.
@@ -37,7 +38,7 @@ public class IndexerSocketConnection extends SocketConnection {
         int msgLength = this.readInt();
         byte[] buff = new byte[msgLength];
         this.dataInputStream.read(buff, 0, msgLength);
-        return new String(buff);
+        return new String(buff, Charset.forName("UTF-8"));
     }
 
     public void close(){

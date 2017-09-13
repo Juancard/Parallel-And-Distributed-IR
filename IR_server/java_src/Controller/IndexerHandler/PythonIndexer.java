@@ -104,15 +104,30 @@ public class PythonIndexer {
         //Read metadata
         int docs = sc.readInt();
         int terms = sc.readInt();
+        LOGGER.info("Docs: " + docs + " - Terms: " + terms);
+        // Read vocabulary
+
+        LOGGER.info("Loading vocabulary");
+        HashMap<String, Integer> vocabulary = new HashMap<String, Integer>();
+        //for (int i=0; i<terms; i++) System.out.println("term: " + sc.readMessage());
+        for (int i=0; i<terms; i++) vocabulary.put(sc.readMessage(), i);
+
+        // Read documents
+        LOGGER.info("Loading documents");
+        HashMap<String, Integer> documents = new HashMap<String, Integer>();
+        for (int i=0; i<docs; i++) documents.put(sc.readMessage(), i);
         //Read max freqs
+        LOGGER.info("Loading maxfreqs");
         int[] maxFreqs = new int[docs];
         for (int i=0; i<docs; i++)
             maxFreqs[i] = sc.readInt();
         // READ DF
+        LOGGER.info("Loading df");
         int[] df = new int[terms];
         for (int i=0; i<terms; i++)
             df[i] = sc.readInt();
         //READ POSTINGS
+        LOGGER.info("Loading postings");
         HashMap<Integer, HashMap<Integer, Integer>> postings = new HashMap<Integer, HashMap<Integer, Integer>>();
         int[] docIds;
         HashMap<Integer, Integer> mapDocToFreq;
