@@ -6,6 +6,7 @@ import sys
 import indexer_main
 import argparse
 import logging
+import os
 
 REQUEST_INDEX = 'IND'
 RESPONSE_SUCCESS = "OK"
@@ -108,7 +109,9 @@ def onRequest(conn, addr):
             # READ DOCUMENTS
             logging.info("Sending documents")
             for docId in range(0, docs):
-                sendLengthThenMsg(conn, indexer.documents.content[docId])
+                relPath = os.path.relpath(indexer.documents.content[docId], corpusPath)
+                print relPath
+                sendLengthThenMsg(conn, relPath)
             # SEND MAX FREQS
             logging.info("Sending maxfreqs")
             max_freqs = [indexer.maxFreqInDocs[d] for d in range(0, len(indexer.maxFreqInDocs))]
