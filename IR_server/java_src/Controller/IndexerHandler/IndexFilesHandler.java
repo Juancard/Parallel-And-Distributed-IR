@@ -2,6 +2,7 @@ package Controller.IndexerHandler;
 
 import java.io.*;
 import java.util.ArrayList;
+import java.util.HashMap;
 
 /**
  * Created by juan on 10/09/17.
@@ -71,5 +72,15 @@ public class IndexFilesHandler {
         files.add(this.metadataPath);
 
         return files;
+    }
+
+    public boolean persist(
+            int docs,
+            int terms,
+            HashMap<Integer, HashMap<Integer, Integer>> postings,
+            int[] df,
+            int[] maxFreqs
+    ) {
+        return true;
     }
 }

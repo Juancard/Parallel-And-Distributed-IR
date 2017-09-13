@@ -88,7 +88,8 @@ public class InitServer {
                 this.vocabulary,
                 this.gpuHandler,
                 this.pyIndexer,
-                this.normalizer
+                this.normalizer,
+                this.indexFilesHandler
         );
         IRServer irServer = new IRServer(
                 irServerPort,

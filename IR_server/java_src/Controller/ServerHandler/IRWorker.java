@@ -3,8 +3,10 @@ package Controller.ServerHandler;
 import Common.IRProtocol;
 import Common.Socket.MyCustomWorker;
 import Controller.GpuServerHandler;
+import Controller.IndexerHandler.IndexHandler;
 import Controller.IndexerHandler.IndexerException;
 import Controller.IndexerHandler.PythonIndexer;
+import Controller.QueryHandler;
 import Model.IRNormalizer;
 import Model.Query;
 import Model.Vocabulary;
@@ -13,6 +15,7 @@ import com.sun.xml.internal.ws.policy.privateutil.PolicyUtils;
 import java.io.IOException;
 import java.net.Socket;
 import java.util.HashMap;
+import java.util.logging.Level;
 import java.util.logging.Logger;
 
 /**
@@ -24,27 +27,21 @@ public class IRWorker extends MyCustomWorker{
 
     // classname for the logger
     private final static Logger LOGGER = Logger.getLogger(Logger.GLOBAL_LOGGER_NAME);
+    private final IndexHandler indexHandler;
+    private final QueryHandler queryHandler;
 
     private IRServerForConnections irServer;
-    private final Vocabulary vocabulary;
-    private final GpuServerHandler gpuHandler;
-    private final PythonIndexer pythonIndexer;
-    private final IRNormalizer normalizer;
 
     public IRWorker(
             Socket clientSocket,
             IRServerForConnections irServer,
-            Vocabulary vocabulary,
-            GpuServerHandler gpuHandler,
-            PythonIndexer pythonIndexer,
-            IRNormalizer normalizer
+            IndexHandler indexHandler,
+            QueryHandler queryHandler
     ) {
         super(clientSocket);
         this.irServer = irServer;
-        this.vocabulary = vocabulary;
-        this.gpuHandler = gpuHandler;
-        this.pythonIndexer = pythonIndexer;
-        this.normalizer = normalizer;
+        this.indexHandler = indexHandler;
+        this.queryHandler = queryHandler;
     }
 
     protected Object onClientRequest(String request) {
@@ -70,7 +67,13 @@ public class IRWorker extends MyCustomWorker{
     }
 
     private Object index() {
-
+        try {
+            return this.indexHandler.index();
+        } catch (IOException e) {
+            LOGGER.log(Level.SEVERE, e.getMessage(), e);
+            return new IOException("Internal Server error");
+        }
+        /*
         try {
             LOGGER.info("Calling python indexer");
             //this.pythonIndexer.callScriptIndex();
@@ -110,12 +113,13 @@ public class IRWorker extends MyCustomWorker{
             LOGGER.warning(m);
             return new IOException(m);
         }
-
         return true;
+        */
     }
 
     private Object query(String query){
-
+        return this.queryHandler.query();
+/*
         Query q = new Query(
                 query,
                 this.vocabulary.getMapTermStringToTermId(),
@@ -132,7 +136,7 @@ public class IRWorker extends MyCustomWorker{
             LOGGER.warning(m);
             return new IOException(m);
         }
-
+*/
     }
 
 }

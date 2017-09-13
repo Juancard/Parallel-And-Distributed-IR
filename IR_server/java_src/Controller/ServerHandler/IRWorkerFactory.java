@@ -3,7 +3,10 @@ package Controller.ServerHandler;
 import Common.Socket.MyCustomWorker;
 import Common.Socket.WorkerFactory;
 import Controller.GpuServerHandler;
+import Controller.IndexerHandler.IndexFilesHandler;
+import Controller.IndexerHandler.IndexHandler;
 import Controller.IndexerHandler.PythonIndexer;
+import Controller.QueryHandler;
 import Model.IRNormalizer;
 import Model.Vocabulary;
 
@@ -18,22 +21,30 @@ import java.util.HashMap;
  */
 public class IRWorkerFactory implements WorkerFactory{
 
-    private Vocabulary vocabulary;
-    private final GpuServerHandler gpuHandler;
-    private final PythonIndexer pythonIndexer;
-    private final IRNormalizer normalizer;
     private IRServerForConnections irServer;
+    private IndexHandler indexHandler;
+    private QueryHandler queryHandler;
+    private Vocabulary vocabulary;
 
     public IRWorkerFactory(
             Vocabulary vocabulary,
             GpuServerHandler gpuHandler,
             PythonIndexer pythonIndexer,
-            IRNormalizer normalizer
+            IRNormalizer normalizer,
+            IndexFilesHandler indexFilesHandler
     ) {
+        this.indexHandler = new IndexHandler(
+                normalizer,
+                indexFilesHandler,
+                pythonIndexer,
+                gpuHandler,
+                vocabulary
+        );
+        this.queryHandler = new QueryHandler(
+                gpuHandler,
+                vocabulary
+        );
         this.vocabulary = vocabulary;
-        this.gpuHandler = gpuHandler;
-        this.pythonIndexer = pythonIndexer;
-        this.normalizer = normalizer;
     }
 
     @Override
@@ -41,10 +52,8 @@ public class IRWorkerFactory implements WorkerFactory{
         return new IRWorker(
                 connection,
                 irServer,
-                this.vocabulary,
-                this.gpuHandler,
-                this.pythonIndexer,
-                this.normalizer
+                this.indexHandler,
+                this.queryHandler
         );
     }
 

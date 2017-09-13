@@ -90,7 +90,7 @@ public class PythonIndexer {
         return true;
     }
 
-    public synchronized boolean indexViaSocket() throws IndexerException, IOException {
+    public synchronized boolean indexViaSocket(IndexFilesHandler indexFilesHandler) throws IndexerException, IOException {
         IndexerSocketConnection sc = null;
         try {
             sc = new IndexerSocketConnection(host, port);
@@ -130,6 +130,11 @@ public class PythonIndexer {
             throw new IndexerException("At Indexer host: " + errorMsg);
         }
         sc.close();
-        return status.equals(this.RESPONSE_INDEX_SUCCESS);
+
+        boolean persistStatus = indexFilesHandler.persist(
+          docs, terms, postings, df, maxFreqs
+        );
+
+        return persistStatus && status.equals(this.RESPONSE_INDEX_SUCCESS);
     }
 }
