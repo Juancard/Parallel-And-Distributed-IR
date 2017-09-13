@@ -110,7 +110,6 @@ def onRequest(conn, addr):
             logging.info("Sending documents")
             for docId in range(0, docs):
                 relPath = os.path.relpath(indexer.documents.content[docId], corpusPath)
-                print relPath
                 sendLengthThenMsg(conn, relPath)
             # SEND MAX FREQS
             logging.info("Sending maxfreqs")

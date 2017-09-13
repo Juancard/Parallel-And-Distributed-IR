@@ -149,7 +149,7 @@ public class InitServer {
 
     private void setupVocabulary(Properties properties) throws IOException {
         File indexPath = this.indexerConfiguration.getIndexPath();
-        String vocabularyFilename = properties.getProperty("IR_VOCABULARY_FILE");
+        String vocabularyFilename = properties.getProperty("IR_VOCABULARY_FILENAME");
         String vocabularyFilePath = indexPath + "/" + vocabularyFilename;
         try {
             this.vocabulary = new Vocabulary(
@@ -167,34 +167,39 @@ public class InitServer {
                 "IR_POSTINGS_FILENAME",
                 "IR_POINTERS_FILENAME",
                 "IR_METADATA_FILENAME",
-                "IR_MAXFREQS_FILENAME"
+                "IR_MAXFREQS_FILENAME",
+                "IR_VOCABULARY_FILENAME",
+                "IR_DOCUMENTS_FILENAME"
         };
 
-        File[] files = new File[4];
+        File[] files = new File[6];
         for (int i=0; i<filesProp.length; i++){
             String fpath = properties.getProperty(filesProp[i]);
-            File f = new File(
-                    irIndexPath + "/" + fpath
-            );
-            if (!this.isValidFile(f.toString()))
+            if (fpath == null || fpath.isEmpty())
                 throw new IOException(
                         "Setting up index files: '"
                                 + filesProp[i]
-                                + "' is not a valid file path.");
-
-            files[i] = f;
+                                + "': not a valid filename: "
+                                + fpath);
+            files[i] = new File(
+                    irIndexPath + "/" + fpath
+            );
         }
 
         String postingsPath = files[0].toString();
         String pointersPath = files[1].toString();
         String metadataPath = files[2].toString();
         String maxFreqsPath = files[3].toString();
+        String vocabularyPath = files[4].toString();
+        String documentsPath = files[5].toString();
 
         this.indexFilesHandler = new IndexFilesHandler(
                 postingsPath,
                 pointersPath,
                 maxFreqsPath,
-                metadataPath
+                metadataPath,
+                vocabularyPath,
+                documentsPath
         );
     }
 

@@ -109,7 +109,8 @@ public class PythonIndexer {
 
         LOGGER.info("Loading vocabulary");
         HashMap<String, Integer> vocabulary = new HashMap<String, Integer>();
-        for (int i=0; i<terms; i++) vocabulary.put(sc.readMessage(), i);
+        for (int i=0; i<terms; i++)
+            vocabulary.put(sc.readMessage(), i);
 
         // Read documents
         LOGGER.info("Loading documents");
@@ -146,7 +147,7 @@ public class PythonIndexer {
         sc.close();
 
         boolean persistStatus = indexFilesHandler.persist(
-          docs, terms, postings, df, maxFreqs
+          docs, terms, postings, df, maxFreqs, documents, vocabulary
         );
 
         return persistStatus && status.equals(this.RESPONSE_INDEX_SUCCESS);

@@ -41,11 +41,19 @@ public class IndexHandler {
             boolean status = this.pythonIndexer.indexViaSocket(indexFilesHandler);
             if (!status)
                 return false;
+            LOGGER.info(
+                    "Connecting to Gpu server at "
+                            + this.gpuServerHandler.getHost()
+                            + ":"
+                            + this.gpuServerHandler.getPort()
+            );
+            this.gpuServerHandler.sendIndex();
         } catch (IndexerException e) {
             String m = "Error on indexer: " + e.getMessage();
             LOGGER.warning(m);
             throw new IOException(m);
         }
+
         return true;
     }
 }
