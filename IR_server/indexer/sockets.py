@@ -85,7 +85,27 @@ def onRequest(conn, addr):
         corpusPath = readLengthThenMsg(conn)
         print "Corpus to be indexed:", corpusPath
         try:
-            indexer_main.index(corpusPath)
+            #INDEX
+            indexer = indexer_main.index(corpusPath)
+            # SEND METADATA
+            docs = len(indexer.documents.content)
+            terms = len(indexer.vocabulary.content)
+            conn.sendall(struct.pack('<2i', docs, terms))
+            # SEND MAX FREQS
+            max_freqs = indexer.maxFreqInDocs.values()
+            conn.sendall(struct.pack('<%di' % len(max_freqs), *max_freqs))
+            #SEND Postings
+            postings = indexer.postings.getAll()
+            df = [len(postings[tId].keys()) for tId in postings]
+            conn.sendall(struct.pack('<%dI' % len(df), *df))
+            #SEND POINTERS
+            for tId in postings:
+                docIds = postings[tId].keys()
+                freqs = postings[tId].values()
+                conn.sendall(struct.pack('<%sI' % len(docIds), *docIds))
+                conn.sendall(struct.pack('<%sI' % len(freqs), *freqs))
+
+
         except OSError, e:
             logging.error(e)
             sendLengthThenMsg(conn, RESPONSE_FAIL)

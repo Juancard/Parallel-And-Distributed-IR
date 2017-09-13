@@ -72,14 +72,17 @@ def index(corpusPath):
 	except OSError, e:
 		logging.error(e)
 		raise
-
 	iniData = loadIni()
 	# data para el analizador lexico
 	indexConfig = loadIndexConfig(iniData)
 
-	# Indexo
 	indexer = Indexer(collection)
 	indexer.index(indexConfig)
+
+	return indexer
+
+def indexAndSave(corpusPath):
+	index(corpusPath)
 
 	# Persisto indice para su recuperacion
 	INDEX_DIR = os.path.join(iniData['index_dir'], '')
