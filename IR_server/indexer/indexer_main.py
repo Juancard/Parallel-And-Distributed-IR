@@ -57,7 +57,7 @@ def storeIndexInDisk(indexDir, indexer):
 	logging.info("Pointers to postings guardadas en: %s" % bp.storeTermToPointer(path=indexDir, title="postings_pointers.bin"))
 
 	with open(indexDir + "max_freq_in_docs.bin", "wb") as f:
-		max_freqs = indexer.maxFreqInDocs.values()
+		max_freqs = [indexer.maxFreqInDocs[d] for d in range(0, len(indexer.maxFreqInDocs))]
 		f.write(struct.pack('<%sI' % len(max_freqs), *max_freqs))
 	logging.info("Max freq per doc guardadas en: " + indexDir + "max_freq_in_docs.bin")
 

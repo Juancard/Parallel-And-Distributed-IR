@@ -62,7 +62,7 @@ class Indexer(object):
 					tokens.extend(analysed["tokens"])
 
 			# Guardo documento actual
-			self.documents.addDocument(docId, actualDoc["name"])
+			self.documents.addDocument(docId, actualDoc["path"])
 
 			# De cada documento los terminos que tiene (sin repetir)
 			self.documentsTerms[docId] = set()
@@ -85,8 +85,10 @@ class Indexer(object):
 		self.vocabulary.setAlphabeticalOrder()
 		logging.info(u"Generando id de los terminos")
 		self.setTermsId()
+		logging.info(u"Ordenando postings por clave")
 		self.postings.sortByKey()
 		#self.positions.sortByKey()
+		logging.info(u"Calculando frecuencias maximas de cada documento")
 		self.loadMaxFreqs()
 
 	def updateIndex(self, docId, terms):

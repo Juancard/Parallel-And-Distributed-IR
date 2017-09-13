@@ -215,7 +215,7 @@ class BinaryPostings(object):
 	def create(self, postings, path="index_data/",
 			title="binary_postings.bin", dgaps=False):
 		path = path + title
-		termToPointer = collections.OrderedDict()
+		termToPointer = {}
 		pointer = 0
 		with open(path, "wb") as f:
 			for pId in postings:
@@ -238,10 +238,10 @@ class BinaryPostings(object):
 			title="term_to_pointer.bin"):
 		file_path = path + title
 		with open(file_path, "wb") as f:
-			dfs = [self.termToPointer[t]["lenDocs"] for t in self.termToPointer]
+			dfs = [self.termToPointer[t]["lenDocs"] for t in range(0,len(self.termToPointer))]
 			f.write(struct.pack('<%sI' % len(dfs), *dfs))
 		return file_path
-		
+
 	def readTermToPointerBinaryFile(self, terms, path="index_data/",
 			title="term_to_pointer.bin"):
 		file_path = path + title

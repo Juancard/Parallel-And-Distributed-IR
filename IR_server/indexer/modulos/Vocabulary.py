@@ -66,6 +66,8 @@ class Vocabulary(object):
 
 	def orderByFrecuenceValue(self, isDesc):
 		return sorted(self.content, key=lambda x: (self.content[x]['cf'], self.content[x]['df']), reverse=isDesc)
+	def termsSortedById(self):
+		return sorted(self.content, key=lambda x: self.content[x]["id"])
 
 	def setAlphabeticalOrder(self):
 		ordered = collections.OrderedDict()
@@ -79,20 +81,20 @@ class Vocabulary(object):
 			s.append("-"*50+"\n")
 			s.append("\tRANKING \tpor Juan Cardona\n")
 			s.append("-"*50+"\n")
-		
+
 			s.append("LOS %d TÉRMINOS MÁS FRECUENTES\n" % k)
 			s.append("\n\tTERMINO - CF\n")
 
 			maxCFList = self.orderByFrecuenceValue(True)[0:k]
 			for term in maxCFList:
 				s.append("\t%s - %d\n" % (term.encode('UTF-8'), self.getCF(term)))
-			
+
 			minCFList = self.orderByFrecuenceValue(False)[0:k]
 			s.append("\nLOS %d TÉRMINOS MENOS FRECUENTES\n" % k)
 			s.append("\n\tTERMINO - CF\n")
 			for term in minCFList:
 				s.append("\t%s - %d\n" % (term.encode("UTF-8"), self.getCF(term)))
-			
+
 			topKFile.write(''.join(s))
 		return title
 
