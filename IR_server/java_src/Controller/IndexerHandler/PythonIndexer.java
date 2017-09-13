@@ -6,6 +6,7 @@ import org.omg.CORBA.INITIALIZE;
 import java.io.*;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -97,10 +98,31 @@ public class PythonIndexer {
             LOGGER.log(Level.SEVERE, e.getMessage(), e);
             throw new IndexerException("Could not connect to indexer host. Cause: " + e.getMessage());
         }
-
+        // SEND INDEX REQUEST
         sc.sendMessage(this.REQUEST_INDEX);
         sc.sendMessage(this.corpusPath);
-
+        //Read metadata
+        int docs = sc.readInt();
+        int terms = sc.readInt();
+        //Read max freqs
+        int[] maxFreqs = new int[docs];
+        for (int i=0; i<docs; i++)
+            maxFreqs[i] = sc.readInt();
+        // READ DF
+        int[] df = new int[terms];
+        for (int i=0; i<terms; i++)
+            df[i] = sc.readInt();
+        //READ POSTINGS
+        HashMap<Integer, HashMap<Integer, Integer>> postings = new HashMap<Integer, HashMap<Integer, Integer>>();
+        int[] docIds;
+        HashMap<Integer, Integer> mapDocToFreq;
+        for (int termId=0; termId<terms; termId++){
+            docIds = new int[df[termId]];
+            mapDocToFreq = new HashMap<Integer, Integer>();
+            for (int i=0; i<df[termId]; i++) docIds[i] = sc.readInt();
+            for (int i=0; i<df[termId]; i++) mapDocToFreq.put(docIds[i], sc.readInt());
+            postings.put(termId, mapDocToFreq);
+        }
         String status = sc.readMessage();
         if (status.equals(RESPONSE_INDEX_FAIL)){
             String errorMsg = sc.readMessage();
