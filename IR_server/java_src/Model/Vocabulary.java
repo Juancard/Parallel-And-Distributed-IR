@@ -22,7 +22,7 @@ public class Vocabulary {
         this.termToId = Vocabulary.load(vocabularyFile);
     }
 
-    public void update() throws IOException {
+    public synchronized void update() throws IOException {
         this.termToId = Vocabulary.load(this.vocabularyFile);
     }
 

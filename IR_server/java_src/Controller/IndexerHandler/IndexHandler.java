@@ -38,8 +38,7 @@ public class IndexHandler {
         try {
             LOGGER.info("Calling indexer");
             //this.pythonIndexer.callScriptIndex();
-            boolean status = this.pythonIndexer.indexViaSocket(indexFilesHandler);
-            if (!status)
+            if (!this.pythonIndexer.indexViaSocket(indexFilesHandler))
                 return false;
             LOGGER.info(
                     "Connecting to Gpu server at "
@@ -48,6 +47,14 @@ public class IndexHandler {
                             + this.gpuServerHandler.getPort()
             );
             this.gpuServerHandler.sendIndex();
+            try {
+                LOGGER.info("Updating index in IR server");
+                this.vocabulary.update();
+            } catch (IOException e) {
+                String m = "Could not update index in IR server: " + e.getMessage();
+                LOGGER.warning(m);
+                throw  new IndexerException(m);
+            }
         } catch (IndexerException e) {
             String m = "Error on indexer: " + e.getMessage();
             LOGGER.warning(m);
