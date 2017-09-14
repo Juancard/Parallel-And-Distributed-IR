@@ -34,7 +34,6 @@ public class IRWorkerFactory implements WorkerFactory{
             IndexFilesHandler indexFilesHandler
     ) {
         this.indexHandler = new IndexHandler(
-                normalizer,
                 indexFilesHandler,
                 pythonIndexer,
                 gpuHandler,
@@ -42,7 +41,8 @@ public class IRWorkerFactory implements WorkerFactory{
         );
         this.queryHandler = new QueryHandler(
                 gpuHandler,
-                vocabulary
+                vocabulary,
+                normalizer
         );
         this.vocabulary = vocabulary;
     }

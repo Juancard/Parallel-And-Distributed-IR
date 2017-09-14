@@ -118,7 +118,12 @@ public class IRWorker extends MyCustomWorker{
     }
 
     private Object query(String query){
-        return this.queryHandler.query();
+        try {
+            return this.queryHandler.query(query);
+        } catch (IOException e) {
+            LOGGER.log(Level.SEVERE, e.getMessage(), e);
+            return new IOException("Internal Server error");
+        }
 /*
         Query q = new Query(
                 query,

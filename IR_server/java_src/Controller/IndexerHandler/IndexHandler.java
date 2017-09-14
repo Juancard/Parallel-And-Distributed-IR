@@ -16,19 +16,16 @@ public class IndexHandler {
 
     private IndexFilesHandler indexFilesHandler;
     private GpuServerHandler gpuServerHandler;
-    private IRNormalizer irNormalizer;
     private PythonIndexer pythonIndexer;
     private Vocabulary vocabulary;
 
     public IndexHandler(
-            IRNormalizer irNormalizer,
             IndexFilesHandler indexFilesHandler,
             PythonIndexer pythonIndexer,
             GpuServerHandler gpuServerHandler,
             Vocabulary vocabulary
     ){
         this.gpuServerHandler = gpuServerHandler;
-        this.irNormalizer = irNormalizer;
         this.indexFilesHandler = indexFilesHandler;
         this.pythonIndexer = pythonIndexer;
         this.vocabulary = vocabulary;
