@@ -73,48 +73,6 @@ public class IRWorker extends MyCustomWorker{
             LOGGER.log(Level.SEVERE, e.getMessage(), e);
             return new IOException("Internal Server error");
         }
-        /*
-        try {
-            LOGGER.info("Calling python indexer");
-            //this.pythonIndexer.callScriptIndex();
-            boolean status = this.pythonIndexer.indexViaSocket();
-            if (!status)
-                return false;
-        } catch (IOException e) {
-            String m = "Error on indexer socket: " + e.getMessage();
-            LOGGER.warning(m);
-            e.printStackTrace();
-            return new IOException(m);
-        } catch (IndexerException e) {
-            String m = "Error on indexer: " + e.getMessage();
-            LOGGER.warning(m);
-            return new IOException(m);
-        }
-
-        try {
-            LOGGER.info(
-                    "Connecting to Gpu server at "
-                    + this.gpuHandler.getHost()
-                    + ":"
-                    + this.gpuHandler.getPort()
-            );
-            this.gpuHandler.sendIndex();
-        } catch (IOException e) {
-            String m = "Error on communication with Gpu : " + e.getMessage();
-            LOGGER.warning(m);
-            return new IOException(m);
-        }
-
-        try {
-            LOGGER.info("Update index in IR server");
-            this.irServer.updateIndex();
-        } catch (IOException e) {
-            String m = "Error updating index in IR server: " + e.getMessage();
-            LOGGER.warning(m);
-            return new IOException(m);
-        }
-        return true;
-        */
     }
 
     private Object query(String query){
@@ -124,24 +82,6 @@ public class IRWorker extends MyCustomWorker{
             LOGGER.log(Level.SEVERE, e.getMessage(), e);
             return new IOException("Internal Server error");
         }
-/*
-        Query q = new Query(
-                query,
-                this.vocabulary.getMapTermStringToTermId(),
-                this.normalizer
-        );
-
-        if (q.isEmptyOfTerms()) return new HashMap<Integer, Double>();
-
-        try {
-            HashMap<Integer, Double> docsScore = gpuHandler.sendQuery(q);
-            return docsScore;
-        } catch (IOException e) {
-            String m = "Sending query to Gpu server: " + e.getMessage();
-            LOGGER.warning(m);
-            return new IOException(m);
-        }
-*/
     }
 
 }
