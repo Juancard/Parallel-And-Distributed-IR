@@ -154,7 +154,6 @@ extern "C" DocScores evaluateQueryInCuda(Query q){
 
 	printf("Allocating memory for docs scores in GPU\n");
   int a = sizeof(float) * docs;
-  printf("docs: %d\n", a);
 	docScores = (float *) malloc(a);
   printf("Sending to cuda\n");
   CudaSafeCall( cudaMalloc((void **) &dev_docScores, docs * sizeof(float)) );

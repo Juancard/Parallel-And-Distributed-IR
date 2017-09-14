@@ -1,6 +1,8 @@
 package View;
 
 import java.io.*;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.Properties;
 import java.util.logging.Logger;
 
@@ -12,12 +14,14 @@ import Controller.IndexerHandler.IndexerConfig;
 import Controller.IndexerHandler.IndexerException;
 import Controller.ServerHandler.IRWorkerFactory;
 import Controller.SshHandler;
+import Model.Documents;
 import Model.IRNormalizer;
 import Controller.ServerHandler.IRServer;
 import Controller.IndexerHandler.PythonIndexer;
 import Model.Vocabulary;
 import org.ini4j.Ini;
 
+@SuppressWarnings("ALL")
 public class InitServer {
 
     public static final String PROPERTIES_PATH = "/ssh_tunnel.properties";
@@ -44,6 +48,7 @@ public class InitServer {
     private IndexerConfig indexerConfiguration;
     private IRNormalizer normalizer;
     private Vocabulary vocabulary;
+    private Documents documents;
     private GpuServerHandler gpuHandler;
     private IndexFilesHandler indexFilesHandler;
 
@@ -63,6 +68,7 @@ public class InitServer {
             this.setupPythonIndexer(properties);
             this.setupNormalizer(properties);
             this.setupVocabulary(properties);
+            this.setupDocuments(properties);
             this.setupIndexFilesHandler(properties);
             this.setupGpuServer(properties);
 
@@ -86,6 +92,7 @@ public class InitServer {
 
         IRWorkerFactory irWorkerFactory = new IRWorkerFactory(
                 this.vocabulary,
+                this.documents,
                 this.gpuHandler,
                 this.pyIndexer,
                 this.normalizer,
@@ -158,10 +165,27 @@ public class InitServer {
         } catch (IOException e) {
             throw new IOException("Loading vocabulary: " + e.getMessage());
         }
-        LOGGER.info("Loaded vocabulary FROM: " + vocabularyFilePath);
+        LOGGER.info("Loaded vocabulary from: " + vocabularyFilePath);
     }
 
-    private void setupIndexFilesHandler(Properties properties) throws IOException {
+    private void setupDocuments(Properties properties) throws IOException {
+        File indexPath = this.indexerConfiguration.getIndexPath();
+        String corpusPath = properties.getProperty("IR_CORPUS_PATH");
+        String documentsFilename = properties.getProperty("IR_DOCUMENTS_FILENAME");
+        String documentsFilePath = indexPath + "/" + documentsFilename;
+        try {
+            this.documents = new Documents(
+                    new File(documentsFilePath)
+            );
+            this.documents.setCorpusPath(corpusPath);
+        } catch (IOException e) {
+            throw new IOException("Loading documents: " + e.getMessage());
+        }
+        LOGGER.info("Loaded documents from: " + documentsFilePath);
+    }
+
+
+        private void setupIndexFilesHandler(Properties properties) throws IOException {
         File irIndexPath = this.indexerConfiguration.getIndexPath();
         String filesProp[] = {
                 "IR_POSTINGS_FILENAME",

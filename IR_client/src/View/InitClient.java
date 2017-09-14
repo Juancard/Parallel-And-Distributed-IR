@@ -82,7 +82,7 @@ public class InitClient {
         System.out.print("Enter query: ");
         String query = this.scanner.nextLine();
         try {
-            HashMap<Integer, Double> docsScores = this.irClientHandler.query(query);
+            HashMap<String, Double> docsScores = this.irClientHandler.query(query);
             docsScores = DocScores.orderByScore(
                     DocScores.removeBehindThreshold(docsScores, 0.0),
                     false
@@ -92,7 +92,7 @@ public class InitClient {
             else{
                 CommonMain.display("RANK - DOC - SCORE");
                 int rank = 1;
-                for (int d : docsScores.keySet()){
+                for (String d : docsScores.keySet()){
                     CommonMain.display(
                             rank + " - " + d + " - " + docsScores.get(d)
                     );

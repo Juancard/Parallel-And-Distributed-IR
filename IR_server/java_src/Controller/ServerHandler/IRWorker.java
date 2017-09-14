@@ -56,7 +56,7 @@ public class IRWorker extends MyCustomWorker{
                 out = this.query(query);
             } catch (Exception e) {
                 String m = "Error reading user query: " + e.getMessage();
-                LOGGER.warning(m);
+                LOGGER.log(Level.SEVERE, m, e);
                 return new Exception(m);
             }
         }

@@ -9,36 +9,36 @@ import java.util.*;
  */
 public class DocScores {
 
-    public static HashMap<Integer, Double> orderByScore(HashMap<Integer, Double> docScores, boolean ascending){
-        List<Map.Entry<Integer, Double>> list = new LinkedList<Map.Entry<Integer, Double>>(docScores.entrySet());
+    public static HashMap<String, Double> orderByScore(HashMap<String, Double> docScores, boolean ascending){
+        List<Map.Entry<String, Double>> list = new LinkedList<Map.Entry<String, Double>>(docScores.entrySet());
 
         if (ascending) {
-            Collections.sort( list, new Comparator<Map.Entry<Integer, Double>>() {
-                public int compare(Map.Entry<Integer, Double> o1, Map.Entry<Integer, Double> o2) {
+            Collections.sort( list, new Comparator<Map.Entry<String, Double>>() {
+                public int compare(Map.Entry<String, Double> o1, Map.Entry<String, Double> o2) {
                     return (o1.getValue()).compareTo( o2.getValue() );
                 }
             });
         } else {
-            Collections.sort( list, new Comparator<Map.Entry<Integer, Double>>() {
-                public int compare(Map.Entry<Integer, Double> o1, Map.Entry<Integer, Double> o2) {
+            Collections.sort( list, new Comparator<Map.Entry<String, Double>>() {
+                public int compare(Map.Entry<String, Double> o1, Map.Entry<String, Double> o2) {
                     return (o2.getValue()).compareTo( o1.getValue() );
                 }
             });
         }
 
 
-        HashMap<Integer, Double> result = new LinkedHashMap<Integer, Double>();
-        for (HashMap.Entry<Integer, Double> entry : list) {
+        HashMap<String, Double> result = new LinkedHashMap<String, Double>();
+        for (HashMap.Entry<String, Double> entry : list) {
             result.put(entry.getKey(), entry.getValue());
         }
 
         return result;
     }
 
-    public static HashMap<Integer, Double> removeBehindThreshold(HashMap<Integer, Double> docScores, double threshold){
-        Iterator<Map.Entry<Integer,Double>> iter = docScores.entrySet().iterator();
+    public static HashMap<String, Double> removeBehindThreshold(HashMap<String, Double> docScores, double threshold){
+        Iterator<Map.Entry<String,Double>> iter = docScores.entrySet().iterator();
         while (iter.hasNext()) {
-            Map.Entry<Integer,Double> entry = iter.next();
+            Map.Entry<String,Double> entry = iter.next();
             if(entry.getValue() <= threshold){
                 iter.remove();
             }

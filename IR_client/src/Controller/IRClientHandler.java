@@ -32,7 +32,7 @@ public class IRClientHandler {
         return (Boolean) response;
     }
 
-    public HashMap<Integer, Double> query(String query) throws Exception {
+    public HashMap<String, Double> query(String query) throws Exception {
         SocketConnection connection = new SocketConnection(host, port);
         connection.send(IRProtocol.EVALUATE);
         connection.send(query);
