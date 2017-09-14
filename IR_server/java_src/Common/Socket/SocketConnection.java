@@ -14,7 +14,7 @@ public class SocketConnection {
     // classname for the logger
     private final static Logger LOGGER = Logger.getLogger(Logger.GLOBAL_LOGGER_NAME);
 
-    private Socket clientSocket;
+    protected Socket clientSocket;
     private OutputStream socketOutput;
     private InputStream socketInput;
 

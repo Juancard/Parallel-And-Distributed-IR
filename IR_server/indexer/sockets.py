@@ -9,6 +9,8 @@ import logging
 import os
 
 REQUEST_INDEX = 'IND'
+REQUEST_EVALUATION="EVA"
+REQUEST_TEST="TEST"
 RESPONSE_SUCCESS = "OK"
 RESPONSE_FAIL = "NOK"
 
@@ -88,54 +90,60 @@ def sendLengthThenMsg(conn, msg):
     conn.sendall(msg)
 
 def onRequest(conn, addr):
-    message = readLengthThenMsg(conn)
-    if not message: return False
-    if (message == REQUEST_INDEX):
-        logging.info("REQUEST - INDEX")
-        corpusPath = readLengthThenMsg(conn)
-        logging.info("Corpus to be indexed: " + corpusPath)
-        try:
-            #INDEX
-            indexer = indexer_main.index(corpusPath)
-            # SEND METADATA
-            docs = len(indexer.documents.content)
-            terms = len(indexer.vocabulary.content)
-            logging.info("Sending metadata")
-            conn.sendall(struct.pack('<2i', docs, terms))
-            # SEND VOCABULARY
-            logging.info("Sending vocabulary")
-            for term in indexer.vocabulary.termsSortedById():
-                sendLengthThenMsg(conn, term)
-            # READ DOCUMENTS
-            logging.info("Sending documents")
-            for docId in range(0, docs):
-                relPath = os.path.relpath(indexer.documents.content[docId], corpusPath)
-                sendLengthThenMsg(conn, relPath)
-            # SEND MAX FREQS
-            logging.info("Sending maxfreqs")
-            max_freqs = [indexer.maxFreqInDocs[d] for d in range(0, len(indexer.maxFreqInDocs))]
-            conn.sendall(struct.pack('<%di' % len(max_freqs), *max_freqs))
-            #SEND Postings
-            logging.info("Sending postings")
-            postings = indexer.postings.getAll()
-            df = [len(postings[tId].keys()) for tId in postings]
-            conn.sendall(struct.pack('<%dI' % len(df), *df))
-            #SEND POINTERS
-            logging.info("Sending pointers")
-            for tId in postings:
-                docIds = postings[tId].keys()
-                freqs = postings[tId].values()
-                conn.sendall(struct.pack('<%sI' % len(docIds), *docIds))
-                conn.sendall(struct.pack('<%sI' % len(freqs), *freqs))
-
-
-        except OSError, e:
-            logging.error(e)
-            sendLengthThenMsg(conn, RESPONSE_FAIL)
-            sendLengthThenMsg(conn, "Corpus path is not a valid directory")
-        sendLengthThenMsg(conn, RESPONSE_SUCCESS)
-    else:
-        logging.info("No action")
+	message = readLengthThenMsg(conn)
+	if not message: return False
+	if message == REQUEST_TEST:
+		logging.info("REQUEST - TEST")
+		sendLengthThenMsg(conn, RESPONSE_SUCCESS)
+	elif message == REQUEST_INDEX:
+		logging.info("REQUEST - INDEX")
+		corpusPath = readLengthThenMsg(conn)
+		logging.info("Corpus to be indexed: " + corpusPath)
+		try:
+			#INDEX
+			indexer = indexer_main.index(corpusPath)
+			# SEND METADATA
+			docs = len(indexer.documents.content)
+			terms = len(indexer.vocabulary.content)
+			logging.info("Sending metadata")
+			conn.sendall(struct.pack('<2i', docs, terms))
+			# SEND VOCABULARY
+			logging.info("Sending vocabulary")
+			for term in indexer.vocabulary.termsSortedById():
+			    sendLengthThenMsg(conn, term)
+			# READ DOCUMENTS
+			logging.info("Sending documents")
+			for docId in range(0, docs):
+			    relPath = os.path.relpath(indexer.documents.content[docId], corpusPath)
+			    sendLengthThenMsg(conn, relPath)
+			# SEND MAX FREQS
+			logging.info("Sending maxfreqs")
+			max_freqs = [indexer.maxFreqInDocs[d] for d in range(0, len(indexer.maxFreqInDocs))]
+			conn.sendall(struct.pack('<%di' % len(max_freqs), *max_freqs))
+			#SEND Postings
+			logging.info("Sending postings")
+			postings = indexer.postings.getAll()
+			df = [len(postings[tId].keys()) for tId in postings]
+			conn.sendall(struct.pack('<%dI' % len(df), *df))
+			#SEND POINTERS
+			logging.info("Sending pointers")
+			for tId in postings:
+				docIds = postings[tId].keys()
+				freqs = postings[tId].values()
+				conn.sendall(struct.pack('<%sI' % len(docIds), *docIds))
+				conn.sendall(struct.pack('<%sI' % len(freqs), *freqs))
+			sendLengthThenMsg(conn, RESPONSE_SUCCESS)
+		except OSError, e:
+		    logging.error(e)
+		    sendLengthThenMsg(conn, RESPONSE_FAIL)
+		    sendLengthThenMsg(conn, "Corpus path is not a valid directory")
+	elif message == REQUEST_EVALUATION:
+		logging.info("REQUEST - EVALUATION")
+		indexPath = readLengthThenMsg(conn)
+		logging.info("Path to index: " + indexPath)
+		sendLengthThenMsg(conn, RESPONSE_SUCCESS)
+	else:
+	    logging.info("No action")
 
 def acceptConnection(s):
     conn, addr = s.accept()

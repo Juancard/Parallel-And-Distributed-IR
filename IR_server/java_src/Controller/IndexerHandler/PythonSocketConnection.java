@@ -10,12 +10,12 @@ import java.nio.charset.Charset;
 /**
  * Created by juan on 12/09/17.
  */
-public class IndexerSocketConnection extends SocketConnection {
+public class PythonSocketConnection extends SocketConnection {
 
     protected DataInputStream dataInputStream;
     protected DataOutputStream dataOutputStream;
 
-    public IndexerSocketConnection(String host, int port) throws IOException {
+    public PythonSocketConnection(String host, int port) throws IOException {
         super(host, port);
         this.dataInputStream = new DataInputStream(this.getSocketInput());
         this.dataOutputStream = new DataOutputStream(this.getSocketOutput());

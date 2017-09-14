@@ -1,8 +1,5 @@
 package Controller.IndexerHandler;
 
-import Common.Socket.SocketConnection;
-import org.omg.CORBA.INITIALIZE;
-
 import java.io.*;
 
 import java.util.ArrayList;
@@ -91,9 +88,9 @@ public class PythonIndexer {
     }
 
     public synchronized boolean indexViaSocket(IndexFilesHandler indexFilesHandler) throws IndexerException, IOException {
-        IndexerSocketConnection sc = null;
+        PythonSocketConnection sc = null;
         try {
-            sc = new IndexerSocketConnection(host, port);
+            sc = new PythonSocketConnection(host, port);
         } catch (IOException e) {
             LOGGER.log(Level.SEVERE, e.getMessage(), e);
             throw new IndexerException("Could not connect to indexer host. Cause: " + e.getMessage());

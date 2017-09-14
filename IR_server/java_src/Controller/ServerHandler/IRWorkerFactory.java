@@ -6,6 +6,7 @@ import Controller.GpuServerHandler;
 import Controller.IndexerHandler.IndexFilesHandler;
 import Controller.IndexerHandler.IndexHandler;
 import Controller.IndexerHandler.PythonIndexer;
+import Controller.QueryEvaluator;
 import Controller.QueryHandler;
 import Model.Documents;
 import Model.IRNormalizer;
@@ -33,7 +34,8 @@ public class IRWorkerFactory implements WorkerFactory{
             GpuServerHandler gpuHandler,
             PythonIndexer pythonIndexer,
             IRNormalizer normalizer,
-            IndexFilesHandler indexFilesHandler
+            IndexFilesHandler indexFilesHandler,
+            QueryEvaluator queryEvaluator
     ) {
         this.indexHandler = new IndexHandler(
                 indexFilesHandler,
@@ -45,7 +47,8 @@ public class IRWorkerFactory implements WorkerFactory{
                 gpuHandler,
                 vocabulary,
                 normalizer,
-                documents
+                documents,
+                queryEvaluator
         );
         this.vocabulary = vocabulary;
     }

@@ -1,8 +1,6 @@
 package View;
 
 import java.io.*;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.Properties;
 import java.util.logging.Logger;
 
@@ -12,6 +10,7 @@ import Controller.GpuServerHandler;
 import Controller.IndexerHandler.IndexFilesHandler;
 import Controller.IndexerHandler.IndexerConfig;
 import Controller.IndexerHandler.IndexerException;
+import Controller.QueryEvaluator;
 import Controller.ServerHandler.IRWorkerFactory;
 import Controller.SshHandler;
 import Model.Documents;
@@ -51,6 +50,7 @@ public class InitServer {
     private Documents documents;
     private GpuServerHandler gpuHandler;
     private IndexFilesHandler indexFilesHandler;
+    private QueryEvaluator queryEvaluator;
 
     public InitServer(String propertiesPath){
         Properties properties = null;
@@ -65,7 +65,7 @@ public class InitServer {
 
         try {
             this.setupIndexerConfiguration(properties);
-            this.setupPythonIndexer(properties);
+            this.setupPythonHost(properties);
             this.setupNormalizer(properties);
             this.setupVocabulary(properties);
             this.setupDocuments(properties);
@@ -83,6 +83,7 @@ public class InitServer {
             System.exit(1);
         }
 
+
         try {
             this.testConfiguration();
         } catch (IOException e) {
@@ -90,13 +91,15 @@ public class InitServer {
             System.exit(1);
         }
 
+
         IRWorkerFactory irWorkerFactory = new IRWorkerFactory(
                 this.vocabulary,
                 this.documents,
                 this.gpuHandler,
                 this.pyIndexer,
                 this.normalizer,
-                this.indexFilesHandler
+                this.indexFilesHandler,
+                this.queryEvaluator
         );
         IRServer irServer = new IRServer(
                 irServerPort,
@@ -131,7 +134,7 @@ public class InitServer {
         }
     }
 
-    private void setupPythonIndexer(Properties properties) throws IndexerException{
+    private void setupPythonHost(Properties properties) throws IndexerException{
 
         String corpus = properties.getProperty("IR_CORPUS_PATH");
         if (!this.isValidDirectory(corpus))
@@ -141,12 +144,17 @@ public class InitServer {
         if (!this.isValidFile(indexerScript))
             throw new IndexerException("Loading python indexer: IR_INDEXER_SCRIPT was not set");
         */
-        String indexerHost = properties.getProperty("INDEXER_HOST");
-        String indexerPort = properties.getProperty("INDEXER_PORT");
+        String pythonHost = properties.getProperty("PYTHON_HOST");
+        String pythonPort = properties.getProperty("PYTHON_PORT");
         this.pyIndexer = new PythonIndexer(
-                indexerHost,
-                Integer.parseInt(indexerPort),
+                pythonHost,
+                Integer.parseInt(pythonPort),
                 corpus
+        );
+        this.queryEvaluator = new QueryEvaluator(
+                pythonHost,
+                new Integer(pythonPort),
+                this.indexerConfiguration.getIndexPath().toString()
         );
     }
 
@@ -288,7 +296,16 @@ public class InitServer {
         try {
             this.gpuHandler.testConnection();
         } catch (IOException e) {
-            throw new IOException("Gpu connection test failed. Cause: " + e.getMessage());
+            LOGGER.warning("Gpu connection test failed");
+            //throw new IOException("Gpu connection test failed. Cause: " + e.getMessage());
+        }
+
+        LOGGER.info("Testing connection to Python Server");
+        try {
+            this.queryEvaluator.testConnection();
+        } catch (IOException e) {
+            LOGGER.warning("Python connection test failed");
+            //throw new IOException("Python connection test failed. Cause: " + e.getMessage());
         }
     }
 

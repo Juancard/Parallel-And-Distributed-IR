@@ -46,14 +46,14 @@ public class GpuServerHandler {
         this.isSshTunnel = false;
 	}
 
-	public HashMap<Integer, Double> sendQuery(Query query) throws IOException{
+	public HashMap<Integer, Double> sendQuery(Query query) throws GpuException, IOException {
         SocketConnection connection;
 		try {
             LOGGER.info(this.connectionMessage());
             connection = this.connect();
 		} catch (IOException e) {
 			String m = "Could not connect to Gpu server. Cause: " + e.getMessage(); 
-			throw new IOException(m);
+			throw new GpuException(m);
 		}
 		DataOutputStream out = new DataOutputStream(connection.getSocketOutput());
         DataInputStream in = new DataInputStream(connection.getSocketInput());
@@ -70,32 +70,32 @@ public class GpuServerHandler {
             }
         } catch(IOException e) {
         	String m = "Could not send query to GPU. Cause: " + e.getMessage();
-			throw new IOException(m);
+			throw new GpuException(m);
         }
 
         LOGGER.info("Receiving documents scores...");
         HashMap<Integer, Double> docsScore = new HashMap<Integer, Double>();
         int docs;
 		try {
-			docs = in.readInt();
+            connection.getClientSocket().setSoTimeout(2000);
+            docs = in.readInt();
+            int doc, weightLength;
+            String weightStr;
+            byte [] weightBytes = null;
+            for (int i=0; i<docs; i++){
+                doc = in.readInt();
+                weightLength = in.readInt();
+
+                weightBytes = new byte[weightLength];    // Se le da el tamaño
+                in.read(weightBytes, 0, weightLength);   // Se leen los bytes
+                weightStr = new String (weightBytes); // Se convierten a String
+
+                docsScore.put(doc, new Double(weightStr));
+            }
 		} catch (IOException e) {
-        	String m = "Error while receiving docs size. Cause: " + e.getMessage();
-			throw new IOException(m);
+        	String m = "Error while receiving docs scores. Cause: " + e.getMessage();
+			throw new GpuException(m);
 		}
-        int doc, weightLength;
-        String weightStr;
-        byte [] weightBytes = null;
-        for (int i=0; i<docs; i++){
-            doc = in.readInt();
-            weightLength = in.readInt();
-
-            weightBytes = new byte[weightLength];    // Se le da el tamaño
-            in.read(weightBytes, 0, weightLength);   // Se leen los bytes
-            weightStr = new String (weightBytes); // Se convierten a String
-
-            docsScore.put(doc, new Double(weightStr));
-        }
-
         LOGGER.info("Closing connection with Gpu Server");
         connection.close();
         out.close();
@@ -224,6 +224,7 @@ public class GpuServerHandler {
         }
         int testResult = 0;
         try {
+            connection.getClientSocket().setSoTimeout(2000);
             testResult = in.readInt();
         } catch (IOException e) {
             throw new IOException("Could not read from socket.");
