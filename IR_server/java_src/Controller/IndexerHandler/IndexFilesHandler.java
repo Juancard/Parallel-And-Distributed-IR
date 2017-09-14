@@ -91,7 +91,6 @@ public class IndexFilesHandler {
             int docs,
             int terms,
             HashMap<Integer, HashMap<Integer, Integer>> postings,
-            int[] df,
             int[] maxFreqs,
             HashMap<String, Integer> documents,
             HashMap<String, Integer> vocabulary
@@ -100,10 +99,40 @@ public class IndexFilesHandler {
             this.persistMetadata(docs, terms);
             this.persistDocuments(documents);
             this.persistVocabulary(vocabulary);
+            this.persistMaxfreqs(maxFreqs);
+            this.persistPostings(postings);
         } catch (IOException e) {
             LOGGER.log(Level.SEVERE, e.getMessage(), e);
             throw new IOException("Could not persist index files: " + e.getMessage());
         }
+        return true;
+    }
+
+    private boolean persistPostings(
+            HashMap<Integer, HashMap<Integer, Integer>> postings
+    ) throws IOException {
+        DataOutputStream postingsOut = this.dataOutputStreamFromPath(this.postingsPath);
+        DataOutputStream pointersOut = this.dataOutputStreamFromPath(this.pointersPath);
+        HashMap<Integer, Integer> docIdFreqMap;
+        for (int termId=0; termId<postings.size(); termId++){
+            docIdFreqMap = postings.get(termId);
+            pointersOut.writeInt(Integer.reverseBytes(docIdFreqMap.size()));
+            for (int docIdKey : docIdFreqMap.keySet())
+                postingsOut.writeInt(Integer.reverseBytes(docIdKey));
+            for (int freq : docIdFreqMap.values())
+                postingsOut.writeInt(Integer.reverseBytes(freq));
+        }
+
+        postingsOut.close();
+        pointersOut.close();
+        return true;
+    }
+
+    private boolean persistMaxfreqs(int[] maxFreqs) throws IOException {
+        DataOutputStream dos = this.dataOutputStreamFromPath(this.maxFreqsPath);
+        for (int i : maxFreqs)
+            dos.writeInt(Integer.reverseBytes(i));
+        dos.close();
         return true;
     }
 
@@ -119,6 +148,7 @@ public class IndexFilesHandler {
         DataOutputStream dos = this.dataOutputStreamFromPath(this.metadataPath);
         dos.writeInt(Integer.reverseBytes(docs));
         dos.writeInt(Integer.reverseBytes(terms));
+        dos.close();
         return true;
     }
 

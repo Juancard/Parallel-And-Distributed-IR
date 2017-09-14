@@ -147,7 +147,7 @@ public class PythonIndexer {
         sc.close();
 
         boolean persistStatus = indexFilesHandler.persist(
-          docs, terms, postings, df, maxFreqs, documents, vocabulary
+          docs, terms, postings, maxFreqs, documents, vocabulary
         );
 
         return persistStatus && status.equals(this.RESPONSE_INDEX_SUCCESS);
