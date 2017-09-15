@@ -40,8 +40,25 @@ public class QueryEvaluator {
         }
         sc.sendMessage(this.REQUEST_EVALUATION);
         sc.sendMessage(this.indexPath);
-        System.out.println(sc.readMessage());
-        return new HashMap<Integer, Double>();
+        HashMap<Integer, Integer> termsFreq = query.getTermsAndFrequency();
+        sc.sendInt(termsFreq.size());
+        for (Integer termId : termsFreq.keySet()){
+            sc.sendInt(termId);
+            sc.sendInt(termsFreq.get(termId));
+        }
+        LOGGER.info("Receiving documents scores...");
+        HashMap<Integer, Double> docsScore = new HashMap<Integer, Double>();
+        int docs = sc.readInt();
+        System.out.println("Docs received: " + docs);
+        int doc, weightLength;
+        String weightStr;
+        for (int i=0; i<docs; i++){
+            doc = sc.readInt();
+            weightStr = sc.readMessage();
+            System.out.println(String.format("Doc %d: %s" , doc, weightStr));
+            docsScore.put(doc, new Double(weightStr));
+        }
+        return docsScore;
     }
 
     public boolean testConnection() throws IOException {

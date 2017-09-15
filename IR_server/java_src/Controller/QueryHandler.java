@@ -54,9 +54,8 @@ public class QueryHandler {
             docScoresId = this.queryEvaluator.evaluateQuery(q);
         }
         HashMap<String, Double> docScoresPath = new HashMap<String, Double>();
-        for (int docId : docScoresId.keySet()) {
+        for (int docId : docScoresId.keySet())
             docScoresPath.put(documents.getPathFromId(docId), docScoresId.get(docId));
-        }
         return docScoresPath;
     }
 }
