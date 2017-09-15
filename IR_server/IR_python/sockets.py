@@ -149,11 +149,11 @@ def onRequest(conn, addr, irManager):
 			freq = readInt(conn)
 			print "%d: %d" % (termId, freq)
 			query[termId] = freq
-
+		docScores = irManager.evaluate(query)
 		# doc scores mocked
-		conn.sendall(struct.pack('<I', 1))
-		conn.sendall(struct.pack('<I', 0))
-		sendLengthThenMsg(conn, "1.0")
+		conn.sendall(struct.pack('<I', len(docScores)))
+		for i in range(0, len(docScores)):
+			sendLengthThenMsg(conn, str(docScores[i]))
 	else:
 	    logging.info("No action")
 
@@ -165,13 +165,15 @@ def acceptConnection(s, irManager):
     conn.close()
 
 def main():
-    args = loadArgParser()
-    if args.verbose:
-        logging.basicConfig(format='%(levelname)s: %(message)s', level=logging.INFO)
+	args = loadArgParser()
+	if args.verbose:
+		logging.basicConfig(format='%(levelname)s: %(message)s', level=logging.INFO)
+	if args.debug:
+		logging.basicConfig(format='%(levelname)s: %(message)s', level=logging.DEBUG)
 	irManager = IRManager()
-    s = openSocket()
-    while 1:
-        acceptConnection(s, irManager)
+	s = openSocket()
+	while 1:
+	    acceptConnection(s, irManager)
 
 if __name__ == "__main__":
 	main()

@@ -41,8 +41,11 @@ class IRManager(object):
         self.terms = len(self.vocabulary.content)
         self.docs = len(self.documents.content)
 
-    def evaluate(self, queryString):
-        pass
+    def evaluate(self, query):
+        docScores = {}
+        for docId in range(0, self.docs):
+            docScores[docId] = 1.0
+        return docScores
 
 def loadIndexConfig(iniData):
 	indexConfig = {}

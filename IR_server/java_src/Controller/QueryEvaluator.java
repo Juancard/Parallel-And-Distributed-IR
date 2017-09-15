@@ -54,10 +54,8 @@ public class QueryEvaluator {
         int doc, weightLength;
         String weightStr;
         for (int i=0; i<docs; i++){
-            doc = sc.readInt();
             weightStr = sc.readMessage();
-            System.out.println(String.format("Doc %d: %s" , doc, weightStr));
-            docsScore.put(doc, new Double(weightStr));
+            docsScore.put(i, new Double(weightStr));
         }
         return docsScore;
     }
