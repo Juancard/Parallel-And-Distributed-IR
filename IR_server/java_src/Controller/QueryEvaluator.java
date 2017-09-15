@@ -41,8 +41,10 @@ public class QueryEvaluator {
         sc.sendMessage(this.REQUEST_EVALUATION);
         sc.sendMessage(this.indexPath);
         HashMap<Integer, Integer> termsFreq = query.getTermsAndFrequency();
+        System.out.println("Sending query size: " + termsFreq.size());
         sc.sendInt(termsFreq.size());
         for (Integer termId : termsFreq.keySet()){
+            System.out.println("termid: " + termId + " - freq : " + termsFreq.get(termId));
             sc.sendInt(termId);
             sc.sendInt(termsFreq.get(termId));
         }

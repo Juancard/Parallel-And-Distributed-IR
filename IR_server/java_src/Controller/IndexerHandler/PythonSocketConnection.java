@@ -43,8 +43,10 @@ public class PythonSocketConnection extends SocketConnection {
 
     public void close(){
         try {
-            this.dataInputStream.close();
-            this.dataOutputStream.close();
+            if (this.dataInputStream != null && this.dataOutputStream != null){
+                this.dataInputStream.close();
+                this.dataOutputStream.close();
+            }
         } catch (IOException e) {
             e.printStackTrace();
         }

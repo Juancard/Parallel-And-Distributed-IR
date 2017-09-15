@@ -73,11 +73,13 @@ def readSocket(conn, size):
         logging.warning("Broken socket: " + msg)
         logging.warning("Exiting connection")
         return False
-
-def readLengthThenMsg(conn):
+def readInt(conn):
     read = readSocket(conn, SIZE_OF_INT)
     if not read: return False
-    messageLength = struct.unpack('<i', read)[0];
+    return int(struct.unpack('<i', read)[0])
+def readLengthThenMsg(conn):
+    messageLength = readInt(conn)
+    if not messageLength: return False
     message = readSocket(conn, messageLength)
     logging.debug("Read: " + message)
     if not message: return False
@@ -130,7 +132,7 @@ def onRequest(conn, addr):
 			for tId in postings:
 				docIds = postings[tId].keys()
 				freqs = postings[tId].values()
-				conn.sendall(struct.pack('<%sI' % len(docIds), *docIds))
+				conn.sendal(struct.pack('<%sI' % len(docIds), *docIds))
 				conn.sendall(struct.pack('<%sI' % len(freqs), *freqs))
 			sendLengthThenMsg(conn, RESPONSE_SUCCESS)
 		except OSError, e:
@@ -141,7 +143,19 @@ def onRequest(conn, addr):
 		logging.info("REQUEST - EVALUATION")
 		indexPath = readLengthThenMsg(conn)
 		logging.info("Path to index: " + indexPath)
-		sendLengthThenMsg(conn, RESPONSE_SUCCESS)
+		querySize = int(readInt(conn))
+		query = {}
+		print "Receveiving query: "
+		for i in range(0, querySize):
+			termId = readInt(conn)
+			freq = readInt(conn)
+			print "%d: %d" % (termId, freq)
+			query[termId] = freq
+
+		# doc scores mocked
+		conn.sendall(struct.pack('<I', 1))
+		conn.sendall(struct.pack('<I', 0))
+		sendLengthThenMsg(conn, "1.0")
 	else:
 	    logging.info("No action")
 
