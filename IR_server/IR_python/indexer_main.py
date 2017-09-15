@@ -20,7 +20,7 @@ def loadArgParser():
 	return parser.parse_args()
 
 def loadIni():
-	INI_PATH = os.path.dirname(os.path.realpath(__file__)) + "/indexer.ini"
+	INI_PATH = os.path.dirname(os.path.realpath(__file__)) + "/config.ini"
 	Config = ConfigParser.ConfigParser()
 	Config.read(INI_PATH)
 	logging.info(INI_PATH)

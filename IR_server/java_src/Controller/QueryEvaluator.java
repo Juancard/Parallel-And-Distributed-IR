@@ -39,7 +39,6 @@ public class QueryEvaluator {
             throw new IOException("Could not connect to evaluator host. Cause: " + e.getMessage());
         }
         sc.sendMessage(this.REQUEST_EVALUATION);
-        sc.sendMessage(this.indexPath);
         HashMap<Integer, Integer> termsFreq = query.getTermsAndFrequency();
         System.out.println("Sending query size: " + termsFreq.size());
         sc.sendInt(termsFreq.size());

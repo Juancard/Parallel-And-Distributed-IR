@@ -3,10 +3,10 @@
 import socket
 import struct
 import sys
-import indexer_main
 import argparse
 import logging
 import os
+from ir_manager import IRManager
 
 REQUEST_INDEX = 'IND'
 REQUEST_EVALUATION="EVA"
@@ -91,7 +91,7 @@ def sendLengthThenMsg(conn, msg):
     logging.debug("Sending msg: " + msg)
     conn.sendall(msg)
 
-def onRequest(conn, addr):
+def onRequest(conn, addr, irManager):
 	message = readLengthThenMsg(conn)
 	if not message: return False
 	if message == REQUEST_TEST:
@@ -103,28 +103,28 @@ def onRequest(conn, addr):
 		logging.info("Corpus to be indexed: " + corpusPath)
 		try:
 			#INDEX
-			indexer = indexer_main.index(corpusPath)
+			irManager.index(corpusPath)
 			# SEND METADATA
-			docs = len(indexer.documents.content)
-			terms = len(indexer.vocabulary.content)
+			docs = irManager.docs
+			terms = irManager.terms
 			logging.info("Sending metadata")
 			conn.sendall(struct.pack('<2i', docs, terms))
 			# SEND VOCABULARY
 			logging.info("Sending vocabulary")
-			for term in indexer.vocabulary.termsSortedById():
+			for term in irManager.vocabulary.termsSortedById():
 			    sendLengthThenMsg(conn, term)
 			# READ DOCUMENTS
 			logging.info("Sending documents")
 			for docId in range(0, docs):
-			    relPath = os.path.relpath(indexer.documents.content[docId], corpusPath)
+			    relPath = os.path.relpath(irManager.documents.content[docId], corpusPath)
 			    sendLengthThenMsg(conn, relPath)
 			# SEND MAX FREQS
 			logging.info("Sending maxfreqs")
-			max_freqs = [indexer.maxFreqInDocs[d] for d in range(0, len(indexer.maxFreqInDocs))]
+			max_freqs = [irManager.maxFreqInDocs[d] for d in range(0, len(irManager.maxFreqInDocs))]
 			conn.sendall(struct.pack('<%di' % len(max_freqs), *max_freqs))
 			#SEND Postings
 			logging.info("Sending postings")
-			postings = indexer.postings.getAll()
+			postings = irManager.postings.getAll()
 			df = [len(postings[tId].keys()) for tId in postings]
 			conn.sendall(struct.pack('<%dI' % len(df), *df))
 			#SEND POINTERS
@@ -132,7 +132,7 @@ def onRequest(conn, addr):
 			for tId in postings:
 				docIds = postings[tId].keys()
 				freqs = postings[tId].values()
-				conn.sendal(struct.pack('<%sI' % len(docIds), *docIds))
+				conn.sendall(struct.pack('<%sI' % len(docIds), *docIds))
 				conn.sendall(struct.pack('<%sI' % len(freqs), *freqs))
 			sendLengthThenMsg(conn, RESPONSE_SUCCESS)
 		except OSError, e:
@@ -141,8 +141,6 @@ def onRequest(conn, addr):
 		    sendLengthThenMsg(conn, "Corpus path is not a valid directory")
 	elif message == REQUEST_EVALUATION:
 		logging.info("REQUEST - EVALUATION")
-		indexPath = readLengthThenMsg(conn)
-		logging.info("Path to index: " + indexPath)
 		querySize = int(readInt(conn))
 		query = {}
 		print "Receveiving query: "
@@ -159,10 +157,10 @@ def onRequest(conn, addr):
 	else:
 	    logging.info("No action")
 
-def acceptConnection(s):
+def acceptConnection(s, irManager):
     conn, addr = s.accept()
     logging.info('Connected by ' + str(addr))
-    onRequest(conn, addr)
+    onRequest(conn, addr, irManager)
     logging.info("Closing connection with " + str(addr))
     conn.close()
 
@@ -170,9 +168,10 @@ def main():
     args = loadArgParser()
     if args.verbose:
         logging.basicConfig(format='%(levelname)s: %(message)s', level=logging.INFO)
+	irManager = IRManager()
     s = openSocket()
     while 1:
-        acceptConnection(s)
+        acceptConnection(s, irManager)
 
 if __name__ == "__main__":
 	main()

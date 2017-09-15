@@ -85,7 +85,7 @@ int getCollection(Collection *collection){
 
   printf("Loading postings\n");
   int postingsSize = sizeof(PostingFreq) * collection->terms;
-  printf("Postings size: %.6f mb\n", postingsSize / 1000000);
+  printf("Postings size: %.6f mb\n", (double) postingsSize / 1000000);
   PostingFreq *postingsFreq = (PostingFreq *) malloc(postingsSize);
   int status = getPostingsBin(
     INDEX_PATH POSTINGS_FILENAME,
