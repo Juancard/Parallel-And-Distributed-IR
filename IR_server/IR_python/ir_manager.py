@@ -57,7 +57,24 @@ class IRManager(object):
     def evaluate(self, query):
         docScores = {}
         for docId in range(0, self.docs):
-            docScores[docId] = 1.0
+            docScores[docId] = 0.0
+        qMaxFreq = max(query.values()) + 0.0
+        qNorm = 0.0
+        for qtId in query:
+            qTfIdf = (query[qtId] / qMaxFreq) * self.idf[qtId]
+            query[qtId] = qTfIdf
+            qNorm += qTfIdf ** 2.0
+        qNorm = qNorm ** 0.5
+        for qtId in query:
+            qtPosting = self.postings[qtId]
+            for dId in qtPosting:
+                docScores[dId] += query[qtId] * qtPosting[dId]
+        for docId in range(0, self.docs):
+            divider = qNorm * self.docsNorm[docId]
+            if divider == 0.0:
+                docScores[docId] = 0.0
+            else:
+                docScores[docId] /= divider
         return docScores
 
     def loadStoredIndex(self):
