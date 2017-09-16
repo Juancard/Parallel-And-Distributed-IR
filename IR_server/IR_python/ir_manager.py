@@ -3,14 +3,20 @@ import sys
 import logging
 import argparse
 import ConfigParser
+import struct
 from modulos.Collection import Collection
 from modulos.Indexer import Indexer
+from custom_exceptions import NoIndexFilesException
+
+POSTINGS_FILENAME = "postings.bin"
+MAXFREQS_FILENAME = "max_freq_in_docs.bin"
+POSTINGS_POINTERS_FILENAME = "postings_pointers.bin"
+METADATA_FILENAME = "metadata.bin"
 
 class IRManager(object):
 
     def __init__(self):
-        iniData = loadIni()
-    	self.indexConfig = loadIndexConfig(iniData)
+        self.indexPath = loadIni()["index_dir"]
         self.docs = False
         self.terms = False
         self.vocabulary = False
@@ -47,17 +53,20 @@ class IRManager(object):
             docScores[docId] = 1.0
         return docScores
 
-def loadIndexConfig(iniData):
-	indexConfig = {}
-	if "stopwords" in iniData and iniData["stopwords"]:
-		indexConfig["stopwords"] = iniData['stopwords']
-	if "stem" in iniData and iniData["stem"]:
-		indexConfig["stem"] = iniData['stem']
-	if "term_min_size" in iniData and iniData["term_min_size"]:
-		indexConfig["term_min_size"] = int(iniData["term_min_size"])
-	if "term_max_size" in iniData and iniData["term_max_size"]:
-		indexConfig["term_max_size"] = int(iniData["term_max_size"])
-	return indexConfig
+    def loadStoredIndex(self):
+        print "Loading stored index"
+
+        if not os.path.isdir(self.indexPath):
+            logging.info("Index files directory does not exist. Creating...")
+            os.makedirs(self.indexPath)
+        metadataDir = os.path.join(self.indexPath, METADATA_FILENAME)
+        maxFreqsDir = os.path.join(self.indexPath, MAXFREQS_FILENAME)
+        pointersDir = os.path.join(self.indexPath, POSTINGS_POINTERS_FILENAME)
+        postingsDir = os.path.join(self.indexPath, POSTINGS_FILENAME)
+        if not (os.path.exists(metadataDir) and os.path.exists(maxFreqsDir) and os.path.exists(pointersDir) and os.path.exists(postingsDir)):
+            raise NoIndexFilesException("index files have not been generated.")
+
+        metadata = loadMetadata(metadataDir)
 
 def loadIni():
 	INI_PATH = os.path.dirname(os.path.realpath(__file__)) + "/config.ini"
@@ -70,3 +79,12 @@ def loadIni():
 		opValue = Config.get(sections[0], option)
 		iniData[option] = opValue if opValue != -1 else False;
 	return iniData
+
+def loadMetadata(metadataDir):
+    metadata = {}
+    with open(metadataDir, "rb") as f:
+        binMeta = f.read(8)
+        meta = struct.unpack('<2I', binMeta)
+        metadata["docs"] = meta[0]
+        metadata["terms"] = meta[1]
+    return metadata
