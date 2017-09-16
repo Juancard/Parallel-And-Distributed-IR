@@ -24,10 +24,7 @@ class IRManager(object):
         self.corpusPath = False
         self.docs = False
         self.terms = False
-        self.vocabulary = False
-        self.documents = False
         self.postings = False
-        self.maxFreqInDocs = False
         self.idf = False
         self.docsNorm = False
 
@@ -45,14 +42,19 @@ class IRManager(object):
     	indexer.index(indexConfig)
 
         self.corpusPath = corpusPath
-        self.vocabulary = indexer.vocabulary
-        self.documents = indexer.documents
         indexer.postings.sortByKey()
-        self.postings = indexer.postings
-        self.maxFreqInDocs = indexer.maxFreqInDocs
-        self.terms = len(self.vocabulary.content)
-        self.docs = len(self.documents.content)
-        self.setRetrievalData()
+        self.postings = indexer.postings.content
+        self.terms = len(indexer.vocabulary.content)
+        self.docs = len(indexer.documents.content)
+        return {
+            "vocabulary": indexer.vocabulary.content,
+            "documents": indexer.documents.content,
+            "postings": self.postings,
+            "max_freq": indexer.maxFreqInDocs,
+            "terms": self.terms,
+            "docs": self.docs
+        }
+
 
     def evaluate(self, query):
         docScores = {}
@@ -93,14 +95,14 @@ class IRManager(object):
         metadata = loadMetadata(metadataDir)
         self.docs = metadata["docs"]
         self.terms = metadata["terms"]
-        self.maxFreqInDocs = loadMaxfreqs(maxFreqsDir, self.docs)
+        maxFreqs = loadMaxfreqs(maxFreqsDir, self.docs)
         df = loadDf(pointersDir, self.terms)
         self.postings = loadPostings(postingsDir, df)
 
         logging.info("Generating retrieval data structures")
-        self.setRetrievalData()
+        self.generateRetrievalData(maxFreqs)
 
-    def setRetrievalData(self):
+    def generateRetrievalData(self, maxFreqs):
         self.docsNorm = {}
         for dId in range(0, self.docs):
             self.docsNorm[dId] = 0.0
@@ -111,7 +113,7 @@ class IRManager(object):
             currentIdf = np.log10(self.docs / df)
             self.idf[tId] = currentIdf
             for dId in self.postings[tId]:
-                currentTf = (self.postings[tId][dId] + 0.0) / self.maxFreqInDocs[dId]
+                currentTf = (self.postings[tId][dId] + 0.0) / maxFreqs[dId]
                 currentTfIdf = currentTf * currentIdf
                 self.postings[tId][dId] = currentTfIdf
                 self.docsNorm[dId] += currentTfIdf ** 2.0
@@ -130,6 +132,18 @@ def loadIni():
 		opValue = Config.get(sections[0], option)
 		iniData[option] = opValue if opValue != -1 else False;
 	return iniData
+
+def loadIndexConfig(iniData):
+	indexConfig = {}
+	if "stopwords" in iniData and iniData["stopwords"]:
+		indexConfig["stopwords"] = iniData['stopwords']
+	if "stem" in iniData and iniData["stem"]:
+		indexConfig["stem"] = iniData['stem']
+	if "term_min_size" in iniData and iniData["term_min_size"]:
+		indexConfig["term_min_size"] = int(iniData["term_min_size"])
+	if "term_max_size" in iniData and iniData["term_max_size"]:
+		indexConfig["term_max_size"] = int(iniData["term_max_size"])
+	return indexConfig
 
 def loadMetadata(metadataDir):
     metadata = {}

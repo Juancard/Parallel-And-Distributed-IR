@@ -40,17 +40,14 @@ public class QueryEvaluator {
         }
         sc.sendMessage(this.REQUEST_EVALUATION);
         HashMap<Integer, Integer> termsFreq = query.getTermsAndFrequency();
-        System.out.println("Sending query size: " + termsFreq.size());
         sc.sendInt(termsFreq.size());
         for (Integer termId : termsFreq.keySet()){
-            System.out.println("termid: " + termId + " - freq : " + termsFreq.get(termId));
             sc.sendInt(termId);
             sc.sendInt(termsFreq.get(termId));
         }
         LOGGER.info("Receiving documents scores...");
         HashMap<Integer, Double> docsScore = new HashMap<Integer, Double>();
         int docs = sc.readInt();
-        System.out.println("Docs received: " + docs);
         int doc, weightLength;
         String weightStr;
         for (int i=0; i<docs; i++){

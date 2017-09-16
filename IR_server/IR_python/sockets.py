@@ -104,28 +104,26 @@ def onRequest(conn, addr, irManager):
 		logging.info("Corpus to be indexed: " + corpusPath)
 		try:
 			#INDEX
-			irManager.index(corpusPath)
+			indexData = irManager.index(corpusPath)
 			# SEND METADATA
-			docs = irManager.docs
-			terms = irManager.terms
 			logging.info("Sending metadata")
-			conn.sendall(struct.pack('<2i', docs, terms))
+			conn.sendall(struct.pack('<2i', indexData["docs"], indexData["terms"]))
 			# SEND VOCABULARY
 			logging.info("Sending vocabulary")
-			for term in irManager.vocabulary.termsSortedById():
+			for term in sorted(indexData["vocabulary"], key=lambda x: indexData["vocabulary"][x]["id"]):
 			    sendLengthThenMsg(conn, term)
 			# READ DOCUMENTS
 			logging.info("Sending documents")
-			for docId in range(0, docs):
-			    relPath = os.path.relpath(irManager.documents.content[docId], corpusPath)
+			for docId in range(0, indexData["docs"]):
+			    relPath = os.path.relpath(indexData["documents"][docId], corpusPath)
 			    sendLengthThenMsg(conn, relPath)
 			# SEND MAX FREQS
 			logging.info("Sending maxfreqs")
-			max_freqs = [irManager.maxFreqInDocs[d] for d in range(0, len(irManager.maxFreqInDocs))]
+			max_freqs = [indexData["max_freq"][d] for d in range(0, len(indexData["max_freq"]))]
 			conn.sendall(struct.pack('<%di' % len(max_freqs), *max_freqs))
 			#SEND Postings
 			logging.info("Sending postings")
-			postings = irManager.postings.getAll()
+			postings = indexData["postings"]
 			df = [len(postings[tId].keys()) for tId in postings]
 			conn.sendall(struct.pack('<%dI' % len(df), *df))
 			#SEND POINTERS
@@ -136,6 +134,7 @@ def onRequest(conn, addr, irManager):
 				conn.sendall(struct.pack('<%sI' % len(docIds), *docIds))
 				conn.sendall(struct.pack('<%sI' % len(freqs), *freqs))
 			sendLengthThenMsg(conn, RESPONSE_SUCCESS)
+			irManager.generateRetrievalData(indexData["max_freq"])
 		except OSError, e:
 		    logging.error(e)
 		    sendLengthThenMsg(conn, RESPONSE_FAIL)
@@ -144,11 +143,11 @@ def onRequest(conn, addr, irManager):
 		logging.info("REQUEST - EVALUATION")
 		querySize = int(readInt(conn))
 		query = {}
-		print "Receveiving query: "
+		logging.info("Receveiving query: ")
 		for i in range(0, querySize):
 			termId = readInt(conn)
 			freq = readInt(conn)
-			print "%d: %d" % (termId, freq)
+			logging.info("%d: %d" % (termId, freq))
 			query[termId] = freq
 		docScores = irManager.evaluate(query)
 		# doc scores mocked

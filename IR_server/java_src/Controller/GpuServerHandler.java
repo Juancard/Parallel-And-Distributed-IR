@@ -182,11 +182,15 @@ public class GpuServerHandler {
         for (int i=0; i<terms; i++){
             out.writeInt(df[i]);
             // sends docIds
-            for (int j=0; j<df[i]; j++)
-                out.writeInt(Integer.reverseBytes(dis.readInt()));
+            for (int j=0; j<df[i]; j++){
+                int doc = Integer.reverseBytes(dis.readInt());
+                out.writeInt(doc);
+            }
             // sends freqs
-            for (int j=0; j<df[i]; j++)
-                out.writeInt(Integer.reverseBytes(dis.readInt()));
+            for (int j=0; j<df[i]; j++){
+                int freq = Integer.reverseBytes(dis.readInt());
+                out.writeInt(freq);
+            }
         }
 
         return in.readInt() == IRProtocol.INDEX_SUCCESS;
