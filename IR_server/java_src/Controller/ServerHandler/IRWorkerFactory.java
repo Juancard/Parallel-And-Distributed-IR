@@ -8,6 +8,7 @@ import Controller.IndexerHandler.IndexHandler;
 import Controller.IndexerHandler.PythonIndexer;
 import Controller.QueryEvaluator;
 import Controller.QueryHandler;
+import Controller.StatsHandler;
 import Model.Documents;
 import Model.IRNormalizer;
 import Model.Vocabulary;
@@ -35,8 +36,8 @@ public class IRWorkerFactory implements WorkerFactory{
             PythonIndexer pythonIndexer,
             IRNormalizer normalizer,
             IndexFilesHandler indexFilesHandler,
-            QueryEvaluator queryEvaluator
-    ) {
+            QueryEvaluator queryEvaluator,
+            StatsHandler statsHandler) {
         this.indexHandler = new IndexHandler(
                 indexFilesHandler,
                 pythonIndexer,
@@ -48,7 +49,8 @@ public class IRWorkerFactory implements WorkerFactory{
                 vocabulary,
                 normalizer,
                 documents,
-                queryEvaluator
+                queryEvaluator,
+                statsHandler
         );
         this.vocabulary = vocabulary;
     }

@@ -13,6 +13,7 @@ import Controller.IndexerHandler.IndexerException;
 import Controller.QueryEvaluator;
 import Controller.ServerHandler.IRWorkerFactory;
 import Controller.SshHandler;
+import Controller.StatsHandler;
 import Model.Documents;
 import Model.IRNormalizer;
 import Controller.ServerHandler.IRServer;
@@ -51,6 +52,7 @@ public class InitServer {
     private GpuServerHandler gpuHandler;
     private IndexFilesHandler indexFilesHandler;
     private QueryEvaluator queryEvaluator;
+    private StatsHandler statsHandler;
 
     public InitServer(String propertiesPath){
         Properties properties = null;
@@ -71,6 +73,7 @@ public class InitServer {
             this.setupDocuments(properties);
             this.setupIndexFilesHandler(properties);
             this.setupGpuServer(properties);
+            this.setupStats(properties);
 
             // these are only set up when properties needed exists
             this.setupTunnelToGpuServer(properties);
@@ -99,7 +102,8 @@ public class InitServer {
                 this.pyIndexer,
                 this.normalizer,
                 this.indexFilesHandler,
-                this.queryEvaluator
+                this.queryEvaluator,
+                this.statsHandler
         );
         IRServer irServer = new IRServer(
                 irServerPort,
@@ -289,6 +293,16 @@ public class InitServer {
             LOGGER.info("Setting tunnel at " + sshTunnelHost + ":" + sshTunnelPort);
             this.gpuHandler.setSshTunnel(sshTunnelHost, new Integer(sshTunnelPort));
         }
+    }
+
+    private void setupStats(Properties properties) throws IOException {
+        String statsPath = properties.getProperty("IR_STATS_PATH");
+        if (statsPath == null || statsPath.isEmpty())
+            throw new IOException("IR_STATS_PATH is not a valid directory path: '"+ statsPath +"'");
+        File fStatsPath = new File(statsPath);
+        if (!fStatsPath.exists())
+            fStatsPath.mkdir();
+        this.statsHandler = new StatsHandler(fStatsPath.getPath());
     }
 
     private void testConfiguration() throws IOException {

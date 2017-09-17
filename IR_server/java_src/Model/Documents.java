@@ -49,5 +49,8 @@ public class Documents {
         return Paths.get(this.corpusPath, this.idToPath.get(id)).toString();
     }
 
+    public int getNumberOfDocs(){
+        return this.idToPath.size();
+    }
     public void setCorpusPath(String corpusPath) {this.corpusPath = corpusPath;}
 }

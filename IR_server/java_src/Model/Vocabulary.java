@@ -40,7 +40,7 @@ public class Vocabulary {
         }
         return vocabulary;
     }
-
+    public int getNumerOfTerms(){return this.termToId.size();}
     public File getVocabularyFile(){
         return this.vocabularyFile;
     }
