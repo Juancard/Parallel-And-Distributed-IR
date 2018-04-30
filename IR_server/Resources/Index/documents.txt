@@ -1,0 +1,4 @@
+doc4.txt:1
+doc3.txt:3
+doc1.txt:0
+doc2.txt:2

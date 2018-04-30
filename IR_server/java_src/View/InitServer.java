@@ -75,7 +75,7 @@ public class InitServer {
             this.setupGpuServer(properties);
             this.setupStats(properties);
 
-            // these are only set up when properties needed exists
+            // these are only set up when the needed attributes exist on the properties file
             this.setupTunnelToGpuServer(properties);
             this.setupSshHandler(properties);
         } catch (IndexerException e) {
