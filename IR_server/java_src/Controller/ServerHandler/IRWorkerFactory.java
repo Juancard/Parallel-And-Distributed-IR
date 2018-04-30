@@ -42,7 +42,8 @@ public class IRWorkerFactory implements WorkerFactory{
                 indexFilesHandler,
                 pythonIndexer,
                 gpuHandler,
-                vocabulary
+                vocabulary,
+                documents
         );
         this.queryHandler = new QueryHandler(
                 gpuHandler,

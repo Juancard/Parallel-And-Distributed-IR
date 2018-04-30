@@ -1,9 +1,11 @@
 package Controller.IndexerHandler;
 
 import Controller.GpuServerHandler;
+import Model.Documents;
 import Model.IRNormalizer;
 import Model.Vocabulary;
 
+import javax.print.Doc;
 import java.io.IOException;
 import java.util.logging.Logger;
 
@@ -18,17 +20,20 @@ public class IndexHandler {
     private GpuServerHandler gpuServerHandler;
     private PythonIndexer pythonIndexer;
     private Vocabulary vocabulary;
+    private Documents documents;
 
     public IndexHandler(
             IndexFilesHandler indexFilesHandler,
             PythonIndexer pythonIndexer,
             GpuServerHandler gpuServerHandler,
-            Vocabulary vocabulary
+            Vocabulary vocabulary,
+            Documents documents
     ){
         this.gpuServerHandler = gpuServerHandler;
         this.indexFilesHandler = indexFilesHandler;
         this.pythonIndexer = pythonIndexer;
         this.vocabulary = vocabulary;
+        this.documents = documents;
     }
 
     public boolean index() throws IOException {
@@ -47,6 +52,7 @@ public class IndexHandler {
             try {
                 LOGGER.info("Updating index in IR server");
                 this.vocabulary.update();
+                this.documents.update();
             } catch (IOException e) {
                 String m = "Could not update index in IR server: " + e.getMessage();
                 LOGGER.warning(m);

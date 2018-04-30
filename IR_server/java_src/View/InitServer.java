@@ -197,7 +197,7 @@ public class InitServer {
     }
 
 
-        private void setupIndexFilesHandler(Properties properties) throws IOException {
+    private void setupIndexFilesHandler(Properties properties) throws IOException {
         File irIndexPath = this.indexerConfiguration.getIndexPath();
         String filesProp[] = {
                 "IR_POSTINGS_FILENAME",
@@ -267,7 +267,7 @@ public class InitServer {
                 && PropertiesManager.stringPropIsSet(sshPortStr)
                 && PropertiesManager.stringPropIsSet(gpuIndexPath);
 
-        String m = "Remote connection to Gpu Server is ";
+        String m = "Remote connection to Gpu Server via jsch is ";
 
         if (!sshToGpuEnabled){
             LOGGER.info(m + "disabled");
