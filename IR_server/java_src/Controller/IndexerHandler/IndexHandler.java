@@ -3,10 +3,13 @@ package Controller.IndexerHandler;
 import Controller.GpuServerHandler;
 import Model.Documents;
 import Model.IRNormalizer;
+import Model.Query;
 import Model.Vocabulary;
+import com.google.common.cache.Cache;
 
 import javax.print.Doc;
 import java.io.IOException;
+import java.util.HashMap;
 import java.util.logging.Logger;
 
 /**
@@ -15,6 +18,7 @@ import java.util.logging.Logger;
 public class IndexHandler {
     // classname for the logger
     private final static Logger LOGGER = Logger.getLogger(Logger.GLOBAL_LOGGER_NAME);
+    private final Cache<Query, HashMap<Integer, Double>> IRCache;
 
     private IndexFilesHandler indexFilesHandler;
     private GpuServerHandler gpuServerHandler;
@@ -27,13 +31,15 @@ public class IndexHandler {
             PythonIndexer pythonIndexer,
             GpuServerHandler gpuServerHandler,
             Vocabulary vocabulary,
-            Documents documents
+            Documents documents,
+            Cache<Query, HashMap<Integer, Double>> IRCache
     ){
         this.gpuServerHandler = gpuServerHandler;
         this.indexFilesHandler = indexFilesHandler;
         this.pythonIndexer = pythonIndexer;
         this.vocabulary = vocabulary;
         this.documents = documents;
+        this.IRCache = IRCache;
     }
 
     public boolean index() throws IOException {
@@ -58,6 +64,8 @@ public class IndexHandler {
                 LOGGER.warning(m);
                 throw  new IndexerException(m);
             }
+            LOGGER.info("Cleaning caché");
+            this.IRCache.invalidateAll();
         } catch (IndexerException e) {
             String m = "Error on indexer: " + e.getMessage();
             LOGGER.warning(m);

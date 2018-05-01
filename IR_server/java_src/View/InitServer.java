@@ -1,7 +1,9 @@
 package View;
 
 import java.io.*;
+import java.util.HashMap;
 import java.util.Properties;
+import java.util.concurrent.TimeUnit;
 import java.util.logging.Logger;
 
 import Common.MyLogger;
@@ -18,7 +20,12 @@ import Model.Documents;
 import Model.IRNormalizer;
 import Controller.ServerHandler.IRServer;
 import Controller.IndexerHandler.PythonIndexer;
+import Model.Query;
 import Model.Vocabulary;
+import com.google.common.cache.Cache;
+import com.google.common.cache.CacheBuilder;
+import com.google.common.cache.CacheLoader;
+import com.google.common.cache.LoadingCache;
 import org.ini4j.Ini;
 
 @SuppressWarnings("ALL")
@@ -53,6 +60,7 @@ public class InitServer {
     private IndexFilesHandler indexFilesHandler;
     private QueryEvaluator queryEvaluator;
     private StatsHandler statsHandler;
+    private Cache<Query, HashMap<Integer, Double>> IRCache;
 
     public InitServer(String propertiesPath){
         Properties properties = null;
@@ -72,6 +80,7 @@ public class InitServer {
             this.setupVocabulary(properties);
             this.setupDocuments(properties);
             this.setupIndexFilesHandler(properties);
+            this.setupCache(properties);
             this.setupGpuServer(properties);
             this.setupStats(properties);
 
@@ -102,6 +111,7 @@ public class InitServer {
                 this.pyIndexer,
                 this.normalizer,
                 this.indexFilesHandler,
+                this.IRCache,
                 this.queryEvaluator,
                 this.statsHandler
         );
@@ -252,6 +262,13 @@ public class InitServer {
         );
     }
 
+    public void setupCache(Properties upCache) {
+        this.IRCache = CacheBuilder.newBuilder()
+                .maximumSize(3)
+                .expireAfterAccess(60, TimeUnit.SECONDS)
+                .build();
+    }
+
     private void setupSshHandler(Properties properties) throws IOException {
         String host = properties.getProperty("GPU_HOST");
         String portStr = properties.getProperty("GPU_PORT");
@@ -335,4 +352,5 @@ public class InitServer {
                 && (new File(path)).exists()
                 && (new File(path)).isFile();
     }
+
 }

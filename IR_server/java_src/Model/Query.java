@@ -70,7 +70,27 @@ public class Query{
                 '}';
     }
 
+    @Override
+    public boolean equals(Object o) {
+        if (o == this) return true;
+        if (!(o instanceof Query)) {
+            return false;
+        }
+        Query q = (Query) o;
+        return this.termsFreq.equals(q.termsFreq);
+    }
+
+    //Idea from effective Java : Item 9
+    @Override
+    public int hashCode() {
+        int result = 17;
+        result = 31 * result + this.termsFreq.hashCode();
+        return result;
+    }
+
     public HashMap<Integer, Integer> getTermsAndFrequency() {
         return termsFreq;
     }
+
+
 }

@@ -11,7 +11,9 @@ import Controller.QueryHandler;
 import Controller.StatsHandler;
 import Model.Documents;
 import Model.IRNormalizer;
+import Model.Query;
 import Model.Vocabulary;
+import com.google.common.cache.Cache;
 
 import java.io.IOException;
 import java.net.Socket;
@@ -36,6 +38,7 @@ public class IRWorkerFactory implements WorkerFactory{
             PythonIndexer pythonIndexer,
             IRNormalizer normalizer,
             IndexFilesHandler indexFilesHandler,
+            Cache<Query, HashMap<Integer, Double>> IRCache,
             QueryEvaluator queryEvaluator,
             StatsHandler statsHandler) {
         this.indexHandler = new IndexHandler(
@@ -43,13 +46,15 @@ public class IRWorkerFactory implements WorkerFactory{
                 pythonIndexer,
                 gpuHandler,
                 vocabulary,
-                documents
+                documents,
+                IRCache
         );
         this.queryHandler = new QueryHandler(
                 gpuHandler,
                 vocabulary,
                 normalizer,
                 documents,
+                IRCache,
                 queryEvaluator,
                 statsHandler
         );

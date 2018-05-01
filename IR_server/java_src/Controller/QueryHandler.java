@@ -4,12 +4,11 @@ import Model.Documents;
 import Model.IRNormalizer;
 import Model.Query;
 import Model.Vocabulary;
+import com.google.common.cache.Cache;
 
 import java.io.IOException;
-import java.sql.Timestamp;
-import java.util.Date;
 import java.util.HashMap;
-import java.util.Set;
+import java.util.concurrent.ExecutionException;
 
 /**
  * Created by juan on 12/09/17.
@@ -24,12 +23,14 @@ public class QueryHandler {
     private IRNormalizer irNormalizer;
     private Documents documents;
     private StatsHandler statsHandler;
+    private Cache<Query, HashMap<Integer, Double>> IRCache;
 
     public QueryHandler(
             GpuServerHandler gpuServerHandler,
             Vocabulary vocabulary,
             IRNormalizer irNormalizer,
             Documents documents,
+            Cache<Query, HashMap<Integer, Double>> IRCache,
             QueryEvaluator queryEvaluator,
             StatsHandler statsHandler){
         this.gpuServerHandler = gpuServerHandler;
@@ -38,6 +39,7 @@ public class QueryHandler {
         this.documents = documents;
         this.queryEvaluator = queryEvaluator;
         this.statsHandler = statsHandler;
+        this.IRCache = IRCache;
     }
 
     public HashMap<String, Double> query(String queryStr) throws IOException {
@@ -47,27 +49,32 @@ public class QueryHandler {
                 this.irNormalizer
         );
         if (q.isEmptyOfTerms()) return new HashMap<String, Double>();
+        QueryCallable qCallable = new QueryCallable(
+                this.gpuServerHandler,
+                this.queryEvaluator,
+                q
+        );
         HashMap<Integer, Double> docScoresId = null;
-        long start=0,end=0;
         try {
-            start = System.nanoTime();
-            docScoresId = this.gpuServerHandler.sendQuery(q);
-            end = System.nanoTime();
-        } catch (GpuException e) {
-            LOGGER.warning("Failed at evaluating query via Gpu. Cause: " + e.getMessage());
+            docScoresId = this.IRCache.get(q, qCallable);
+        } catch (ExecutionException e) {
+            LOGGER.severe("Caching query. Cause: " + e.getMessage());
         }
-        boolean isGpuEval = true;
-        if (docScoresId == null){
-            isGpuEval = false;
-            LOGGER.warning("Evaluating query locally.");
-            start = System.nanoTime();
-            docScoresId = this.queryEvaluator.evaluateQuery(q);
-            end = System.nanoTime();
-        }
+
+        LOGGER.info("Aproximate Cache size: " + this.IRCache.size());
+
         HashMap<String, Double> docScoresPath = new HashMap<String, Double>();
         for (int docId : docScoresId.keySet())
             docScoresPath.put(documents.getPathFromId(docId), docScoresId.get(docId));
-        saveQueryStats(queryStr, isGpuEval, start, end, docScoresId.size());
+
+        saveQueryStats(
+                queryStr,
+                qCallable.isGpuEval,
+                qCallable.queryTimeStart,
+                qCallable.queryTimeEnd,
+                docScoresId.size()
+        );
+
         return docScoresPath;
     }
 
