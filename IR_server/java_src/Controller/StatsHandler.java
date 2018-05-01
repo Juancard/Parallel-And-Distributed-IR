@@ -3,9 +3,10 @@ package Controller;
 import Common.CSVUtils;
 
 import java.io.*;
-import java.sql.Timestamp;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Date;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -16,18 +17,21 @@ public class StatsHandler {
     // classname for the logger
     private final static Logger LOGGER = Logger.getLogger(Logger.GLOBAL_LOGGER_NAME);
 
+    private static final String DATE_FORMAT = "yyyy-MM-dd HH:mm:ss";
+
     private static final String QUERY_STATS_FILENAME = "queries.csv";
     // Delimiter used in CSV file
     private static final String NEW_LINE_SEPARATOR = "\n";
     // query headers in CSV
     private static final String[] QUERY_HEADER = {
             "Date", "Docs in corpus", "Terms in corpus", "Query",
-            "Matches (docs)", "Gpu/Local", "Exec. time (ms)"
+            "Matches (docs)", "Gpu/Local", "Exec. time (ms)", "In Caché"
     };
 
 
     private String statsPath;
     private String queryStatsFilePath;
+    private SimpleDateFormat simpleDateFormat;
 
     public StatsHandler(String statsPath) throws IOException {
         this.statsPath = statsPath;
@@ -40,6 +44,7 @@ public class StatsHandler {
             fw.flush(); fw.close();
         }
         this.queryStatsFilePath = f.getPath();
+        this.simpleDateFormat = new SimpleDateFormat(DATE_FORMAT);
     }
 
     private boolean hasQueryHeaders(File f) {
@@ -58,13 +63,14 @@ public class StatsHandler {
             long start,
             long end,
             boolean isGpuEval,
+            boolean isQueryInCache,
             int terms,
             int docs,
             int docsMatched) throws IOException {
         try {
             FileWriter fileWriter = new FileWriter(this.queryStatsFilePath, true);
             ArrayList<String> toSave = this.queryStatsToList(
-                    query, start, end, isGpuEval, terms, docs, docsMatched
+                    query, start, end, isGpuEval, terms, docs, docsMatched, isQueryInCache
             );
             CSVUtils.writeLine(fileWriter, toSave);
             fileWriter.flush(); fileWriter.close();
@@ -76,10 +82,10 @@ public class StatsHandler {
 
     private ArrayList<String> queryStatsToList(
             String query, long start, long end, boolean isGpuEval,
-            int terms, int docs, int docsMatched
-    ) {
+            int terms, int docs, int docsMatched,
+            boolean isQueryInCache) {
         ArrayList<String> out = new ArrayList<String>();
-        out.add(new Timestamp(start).toString());
+        out.add(this.simpleDateFormat.format(new Date()));
         out.add(String.valueOf(docs));
         out.add(String.valueOf(terms));
         out.add(query);
@@ -87,6 +93,7 @@ public class StatsHandler {
         out.add((isGpuEval)? "gpu" : "local");
         long execTimeMs = (end - start) / 1000000;
         out.add(String.valueOf(execTimeMs));
+        out.add((isQueryInCache)? "yes" : "no");
 
         return out;
     }

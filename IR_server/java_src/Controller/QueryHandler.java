@@ -49,6 +49,7 @@ public class QueryHandler {
                 this.irNormalizer
         );
         if (q.isEmptyOfTerms()) return new HashMap<String, Double>();
+        boolean isQueryInCache =  this.IRCache.asMap().containsKey(q);
         QueryCallable qCallable = new QueryCallable(
                 this.gpuServerHandler,
                 this.queryEvaluator,
@@ -70,6 +71,7 @@ public class QueryHandler {
         saveQueryStats(
                 queryStr,
                 qCallable.isGpuEval,
+                isQueryInCache,
                 qCallable.queryTimeStart,
                 qCallable.queryTimeEnd,
                 docScoresId.size()
@@ -79,12 +81,12 @@ public class QueryHandler {
     }
 
     private void saveQueryStats(
-            String query, boolean isGpuEval, long start, long end, int docsMatched
+            String query, boolean isGpuEval, boolean isQueryInCache, long start, long end, int docsMatched
     ) throws IOException {
         int terms = this.vocabulary.getNumerOfTerms();
         int docs = this.documents.getNumberOfDocs();
         this.statsHandler.writeQueryStats(
-                query, start, end, isGpuEval, terms, docs, docsMatched
+                query, start, end, isGpuEval, isQueryInCache, terms, docs, docsMatched
         );
     }
 }
