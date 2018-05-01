@@ -121,7 +121,7 @@ public class InitBroker {
                     LOGGER.info("Indexing at server " + irServer.host + ":" + irServer.port);
                     try {
                         irServer.index();
-                        LOGGER.info("Indexing was successfull at " + irServer.host + ":" + irServer.port);
+                        LOGGER.info("Indexing at " + irServer.host + ":" + irServer.port + ": Success!!");
                     } catch (Exception e) {
                         LOGGER.severe("Error indexing at: " + irServer.host + ":" + irServer.port + ". Cause: " + e.getMessage());
                     }

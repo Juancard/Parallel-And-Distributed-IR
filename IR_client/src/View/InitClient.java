@@ -6,9 +6,11 @@ import Controller.DocScores;
 import Controller.IRClientHandler;
 
 import java.io.IOException;
+import java.text.DecimalFormat;
 import java.util.HashMap;
 import java.util.Properties;
 import java.util.Scanner;
+import java.util.concurrent.TimeUnit;
 
 /**
  * User: juan
@@ -29,13 +31,23 @@ public class InitClient {
     }
 
     private Scanner scanner = new Scanner(System.in);
+    DecimalFormat decimalFormat = new DecimalFormat("#.00");
     private IRClientHandler irClientHandler;
 
     public InitClient(String host, int port){
         this.irClientHandler = new IRClientHandler(host, port);
     }
 
-    private void start() {
+    private void start(){
+        CommonMain.createSection("parallel-and-distributed-IR\nby Juan Cardona");
+        while (true){
+            CommonMain.createSection("Query");
+            this.query();
+            CommonMain.pause();
+        }
+    }
+
+    private void startMultipleActions() {
         String option;
         boolean salir = false;
 
@@ -74,7 +86,7 @@ public class InitClient {
             else
                 System.out.println("Corpus could not be indexed. Try again later.");
         } catch (Exception e) {
-            CommonMain.display("Error indexing: " + e.getMessage());
+            System.out.println("Error indexing: " + e.getMessage());
         }
     }
 
@@ -82,6 +94,7 @@ public class InitClient {
         System.out.print("Enter query: ");
         String query = this.scanner.nextLine();
         try {
+            long start = System.nanoTime();
             HashMap<String, Double> docsScores = this.irClientHandler.query(query);
             docsScores = DocScores.orderByScore(
                     DocScores.removeBehindThreshold(docsScores, 0.0),
@@ -99,6 +112,9 @@ public class InitClient {
                     rank++;
                 }
             }
+            long elapsedTime = System.nanoTime() - start;
+            double seconds = (double)elapsedTime / 1000000000.0;
+            CommonMain.display("Time: " + decimalFormat.format(seconds) + " seconds.");
         } catch (Exception e) {
             CommonMain.display("Error on query: " + e.getMessage());
         }
