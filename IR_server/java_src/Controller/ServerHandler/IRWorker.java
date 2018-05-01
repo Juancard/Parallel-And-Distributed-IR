@@ -41,8 +41,10 @@ public class IRWorker extends MyCustomWorker{
         Object out = new Object();
 
         LOGGER.info("Request - " + request);
-        if (request.equals(IRProtocol.INDEX_LOAD)) {
+        if (request.equals(IRProtocol.INDEX_FILES)) {
             out = this.index();
+        }  else if (request.equals(IRProtocol.INDEX_LOAD)){
+            out = this.loadIndexInGpu();
         } else if (request.equals(IRProtocol.EVALUATE)){
             try {
                 String query = this.readFromClient().toString();
@@ -69,6 +71,16 @@ public class IRWorker extends MyCustomWorker{
             LOGGER.log(Level.SEVERE, e.getMessage(), e);
             return new IOException(e.getMessage());
         } catch (IndexerException e) {
+            LOGGER.log(Level.SEVERE, e.getMessage(), e);
+            return new IOException(e.getMessage());
+        }
+    }
+
+    private Object loadIndexInGpu() {
+        try {
+            this.indexHandler.sendInvertedIndexToGpu();
+            return IRProtocol.INDEX_LOAD_SUCCESS;
+        } catch (IOException e) {
             LOGGER.log(Level.SEVERE, e.getMessage(), e);
             return new IOException(e.getMessage());
         }

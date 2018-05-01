@@ -13,6 +13,7 @@ public class IRProtocol {
 
     public static final int INDEX_SUCCESS = 1;
     public static final int INDEX_FAIL = -1;
+    public static final int INDEX_LOAD_SUCCESS = 2;
 
     public static final int TEST_OK = 1;
 }

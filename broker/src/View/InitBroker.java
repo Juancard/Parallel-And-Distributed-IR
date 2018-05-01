@@ -114,19 +114,12 @@ public class InitBroker {
 
     private void index() {
         ArrayList<Thread> threads = new ArrayList<Thread>();
+        ArrayList<IndexWorker> workers = new ArrayList<IndexWorker>();
+        IndexWorker indexWorker = null;
         for (IRServerHandler irServer : this.irServers){
-            threads.add(new Thread(new Runnable() {
-                @Override
-                public void run() {
-                    LOGGER.info("Indexing at server " + irServer.host + ":" + irServer.port);
-                    try {
-                        irServer.index();
-                        LOGGER.info("Indexing at " + irServer.host + ":" + irServer.port + ": Success!!");
-                    } catch (Exception e) {
-                        LOGGER.severe("Error indexing at: " + irServer.host + ":" + irServer.port + ". Cause: " + e.getMessage());
-                    }
-                }
-            }));
+            indexWorker = new IndexWorker(irServer);
+            workers.add(indexWorker);
+            threads.add(new Thread(indexWorker));
         }
         for (Thread t : threads)
             t.start();
@@ -136,7 +129,27 @@ public class InitBroker {
             } catch (InterruptedException e) {
                 LOGGER.severe("Error indexing at IR servers. Cause: " + e.getMessage());
             }
-
+        IRServerHandler fastestServer = null;
+        boolean allFinished = true;
+        long fastest = Long.MAX_VALUE;
+        for (IndexWorker worker : workers){
+            allFinished &= worker.isIndexedOk;
+            if (worker.isIndexedOk && worker.indexingTime <= fastest){
+                fastest = worker.indexingTime;
+                fastestServer = worker.irServer;
+            }
+        }
+        if (!allFinished || fastestServer == null){
+            LOGGER.severe("One or more servers could not complete indexing. Please, do not start worker until issue is fixed.");
+        } else {
+            try {
+                LOGGER.info("Loading inverted index at gpu via " + fastestServer.host + ":" + fastestServer.port);
+                fastestServer.sendInvertedIndexToGpu();
+                LOGGER.info("Indexing completed!!");
+            } catch (IOException e) {
+                LOGGER.severe("Error loading inverted index in gpu server. Cause: " + e.getMessage());
+            }
+        }
     }
 
     private void startBroker() {

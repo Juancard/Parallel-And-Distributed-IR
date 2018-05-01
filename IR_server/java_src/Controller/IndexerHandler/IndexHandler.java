@@ -48,13 +48,6 @@ public class IndexHandler {
             //this.pythonIndexer.callScriptIndex();
             if (!this.pythonIndexer.indexViaSocket(indexFilesHandler))
                 return false;
-            LOGGER.info(
-                    "Connecting to Gpu server at "
-                            + this.gpuServerHandler.getHost()
-                            + ":"
-                            + this.gpuServerHandler.getPort()
-            );
-            this.gpuServerHandler.sendIndex();
             try {
                 LOGGER.info("Updating index in IR server");
                 this.vocabulary.update();
@@ -72,6 +65,24 @@ public class IndexHandler {
             throw new IOException(m);
         }
 
+        return true;
+    }
+
+    public boolean sendInvertedIndexToGpu() throws IOException {
+        LOGGER.info(
+                "Connecting to Gpu server at "
+                        + this.gpuServerHandler.getHost()
+                        + ":"
+                        + this.gpuServerHandler.getPort()
+        );
+        try {
+            this.gpuServerHandler.testConnection();
+            this.gpuServerHandler.sendIndex();
+        } catch (IOException e) {
+            String m = "Error loading index in gpu server: " + e.getMessage();
+            LOGGER.warning(m);
+            throw new IOException(m);
+        }
         return true;
     }
 

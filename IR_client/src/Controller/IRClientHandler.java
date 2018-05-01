@@ -22,9 +22,14 @@ public class IRClientHandler {
     public boolean index() throws Exception {
         SocketConnection connection = new SocketConnection(host, port);
 
-        connection.send(IRProtocol.INDEX_LOAD);
+        connection.send(IRProtocol.INDEX_FILES);
 
         Object response = connection.read();
+
+        if (!(response instanceof Exception)){
+            connection.send(IRProtocol.INDEX_LOAD);
+            response = connection.read();
+        }
         if (response instanceof Exception)
             throw (Exception) response;
 

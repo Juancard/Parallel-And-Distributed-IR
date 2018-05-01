@@ -29,7 +29,7 @@ public class IRServerHandler {
     public boolean index() throws Exception {
         SocketConnection connection = new SocketConnection(host, port);
 
-        connection.send(IRProtocol.INDEX_LOAD);
+        connection.send(IRProtocol.INDEX_FILES);
 
         Object response = connection.read();
         if (response instanceof Exception)
@@ -64,6 +64,27 @@ public class IRServerHandler {
         try {
             Object response = connection.read();
             return (Integer) response == IRProtocol.TEST_OK;
+        } catch (ClassNotFoundException e) {
+            throw new IOException("Could not receive response.");
+        } finally {
+            connection.close();
+        }
+    }
+
+    public boolean sendInvertedIndexToGpu() throws IOException {
+        SocketConnection connection = null;
+        try {
+            connection = new SocketConnection(this.host, this.port);
+        } catch (IOException e) {
+            throw new IOException("Could not stablish connection.");
+        }
+
+        connection.send(IRProtocol.INDEX_LOAD);
+        try {
+            Object response = connection.read();
+            return (Integer) response == IRProtocol.INDEX_LOAD_SUCCESS;
+        } catch (IOException e) {
+            throw new IOException("Could not receive response.");
         } catch (ClassNotFoundException e) {
             throw new IOException("Could not receive response.");
         } finally {
