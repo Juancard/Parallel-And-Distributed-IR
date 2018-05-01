@@ -10,6 +10,7 @@ import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Properties;
+import java.util.Scanner;
 import java.util.logging.Logger;
 
 @SuppressWarnings("ALL")
@@ -35,6 +36,7 @@ public class InitBroker {
     // classname for the logger
     private final static Logger LOGGER = Logger.getLogger(Logger.GLOBAL_LOGGER_NAME);
     private ArrayList<IRServerHandler> irServers;
+    private int brokerPort;
 
     public InitBroker(String propertiesPath){
         Properties properties = null;
@@ -45,7 +47,7 @@ public class InitBroker {
             System.exit(1);
         }
 
-        int brokerPort = new Integer(properties.getProperty("BROKER_PORT"));
+        this.brokerPort = new Integer(properties.getProperty("BROKER_PORT"));
         this.irServers = new ArrayList<IRServerHandler>();
         try {
             setupIRServers(properties);
@@ -55,24 +57,7 @@ public class InitBroker {
             System.exit(1);
         }
 
-
-        BrokerWorkerFactory brokerWorkerFactory = new BrokerWorkerFactory(
-                this.irServers
-        );
-
-
-        BrokerServer brokerServer = new BrokerServer(
-                brokerPort,
-                brokerWorkerFactory
-        );
-
-        try {
-            brokerServer.startServer();
-        } catch (IOException e) {
-            LOGGER.severe("Error Starting server: " + e.getMessage());
-            System.exit(1);
-        }
-
+        this.startActionMenu();
     }
 
     private void setupIRServers(Properties properties) throws IOException {
@@ -93,6 +78,84 @@ public class InitBroker {
             } catch (IOException e) {
                 throw new IOException(irServerHandler.host + ":" + irServerHandler.port + " connection failed. Cause: " + e.getMessage());
             }
+        }
+    }
+
+    private void startActionMenu() {
+        String option;
+        Scanner scanner = new Scanner(System.in);
+        boolean salir = false;
+
+        while (!salir) {
+            showMain();
+            option = scanner.nextLine();
+            if (option.equals("0")) {
+                salir = true;
+            } else if(option.equals("1")){
+                Common.CommonMain.createSection("Index Corpus");
+                this.index();
+                Common.CommonMain.pause();
+            } else if (option.equals("2")){
+                Common.CommonMain.createSection("Start Broker");
+                this.startBroker();
+                Common.CommonMain.pause();
+            }
+        }
+    }
+
+    private void showMain(){
+        Common.CommonMain.createSection("Broker - Main");
+        java.lang.System.out.println("1 - Index Corpus");
+        java.lang.System.out.println("2 - Start Broker");
+        java.lang.System.out.println("0 - Salir");
+        java.lang.System.out.println("");
+        java.lang.System.out.print("Ingrese opción: ");
+    }
+
+    private void index() {
+        ArrayList<Thread> threads = new ArrayList<Thread>();
+        for (IRServerHandler irServer : this.irServers){
+            threads.add(new Thread(new Runnable() {
+                @Override
+                public void run() {
+                    LOGGER.info("Indexing at server " + irServer.host + ":" + irServer.port);
+                    try {
+                        irServer.index();
+                        LOGGER.info("Indexing was successfull at " + irServer.host + ":" + irServer.port);
+                    } catch (Exception e) {
+                        LOGGER.severe("Error indexing at: " + irServer.host + ":" + irServer.port + ". Cause: " + e.getMessage());
+                    }
+                }
+            }));
+        }
+        for (Thread t : threads)
+            t.start();
+        for (Thread t : threads)
+            try {
+                t.join();
+            } catch (InterruptedException e) {
+                LOGGER.severe("Error indexing at IR servers. Cause: " + e.getMessage());
+            }
+
+    }
+
+    private void startBroker() {
+
+        BrokerWorkerFactory brokerWorkerFactory = new BrokerWorkerFactory(
+                this.irServers
+        );
+
+
+        BrokerServer brokerServer = new BrokerServer(
+                this.brokerPort,
+                brokerWorkerFactory
+        );
+
+        try {
+            brokerServer.startServer();
+        } catch (IOException e) {
+            LOGGER.severe("Error Starting server: " + e.getMessage());
+            System.exit(1);
         }
     }
 
