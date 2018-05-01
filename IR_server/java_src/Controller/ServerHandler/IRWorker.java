@@ -2,19 +2,12 @@ package Controller.ServerHandler;
 
 import Common.IRProtocol;
 import Common.Socket.MyCustomWorker;
-import Controller.GpuServerHandler;
 import Controller.IndexerHandler.IndexHandler;
 import Controller.IndexerHandler.IndexerException;
-import Controller.IndexerHandler.PythonIndexer;
 import Controller.QueryHandler;
-import Model.IRNormalizer;
-import Model.Query;
-import Model.Vocabulary;
-import com.sun.xml.internal.ws.policy.privateutil.PolicyUtils;
 
 import java.io.IOException;
 import java.net.Socket;
-import java.util.HashMap;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -70,10 +63,14 @@ public class IRWorker extends MyCustomWorker{
 
     private Object index() {
         try {
+            this.indexHandler.testConnection();
             return this.indexHandler.index();
         } catch (IOException e) {
             LOGGER.log(Level.SEVERE, e.getMessage(), e);
-            return new IOException("Internal Server error");
+            return new IOException(e.getMessage());
+        } catch (IndexerException e) {
+            LOGGER.log(Level.SEVERE, e.getMessage(), e);
+            return new IOException(e.getMessage());
         }
     }
 

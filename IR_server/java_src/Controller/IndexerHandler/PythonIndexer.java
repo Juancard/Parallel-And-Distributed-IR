@@ -18,8 +18,9 @@ public class PythonIndexer {
     private final static Logger LOGGER = Logger.getLogger(Logger.GLOBAL_LOGGER_NAME);
 
     private final static String REQUEST_INDEX = "IND";
-    private final static String RESPONSE_INDEX_SUCCESS = "OK";
-    private final static String RESPONSE_INDEX_FAIL = "NOK";
+    private final static String REQUEST_TEST = "TEST";
+    private final static String RESPONSE_SUCCESS = "OK";
+    private final static String RESPONSE_FAIL = "NOK";
 
     private String corpusPath;
     private String indexerScript;
@@ -136,7 +137,7 @@ public class PythonIndexer {
             postings.put(termId, mapDocToFreq);
         }
         String status = sc.readMessage();
-        if (status.equals(RESPONSE_INDEX_FAIL)){
+        if (status.equals(RESPONSE_FAIL)){
             String errorMsg = sc.readMessage();
             sc.close();
             throw new IndexerException("At Indexer host: " + errorMsg);
@@ -147,6 +148,30 @@ public class PythonIndexer {
           docs, terms, postings, maxFreqs, documents, vocabulary
         );
 
-        return persistStatus && status.equals(this.RESPONSE_INDEX_SUCCESS);
+        return persistStatus && status.equals(this.RESPONSE_SUCCESS);
+    }
+
+    public boolean testConnection() throws IOException {
+        PythonSocketConnection connection = null;
+        try {
+            connection = new PythonSocketConnection(host, port);
+        } catch (IOException e) {
+            throw new IOException("Could not stablish connection.");
+        }
+        try {
+            connection.sendMessage(this.REQUEST_TEST);
+        } catch (IOException e) {
+            throw new IOException("Could not write in socket.");
+        }
+        String testResult = "";
+        try {
+            connection.getClientSocket().setSoTimeout(2000);
+            testResult = connection.readMessage();
+        } catch (IOException e) {
+            throw new IOException("Could not read from socket.");
+        }
+
+        connection.close();
+        return testResult.equals(RESPONSE_SUCCESS);
     }
 }

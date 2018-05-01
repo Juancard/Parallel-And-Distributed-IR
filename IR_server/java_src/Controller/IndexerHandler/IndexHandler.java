@@ -74,4 +74,18 @@ public class IndexHandler {
 
         return true;
     }
+
+    public boolean testConnection() throws IndexerException {
+        try {
+            this.gpuServerHandler.testConnection();
+        } catch (IOException e) {
+            throw new IndexerException("GPU server is not responding. Cause: " + e.getMessage());
+        }
+        try {
+            this.pythonIndexer.testConnection();
+        } catch (IOException e) {
+            throw new IndexerException("Indexer is not responding. Cause: " + e.getMessage());
+        }
+        return true;
+    }
 }
