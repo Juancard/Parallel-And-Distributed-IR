@@ -1,20 +1,13 @@
-package Controller.ServerHandler;
+package ServerHandler;
 
 import Common.IRProtocol;
 import Common.Socket.MyCustomWorker;
-import Controller.GpuServerHandler;
-import Controller.IndexerHandler.IndexHandler;
-import Controller.IndexerHandler.IndexerException;
-import Controller.IndexerHandler.PythonIndexer;
-import Controller.QueryHandler;
-import Model.IRNormalizer;
-import Model.Query;
-import Model.Vocabulary;
-import com.sun.xml.internal.ws.policy.privateutil.PolicyUtils;
+import View.IRServerHandler;
 
 import java.io.IOException;
 import java.net.Socket;
-import java.util.HashMap;
+import java.util.ArrayList;
+import java.util.Random;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -23,25 +16,18 @@ import java.util.logging.Logger;
  * Date: 03/07/17
  * Time: 17:51
  */
-public class IRWorker extends MyCustomWorker{
+public class BrokerWorker extends MyCustomWorker {
 
     // classname for the logger
     private final static Logger LOGGER = Logger.getLogger(Logger.GLOBAL_LOGGER_NAME);
-    private final IndexHandler indexHandler;
-    private final QueryHandler queryHandler;
+    private final ArrayList<IRServerHandler> irServers;
 
-    private IRServerForConnections irServer;
-
-    public IRWorker(
+    public BrokerWorker(
             Socket clientSocket,
-            IRServerForConnections irServer,
-            IndexHandler indexHandler,
-            QueryHandler queryHandler
+            ArrayList<IRServerHandler> irServers
     ) {
         super(clientSocket);
-        this.irServer = irServer;
-        this.indexHandler = indexHandler;
-        this.queryHandler = queryHandler;
+        this.irServers = irServers;
     }
 
     protected Object onClientRequest(String request) {
@@ -70,19 +56,25 @@ public class IRWorker extends MyCustomWorker{
 
     private Object index() {
         try {
-            return this.indexHandler.index();
+            int i = new Random().nextInt(this.irServers.size());
+            return this.irServers.get(i).index();
         } catch (IOException e) {
             LOGGER.log(Level.SEVERE, e.getMessage(), e);
             return new IOException("Internal Server error");
+        } catch (Exception e) {
+            return e;
         }
     }
 
     private Object query(String query){
         try {
-            return this.queryHandler.query(query);
+            int i = new Random().nextInt(this.irServers.size());
+            return this.irServers.get(i).query(query);
         } catch (IOException e) {
             LOGGER.log(Level.SEVERE, e.getMessage(), e);
             return new IOException("Internal Server error");
+        } catch (Exception e) {
+            return e;
         }
     }
 

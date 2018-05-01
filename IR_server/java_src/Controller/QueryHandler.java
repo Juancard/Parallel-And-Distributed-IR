@@ -59,7 +59,9 @@ public class QueryHandler {
         try {
             docScoresId = this.IRCache.get(q, qCallable);
         } catch (ExecutionException e) {
-            LOGGER.severe("Caching query. Cause: " + e.getMessage());
+            String m = "Caching query. Cause: " + e.getMessage();
+            LOGGER.severe(m);
+            throw new IOException(m);
         }
 
         LOGGER.info("Aproximate Cache size: " + this.IRCache.size());
