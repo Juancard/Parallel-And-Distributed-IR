@@ -7,3 +7,6 @@ Logging.txt
 Logging.html
 Logging.html.lck
 Logging.txt.lck
+pom.xml
+Logging*
+target/
