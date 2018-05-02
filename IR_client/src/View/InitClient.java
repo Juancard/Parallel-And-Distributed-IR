@@ -54,10 +54,13 @@ public class InitClient {
         if (!isBrokerAvailable()){
             CommonMain.display("We are not available at the moment. Please, try again later.");
         } else {
+            this.queryBot();
+            /*
             while (true){
                 CommonMain.createSection("Query");
                 this.query();
             }
+            */
         }
     }
 
@@ -112,6 +115,29 @@ public class InitClient {
         } catch (Exception e) {
             System.out.println("Error indexing: " + e.getMessage());
         }
+    }
+
+    private void queryBot(){
+        String[] queries = new String[]{
+                "primera consulta",
+                "universidad riqueza atletismo argentina estado nacion edificio comunicacion",
+                "tecnologia",
+                "pais",
+                "estado libre",
+                "pais libre",
+                "perro libre finanzas religion estado morfologia",
+                "pais",
+                "tecnologia",
+                "pais",
+                "estado libre",
+                "universidad riqueza atletismo argentina estado nacion edificio comunicacion",
+                "ultima consulta"
+        };
+        Thread[] threads = new Thread[queries.length];
+        for (int i=0; i<queries.length; i++)
+            threads[i] =  new Thread(new QueryBotRunnable(this.irClientHandler, queries[i]));
+        for (Thread t : threads)
+            t.start();
     }
 
     private void query(){
