@@ -80,7 +80,7 @@ public class IRServerHandler {
         }
         connection.send(IRProtocol.TEST);
         try {
-            connection.getClientSocket().setSoTimeout(1000);
+            connection.getClientSocket().setSoTimeout(2000);
             Object response = connection.read();
             return (Integer) response == IRProtocol.TEST_OK;
         } catch (ClassNotFoundException e) {

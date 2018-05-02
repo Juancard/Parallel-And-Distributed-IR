@@ -61,7 +61,7 @@ public class IRWorker extends MyCustomWorker{
             out = IRProtocol.TEST_OK;
         }
 
-        LOGGER.info("Response - " + out);
+        LOGGER.info("Response - " + out.toString().substring(0, Math.min(out.toString().length(), 60)));
 
         return out;
     }
