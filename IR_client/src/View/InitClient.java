@@ -1,8 +1,9 @@
 package View;
 
 import Common.CommonMain;
-import Controller.MyAppException;
+import Common.MyAppException;
 import Common.PropertiesManager;
+import Common.UnidentifiedException;
 import Controller.DocScores;
 import Controller.IRClientHandler;
 
@@ -134,8 +135,10 @@ public class InitClient {
             long elapsedTime = System.nanoTime() - start;
             double seconds = (double)elapsedTime / 1000000000.0;
             CommonMain.display("Time: " + decimalFormat.format(seconds) + " seconds.");
-        } catch (Exception e) {
+        } catch (MyAppException e) {
             CommonMain.display("Error on query: " + e.getMessage());
+        } catch (UnidentifiedException e) {
+            CommonMain.display("Internal Server Error");
         }
     }
 

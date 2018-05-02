@@ -1,7 +1,9 @@
 package Controller;
 
 import Common.IRProtocol;
+import Common.MyAppException;
 import Common.Socket.SocketConnection;
+import Common.UnidentifiedException;
 
 import java.io.IOException;
 import java.net.SocketException;
@@ -21,6 +23,7 @@ public class IRClientHandler {
         this.port = port;
     }
 
+    // DEPRECATED
     public boolean index() throws Exception {
         SocketConnection connection = new SocketConnection(host, port);
 
@@ -39,16 +42,32 @@ public class IRClientHandler {
         return (Boolean) response;
     }
 
-    public HashMap<String, Double> query(String query) throws Exception {
-        SocketConnection connection = new SocketConnection(host, port);
+    public HashMap<String, Double> query(String query) throws MyAppException, UnidentifiedException {
+        SocketConnection connection = null;
+        try {
+            connection = new SocketConnection(this.host, this.port);
+        } catch (IOException e) {
+            throw new MyAppException("Could not stablish connection. Cause: " + e.getMessage());
+        }
         connection.send(IRProtocol.EVALUATE);
         connection.send(query);
 
-        Object response = connection.read();
-        if (response instanceof Exception)
-            throw (Exception) response;
+        Object response = null;
+        try {
+            response = connection.read();
+        } catch (IOException e) {
+            throw new MyAppException("Could not receive response. Cause: " + e.getMessage());
+        } catch (ClassNotFoundException e) {
+            throw new MyAppException("Could not receive response. Cause: " + e.getMessage());
+        } finally {
+            connection.close();
+        }
 
-        connection.close();
+        if (response instanceof MyAppException)
+            throw (MyAppException) response;
+        else if (response instanceof Exception)
+            throw (UnidentifiedException) response;
+
         return (HashMap) response;
     }
 
