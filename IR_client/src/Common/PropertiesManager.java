@@ -3,6 +3,7 @@ package Common;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.util.Properties;
 
 /**
@@ -19,6 +20,13 @@ public class PropertiesManager {
         return defaultProps;
     }
 
+    public static Properties loadProperties(InputStream propertiesStream) throws IOException {
+        Properties defaultProps = new Properties();
+        defaultProps.load(propertiesStream);
+        propertiesStream.close();
+        return defaultProps;
+    }
+
     public static boolean propIsFileExists(Properties properties, String property){
         return properties.contains(property)
                 && new File(properties.getProperty(property)).exists();
@@ -27,5 +35,9 @@ public class PropertiesManager {
     public static boolean propIsPath(Properties properties, String property){
         return properties.contains(property)
                 && new File(properties.getProperty(property)).isDirectory();
+    }
+
+    public static boolean stringPropIsSet(String prop){
+        return prop != null && !prop.isEmpty();
     }
 }

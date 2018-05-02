@@ -3,6 +3,8 @@ package Controller;
 import Common.IRProtocol;
 import Common.Socket.SocketConnection;
 
+import java.io.IOException;
+import java.net.SocketException;
 import java.util.HashMap;
 
 /**
@@ -48,5 +50,28 @@ public class IRClientHandler {
 
         connection.close();
         return (HashMap) response;
+    }
+
+    public boolean testConnection() throws MyAppException {
+        SocketConnection connection = null;
+        try {
+            connection = new SocketConnection(this.host, this.port);
+        } catch (IOException e) {
+            throw new MyAppException("Could not stablish connection. Cause: " + e.getMessage());
+        }
+        connection.send(IRProtocol.TEST);
+        try {
+            connection.getClientSocket().setSoTimeout(2000);
+            Object response = connection.read();
+            return (Integer) response == IRProtocol.TEST_OK;
+        } catch (SocketException e) {
+            throw new MyAppException("Could not set socket timeout. Cause: " + e.getMessage());
+        } catch (IOException e) {
+            throw new MyAppException("Could not receive response. Cause: " + e.getMessage());
+        } catch (ClassNotFoundException e) {
+            throw new MyAppException("Could not receive response. Cause: " + e.getMessage());
+        } finally {
+            connection.close();
+        }
     }
 }

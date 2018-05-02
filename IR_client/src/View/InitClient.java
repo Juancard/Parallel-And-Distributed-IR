@@ -1,6 +1,7 @@
 package View;
 
 import Common.CommonMain;
+import Controller.MyAppException;
 import Common.PropertiesManager;
 import Controller.DocScores;
 import Controller.IRClientHandler;
@@ -10,7 +11,6 @@ import java.text.DecimalFormat;
 import java.util.HashMap;
 import java.util.Properties;
 import java.util.Scanner;
-import java.util.concurrent.TimeUnit;
 
 /**
  * User: juan
@@ -18,15 +18,10 @@ import java.util.concurrent.TimeUnit;
  * Time: 20:21
  */
 public class InitClient {
-    private static final String PROPERTIES_PATH = "src/config.properties";
+    private static final String PROPERTIES_PATH = "/config.properties";
 
     public static void main(String[] args) throws IOException {
-        Properties properties = PropertiesManager.loadProperties(PROPERTIES_PATH);
-
-        String host = properties.getProperty("IR_HOST");
-        int port = Integer.parseInt(properties.getProperty("IR_PORT"));
-
-        InitClient initClient = new InitClient(host, port);
+        InitClient initClient = new InitClient(PROPERTIES_PATH);
         initClient.start();
     }
 
@@ -34,16 +29,40 @@ public class InitClient {
     DecimalFormat decimalFormat = new DecimalFormat("#.00");
     private IRClientHandler irClientHandler;
 
-    public InitClient(String host, int port){
+    public InitClient(String propertiesString){
+        Properties properties = null;
+        try {
+            properties = PropertiesManager.loadProperties(getClass().getResourceAsStream(propertiesString));
+        } catch (IOException e) {
+            System.out.println("Error loading properties: " + e.getMessage());
+            System.exit(1);
+        }
+
+        String host = properties.getProperty("IR_HOST");
+        int port = Integer.parseInt(properties.getProperty("IR_PORT"));
+
         this.irClientHandler = new IRClientHandler(host, port);
     }
 
     private void start(){
         CommonMain.createSection("parallel-and-distributed-IR\nby Juan Cardona");
-        while (true){
-            CommonMain.createSection("Query");
-            this.query();
-            CommonMain.pause();
+        if (!isBrokerAvailable()){
+            CommonMain.display("We are not available at the moment. Please, try again later.");
+        } else {
+            while (true){
+                CommonMain.createSection("Query");
+                this.query();
+                CommonMain.pause();
+            }
+        }
+    }
+
+    private boolean isBrokerAvailable(){
+        try {
+            return this.irClientHandler.testConnection();
+        } catch (MyAppException e) {
+            System.err.println(e);
+            return false;
         }
     }
 
