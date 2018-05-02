@@ -1,5 +1,6 @@
 package Controller;
 
+import Common.MyAppException;
 import Model.Documents;
 import Model.IRNormalizer;
 import Model.Query;
@@ -42,7 +43,7 @@ public class QueryHandler {
         this.IRCache = IRCache;
     }
 
-    public HashMap<String, Double> query(String queryStr) throws IOException {
+    public HashMap<String, Double> query(String queryStr) throws MyAppException {
         Query q = new Query(
                 queryStr,
                 this.vocabulary.getMapTermStringToTermId(),
@@ -61,7 +62,7 @@ public class QueryHandler {
         } catch (ExecutionException e) {
             String m = "Caching query. Cause: " + e.getMessage();
             LOGGER.severe(m);
-            throw new IOException(m);
+            throw new MyAppException(m);
         }
 
         LOGGER.info("Aproximate Cache size: " + this.IRCache.size());
@@ -70,14 +71,19 @@ public class QueryHandler {
         for (int docId : docScoresId.keySet())
             docScoresPath.put(documents.getPathFromId(docId), docScoresId.get(docId));
 
-        saveQueryStats(
-                queryStr,
-                qCallable.isGpuEval,
-                isQueryInCache,
-                qCallable.queryTimeStart,
-                qCallable.queryTimeEnd,
-                docScoresId.size()
-        );
+        try {
+            saveQueryStats(
+                    queryStr,
+                    qCallable.isGpuEval,
+                    isQueryInCache,
+                    qCallable.queryTimeStart,
+                    qCallable.queryTimeEnd,
+                    docScoresId.size()
+            );
+        } catch (IOException e) {
+            String m = "Saving query stats. Cause: " + e.getMessage();
+            LOGGER.warning(m);
+        }
 
         return docScoresPath;
     }

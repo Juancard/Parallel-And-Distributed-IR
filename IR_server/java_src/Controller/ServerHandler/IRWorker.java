@@ -1,6 +1,7 @@
 package Controller.ServerHandler;
 
 import Common.IRProtocol;
+import Common.MyAppException;
 import Common.Socket.MyCustomWorker;
 import Controller.IndexerHandler.IndexHandler;
 import Controller.IndexerHandler.IndexerException;
@@ -91,9 +92,9 @@ public class IRWorker extends MyCustomWorker{
     private Object query(String query){
         try {
             return this.queryHandler.query(query);
-        } catch (IOException e) {
+        } catch (MyAppException e) {
             LOGGER.log(Level.SEVERE, e.getMessage(), e);
-            return new IOException("Internal Server error");
+            return new MyAppException("Evaluating query: " + e.getMessage());
         }
     }
 
