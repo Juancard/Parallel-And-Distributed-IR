@@ -54,6 +54,14 @@ public class IndexFilesHandler {
         }
     }
 
+    public int[] getMetadata() throws IOException {
+        DataInputStream dis = null;
+        dis = this.loadMetadata();
+        int docs = Integer.reverseBytes(dis.readInt());
+        int terms = Integer.reverseBytes(dis.readInt());
+        return new int[]{terms, docs};
+    }
+
     public DataInputStream loadPointers() throws IOException {
         try {
             return this.loadBinaryFile(this.pointersPath);

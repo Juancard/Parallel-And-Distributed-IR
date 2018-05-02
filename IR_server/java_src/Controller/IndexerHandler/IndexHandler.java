@@ -99,4 +99,12 @@ public class IndexHandler {
         }
         return true;
     }
+
+    public Object getIndexMetadata() {
+        try {
+            return this.indexFilesHandler.getMetadata();
+        } catch (IOException e) {
+            return e;
+        }
+    }
 }

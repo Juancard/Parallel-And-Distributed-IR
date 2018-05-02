@@ -10,6 +10,7 @@ public class IRProtocol {
     public static final String INDEX_FILES= "I_F";
     public static final String EVALUATE = "EVA";
     public static final String TEST = "TEST";
+    public static final String GET_INDEX_METADATA = "G_I_M";
 
     public static final int INDEX_SUCCESS = 1;
     public static final int INDEX_FAIL = -1;

@@ -91,4 +91,24 @@ public class IRServerHandler {
             connection.close();
         }
     }
+
+    public int[] getIndexMetadata() throws IOException {
+        SocketConnection connection = null;
+        try {
+            connection = new SocketConnection(this.host, this.port);
+        } catch (IOException e) {
+            throw new IOException("Could not stablish connection.");
+        }
+        connection.send(IRProtocol.GET_INDEX_METADATA);
+        try {
+            Object response = connection.read();
+            return (int[]) response;
+        } catch (IOException e) {
+            throw new IOException("Could not receive response.");
+        } catch (ClassNotFoundException e) {
+            throw new IOException("Could not receive response.");
+        } finally {
+            connection.close();
+        }
+    }
 }

@@ -54,6 +54,8 @@ public class IRWorker extends MyCustomWorker{
                 LOGGER.log(Level.SEVERE, m, e);
                 return new Exception(m);
             }
+        } else if (request.equals(IRProtocol.GET_INDEX_METADATA)){
+            out = this.getIndexMetadata();
         } else if (request.equals(IRProtocol.TEST)){
             out = IRProtocol.TEST_OK;
         }
@@ -95,4 +97,7 @@ public class IRWorker extends MyCustomWorker{
         }
     }
 
+    public Object getIndexMetadata() {
+        return this.indexHandler.getIndexMetadata();
+    }
 }

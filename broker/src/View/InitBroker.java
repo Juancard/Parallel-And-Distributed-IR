@@ -1,5 +1,6 @@
 package View;
 
+import Common.CommonMain;
 import Common.MyLogger;
 import Common.PropertiesManager;
 import Common.ServerInfo;
@@ -50,8 +51,13 @@ public class InitBroker {
         this.brokerPort = new Integer(properties.getProperty("BROKER_PORT"));
         this.irServers = new ArrayList<IRServerHandler>();
         try {
-            setupIRServers(properties);
-            testIRServers();
+            this.setupIRServers(properties);
+            this.testIRServers();
+            boolean consistent = this.IRServersAreConsistent();
+            if (!consistent) {
+                LOGGER.severe("IR servers do not have the same inverted index. Check IR servers issues and index.");
+                CommonMain.pause();
+            }
         } catch (IOException e) {
             LOGGER.severe("Error setting up broker: " + e.getMessage());
             System.exit(1);
@@ -81,6 +87,30 @@ public class InitBroker {
         }
     }
 
+    private boolean IRServersAreConsistent() throws IOException {
+        LOGGER.info("Checking consistency between IR servers");
+        int terms = -1, docs = -1;
+        boolean initialized = false;
+        boolean consistency = true;
+        for (IRServerHandler irServerHandler : this.irServers) {
+            int[] indexMetadata = new int[0];
+            try {
+                indexMetadata = irServerHandler.getIndexMetadata();
+                LOGGER.info(irServerHandler.host + ":" + irServerHandler.port + " - Terms: " + indexMetadata[0] + " - Docs: " + indexMetadata[1]);
+                if (!initialized){
+                    terms = indexMetadata[0];
+                    docs = indexMetadata[1];
+                    initialized = true;
+                } else {
+                    consistency &= indexMetadata[0] == terms & indexMetadata[1] == docs;
+                }
+            } catch (IOException e) {
+                throw new IOException(irServerHandler.host + ":" + irServerHandler.port + ": checking failed. Cause: " + e.getMessage());
+            }
+        }
+        return consistency;
+    }
+
     private void startActionMenu() {
         String option;
         Scanner scanner = new Scanner(System.in);
@@ -92,15 +122,23 @@ public class InitBroker {
             if (option.equals("0")) {
                 salir = true;
             } else if(option.equals("1")){
-                Common.CommonMain.createSection("Index Corpus");
-                this.index();
-                Common.CommonMain.pause();
+                this.goIndex();
             } else if (option.equals("2")){
-                Common.CommonMain.createSection("Start Broker");
-                this.startBroker();
-                Common.CommonMain.pause();
+                this.goStartBroker();
             }
         }
+    }
+
+    private void goStartBroker() {
+        Common.CommonMain.createSection("Start Broker");
+        this.startBroker();
+        Common.CommonMain.pause();
+    }
+
+    private void goIndex() {
+        Common.CommonMain.createSection("Index Corpus");
+        this.index();
+        Common.CommonMain.pause();
     }
 
     private void showMain(){
@@ -128,6 +166,7 @@ public class InitBroker {
                 t.join();
             } catch (InterruptedException e) {
                 LOGGER.severe("Error indexing at IR servers. Cause: " + e.getMessage());
+                return;
             }
         IRServerHandler fastestServer = null;
         boolean allFinished = true;
@@ -140,8 +179,18 @@ public class InitBroker {
             }
         }
         if (!allFinished || fastestServer == null){
-            LOGGER.severe("One or more servers could not complete indexing. Please, do not start worker until issue is fixed.");
+            LOGGER.severe("One or more servers could not complete indexing. Please, do not start broker until issues are fixed.");
         } else {
+            try {
+                boolean consistent = this.IRServersAreConsistent();
+                if (!consistent){
+                    LOGGER.severe("IR servers do not have the same inverted index. Check IR servers issues and index again.");
+                    return;
+                }
+            } catch (IOException e) {
+                LOGGER.severe("Error checking consistency. Cause: " + e.getMessage());
+                return;
+            }
             try {
                 LOGGER.info("Loading inverted index at gpu via " + fastestServer.host + ":" + fastestServer.port);
                 fastestServer.sendInvertedIndexToGpu();
