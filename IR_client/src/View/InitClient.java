@@ -12,6 +12,7 @@ import java.text.DecimalFormat;
 import java.util.HashMap;
 import java.util.Properties;
 import java.util.Scanner;
+import java.util.logging.Logger;
 
 /**
  * User: juan
@@ -26,6 +27,7 @@ public class InitClient {
         initClient.start();
     }
 
+    private final static Logger LOGGER = Logger.getLogger(Logger.GLOBAL_LOGGER_NAME);
     private Scanner scanner = new Scanner(System.in);
     DecimalFormat decimalFormat = new DecimalFormat("#.00");
     private IRClientHandler irClientHandler;
@@ -35,7 +37,9 @@ public class InitClient {
         try {
             properties = PropertiesManager.loadProperties(getClass().getResourceAsStream(propertiesString));
         } catch (IOException e) {
-            System.out.println("Error loading properties: " + e.getMessage());
+            String m = "Error loading properties: " + e.getMessage();
+            LOGGER.severe(m);
+            System.err.println(m);
             System.exit(1);
         }
 
@@ -53,7 +57,6 @@ public class InitClient {
             while (true){
                 CommonMain.createSection("Query");
                 this.query();
-                CommonMain.pause();
             }
         }
     }
@@ -62,7 +65,7 @@ public class InitClient {
         try {
             return this.irClientHandler.testConnection();
         } catch (MyAppException e) {
-            System.err.println(e);
+            LOGGER.severe("Connecting to broker: " + e.getMessage());
             return false;
         }
     }
@@ -97,6 +100,7 @@ public class InitClient {
         java.lang.System.out.print("Ingrese opción: ");
     }
 
+    // DEPRECATED
     private void index(){
         try {
             System.out.println("Indexing...");
@@ -113,9 +117,13 @@ public class InitClient {
     private void query(){
         System.out.print("Enter query: ");
         String query = this.scanner.nextLine();
+        String displayMore;
         try {
             long start = System.nanoTime();
             HashMap<String, Double> docsScores = this.irClientHandler.query(query);
+            long elapsedTime = System.nanoTime() - start;
+            double seconds = (double)elapsedTime / 1000000000.0;
+            CommonMain.display("Time: " + decimalFormat.format(seconds) + " seconds.");
             docsScores = DocScores.orderByScore(
                     DocScores.removeBehindThreshold(docsScores, 0.0),
                     false
@@ -130,14 +138,19 @@ public class InitClient {
                             rank + " - " + d + " - " + docsScores.get(d)
                     );
                     rank++;
+                    if (((rank - 1) % 10) == 0){
+                        CommonMain.display("Display more results? (y/n)");
+                        displayMore = this.scanner.nextLine();
+                        if (!displayMore.equals("y") && !displayMore.equals("Y"))
+                            break;
+                    }
                 }
             }
-            long elapsedTime = System.nanoTime() - start;
-            double seconds = (double)elapsedTime / 1000000000.0;
-            CommonMain.display("Time: " + decimalFormat.format(seconds) + " seconds.");
         } catch (MyAppException e) {
-            CommonMain.display("Error on query: " + e.getMessage());
+            LOGGER.severe(e.getMessage());
+            CommonMain.display("Internal Server Error");
         } catch (UnidentifiedException e) {
+            LOGGER.severe(e.getMessage());
             CommonMain.display("Internal Server Error");
         }
     }
