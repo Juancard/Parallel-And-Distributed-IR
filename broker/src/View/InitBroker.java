@@ -1,9 +1,6 @@
 package View;
 
-import Common.CommonMain;
-import Common.MyLogger;
-import Common.PropertiesManager;
-import Common.ServerInfo;
+import Common.*;
 import Controller.IRServersManager;
 import ServerHandler.BrokerServer;
 import ServerHandler.BrokerWorkerFactory;
@@ -61,7 +58,7 @@ public class InitBroker {
                 LOGGER.severe("IR servers do not have the same inverted index. Check IR servers issues and index.");
                 CommonMain.pause();
             }
-        } catch (IOException e) {
+        } catch (MyAppException e) {
             LOGGER.severe("Error setting up broker: " + e.getMessage());
             System.exit(1);
         }
@@ -69,32 +66,39 @@ public class InitBroker {
         this.startActionMenu();
     }
 
-    private void setupIRServers(Properties properties) throws IOException {
+    private void setupIRServers(Properties properties) throws MyAppException {
         String irServersFile = properties.getProperty("IR_SERVERS_FILE");
         if (!this.isValidFile(irServersFile)){
-            throw new IOException("Loading IR servers file: IR_SERVERS_FILE is not a valid file path");
+            throw new MyAppException("Loading IR servers file: IR_SERVERS_FILE is not a valid file path");
         }
-        ArrayList<ServerInfo> serversInfo = RemotePortsLoader.remotePortsFrom(irServersFile);
+        ArrayList<ServerInfo> serversInfo = null;
+        try {
+            serversInfo = RemotePortsLoader.remotePortsFrom(irServersFile);
+        } catch (IOException e) {
+            throw new MyAppException("Loading IR servers from file: " + e.getMessage());
+        }
         for (ServerInfo si : serversInfo)
             this.irServers.add(new IRServerHandler(si));
+        if (this.irServers.isEmpty())
+            throw new MyAppException("No IR servers specified at " + irServersFile);
     }
 
     private void setupIRServersManager() {
         this.irServerManager = new IRServersManager(this.irServers);
     }
 
-    private void testIRServers() throws IOException {
+    private void testIRServers() throws MyAppException {
         for (IRServerHandler irServerHandler : this.irServers){
             try {
                 LOGGER.info("Testing connection to " + irServerHandler.host + ":" + irServerHandler.port);
                 irServerHandler.testConnection();
             } catch (IOException e) {
-                throw new IOException(irServerHandler.host + ":" + irServerHandler.port + " connection failed. Cause: " + e.getMessage());
+                throw new MyAppException(irServerHandler.host + ":" + irServerHandler.port + " connection failed. Cause: " + e.getMessage());
             }
         }
     }
 
-    private boolean IRServersAreConsistent() throws IOException {
+    private boolean IRServersAreConsistent() throws MyAppException {
         LOGGER.info("Checking consistency between IR servers");
         int terms = -1, docs = -1;
         boolean initialized = false;
@@ -112,7 +116,7 @@ public class InitBroker {
                     consistency &= indexMetadata[0] == terms & indexMetadata[1] == docs;
                 }
             } catch (IOException e) {
-                throw new IOException(irServerHandler.host + ":" + irServerHandler.port + ": checking failed. Cause: " + e.getMessage());
+                throw new MyAppException(irServerHandler.host + ":" + irServerHandler.port + ": checking failed. Cause: " + e.getMessage());
             }
         }
         return consistency;
@@ -194,7 +198,7 @@ public class InitBroker {
                     LOGGER.severe("IR servers do not have the same inverted index. Check IR servers issues and index again.");
                     return;
                 }
-            } catch (IOException e) {
+            } catch (MyAppException e) {
                 LOGGER.severe("Error checking consistency. Cause: " + e.getMessage());
                 return;
             }
