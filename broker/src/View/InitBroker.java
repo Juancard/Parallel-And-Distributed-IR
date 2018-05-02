@@ -92,7 +92,7 @@ public class InitBroker {
             try {
                 LOGGER.info("Testing connection to " + irServerHandler.host + ":" + irServerHandler.port);
                 irServerHandler.testConnection();
-            } catch (IOException e) {
+            } catch (MyAppException e) {
                 throw new MyAppException(irServerHandler.host + ":" + irServerHandler.port + " connection failed. Cause: " + e.getMessage());
             }
         }

@@ -24,10 +24,26 @@ public class IRServersManager {
     }
 
     public HashMap<String, Double> query(String query) throws MyAppException, UnidentifiedException {
-        int i = this.nextServerIndex();
-        IRServerHandler irServerSelected = this.irServers.get(i);
-        LOGGER.info("Sending query to server " + i + " which is " + irServerSelected.getName());
-        return this.irServers.get(i).query(query);
+        boolean serverAvailable = false;
+        int serverIndex = -1;
+        IRServerHandler serverSelected = null;
+        int maxIterations = this.irServers.size() * 2;
+        int i = 0;
+        while (!serverAvailable && i < maxIterations) {
+            i++;
+            try {
+                serverIndex = this.nextServerIndex();
+                serverSelected = this.irServers.get(serverIndex);
+                LOGGER.info("Sending query to server " + serverIndex + " which is " + serverSelected.getName());
+                serverSelected.testConnection();
+                serverAvailable = true;
+            } catch (MyAppException e) {
+                LOGGER.info(serverSelected.getName() + " is down.");
+            }
+        }
+        if (!serverAvailable)
+            throw new MyAppException("No server is available.");
+        return this.irServers.get(serverIndex).query(query);
     }
 
     public synchronized int nextServerIndex(){

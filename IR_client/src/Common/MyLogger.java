@@ -14,8 +14,6 @@ public class MyLogger {
     static private FileHandler fileHTML;
     static private Formatter formatterHTML;
 
-    static private ConsoleHandler consoleHandler;
-
     static public void setup() throws IOException {
 
         // get the global logger to configure it
@@ -31,7 +29,6 @@ public class MyLogger {
         logger.setLevel(Level.INFO);
         fileTxt = new FileHandler("Logging.txt", true);
         fileHTML = new FileHandler("Logging.html", true);
-        consoleHandler = new ConsoleHandler();
 
         // create a TXT formatter
         formatterTxt = new SimpleFormatter();
@@ -43,7 +40,6 @@ public class MyLogger {
         fileHTML.setFormatter(formatterHTML);
         logger.addHandler(fileHTML);
 
-        consoleHandler.setFormatter(formatterTxt);
-        logger.addHandler(consoleHandler);
+
     }
 }

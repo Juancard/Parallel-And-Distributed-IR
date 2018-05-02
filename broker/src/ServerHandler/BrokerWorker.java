@@ -5,12 +5,8 @@ import Common.MyAppException;
 import Common.Socket.MyCustomWorker;
 import Common.UnidentifiedException;
 import Controller.IRServersManager;
-import View.IRServerHandler;
 
-import java.io.IOException;
 import java.net.Socket;
-import java.util.ArrayList;
-import java.util.Random;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 

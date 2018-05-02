@@ -7,6 +7,7 @@ import Common.Socket.SocketConnection;
 import Common.UnidentifiedException;
 
 import java.io.IOException;
+import java.net.SocketException;
 import java.util.HashMap;
 import java.util.logging.Logger;
 
@@ -70,20 +71,24 @@ public class IRServerHandler {
         return (HashMap) response;
     }
 
-    public boolean testConnection() throws IOException {
+    public boolean testConnection() throws MyAppException {
         SocketConnection connection = null;
         try {
             connection = new SocketConnection(this.host, this.port);
         } catch (IOException e) {
-            throw new IOException("Could not stablish connection.");
+            throw new MyAppException("Could not stablish connection.");
         }
         connection.send(IRProtocol.TEST);
-        connection.getClientSocket().setSoTimeout(2000);
         try {
+            connection.getClientSocket().setSoTimeout(1000);
             Object response = connection.read();
             return (Integer) response == IRProtocol.TEST_OK;
         } catch (ClassNotFoundException e) {
-            throw new IOException("Could not receive response.");
+            throw new MyAppException("Could not receive response. Cause: " + e.getMessage());
+        } catch (SocketException e) {
+            throw new MyAppException("Could not wait for response. Cause: " + e.getMessage());
+        } catch (IOException e) {
+            throw new MyAppException("Could not receive response. Cause: " + e.getMessage());
         } finally {
             connection.close();
         }
