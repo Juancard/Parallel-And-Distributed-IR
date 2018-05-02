@@ -1,7 +1,10 @@
 package ServerHandler;
 
 import Common.IRProtocol;
+import Common.MyAppException;
 import Common.Socket.MyCustomWorker;
+import Common.UnidentifiedException;
+import Controller.IRServersManager;
 import View.IRServerHandler;
 
 import java.io.IOException;
@@ -20,23 +23,21 @@ public class BrokerWorker extends MyCustomWorker {
 
     // classname for the logger
     private final static Logger LOGGER = Logger.getLogger(Logger.GLOBAL_LOGGER_NAME);
-    private final ArrayList<IRServerHandler> irServers;
+    private final IRServersManager irServersManager;
 
     public BrokerWorker(
             Socket clientSocket,
-            ArrayList<IRServerHandler> irServers
+            IRServersManager irServersManager
     ) {
         super(clientSocket);
-        this.irServers = irServers;
+        this.irServersManager = irServersManager;
     }
 
     protected Object onClientRequest(String request) {
         Object out = new Object();
 
         LOGGER.info("Request - " + request);
-        if (request.equals(IRProtocol.INDEX_LOAD)) {
-            out = this.index();
-        } else if (request.equals(IRProtocol.EVALUATE)){
+        if (request.equals(IRProtocol.EVALUATE)){
             try {
                 String query = this.readFromClient().toString();
                 out = this.query(query);
@@ -54,27 +55,15 @@ public class BrokerWorker extends MyCustomWorker {
         return out;
     }
 
-    private Object index() {
-        try {
-            int i = new Random().nextInt(this.irServers.size());
-            return this.irServers.get(i).index();
-        } catch (IOException e) {
-            LOGGER.log(Level.SEVERE, e.getMessage(), e);
-            return new IOException("Internal Server error");
-        } catch (Exception e) {
-            return e;
-        }
-    }
-
     private Object query(String query){
         try {
-            int i = new Random().nextInt(this.irServers.size());
-            return this.irServers.get(i).query(query);
-        } catch (IOException e) {
+            return this.irServersManager.query(query);
+        } catch (UnidentifiedException e) {
             LOGGER.log(Level.SEVERE, e.getMessage(), e);
-            return new IOException("Internal Server error");
-        } catch (Exception e) {
-            return e;
+            return new MyAppException("Internal Server error");
+        } catch (MyAppException e) {
+            LOGGER.log(Level.WARNING, "Error in IR server: " + e.getMessage(), e);
+            return new MyAppException("Error in IR server: " + e.getMessage());
         }
     }
 

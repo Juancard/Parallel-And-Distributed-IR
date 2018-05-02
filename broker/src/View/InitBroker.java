@@ -4,6 +4,7 @@ import Common.CommonMain;
 import Common.MyLogger;
 import Common.PropertiesManager;
 import Common.ServerInfo;
+import Controller.IRServersManager;
 import ServerHandler.BrokerServer;
 import ServerHandler.BrokerWorkerFactory;
 
@@ -37,6 +38,7 @@ public class InitBroker {
     // classname for the logger
     private final static Logger LOGGER = Logger.getLogger(Logger.GLOBAL_LOGGER_NAME);
     private ArrayList<IRServerHandler> irServers;
+    private IRServersManager irServerManager;
     private int brokerPort;
 
     public InitBroker(String propertiesPath){
@@ -52,6 +54,7 @@ public class InitBroker {
         this.irServers = new ArrayList<IRServerHandler>();
         try {
             this.setupIRServers(properties);
+            this.setupIRServersManager();
             this.testIRServers();
             boolean consistent = this.IRServersAreConsistent();
             if (!consistent) {
@@ -74,6 +77,10 @@ public class InitBroker {
         ArrayList<ServerInfo> serversInfo = RemotePortsLoader.remotePortsFrom(irServersFile);
         for (ServerInfo si : serversInfo)
             this.irServers.add(new IRServerHandler(si));
+    }
+
+    private void setupIRServersManager() {
+        this.irServerManager = new IRServersManager(this.irServers);
     }
 
     private void testIRServers() throws IOException {
@@ -204,7 +211,7 @@ public class InitBroker {
     private void startBroker() {
 
         BrokerWorkerFactory brokerWorkerFactory = new BrokerWorkerFactory(
-                this.irServers
+                this.irServerManager
         );
 
 

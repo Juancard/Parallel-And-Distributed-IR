@@ -1,11 +1,14 @@
 package View;
 
 import Common.IRProtocol;
+import Common.MyAppException;
 import Common.ServerInfo;
 import Common.Socket.SocketConnection;
+import Common.UnidentifiedException;
 
 import java.io.IOException;
 import java.util.HashMap;
+import java.util.logging.Logger;
 
 /**
  * User: juan
@@ -39,14 +42,29 @@ public class IRServerHandler {
         return (Boolean) response;
     }
 
-    public HashMap<String, Double> query(String query) throws Exception {
-        SocketConnection connection = new SocketConnection(host, port);
+    public HashMap<String, Double> query(String query) throws MyAppException, UnidentifiedException {
+        SocketConnection connection = null;
+        try {
+            connection = new SocketConnection(host, port);
+        } catch (IOException e) {
+            throw new MyAppException("Could not connect to " + this.getName() + ". Cause: " + e.getMessage());
+        }
         connection.send(IRProtocol.EVALUATE);
         connection.send(query);
 
-        Object response = connection.read();
+        Object response = null;
+        try {
+            response = connection.read();
+        } catch (ClassNotFoundException e) {
+            throw new MyAppException("Could not read from " + this.getName() + ". Cause: " + e.getMessage());
+        } catch (IOException e) {
+            throw new MyAppException("Could not read from " + this.getName() + ". Cause:" + e.getMessage());
+        }
+
+        if (response instanceof MyAppException)
+            throw (MyAppException) response;
         if (response instanceof Exception)
-            throw (Exception) response;
+            throw new UnidentifiedException("Error on " + this.getName() + ". Cause: " + ((Exception) response).getMessage());
 
         connection.close();
         return (HashMap) response;
@@ -110,5 +128,9 @@ public class IRServerHandler {
         } finally {
             connection.close();
         }
+    }
+
+    public String getName(){
+        return this.host + ":" + this.port;
     }
 }

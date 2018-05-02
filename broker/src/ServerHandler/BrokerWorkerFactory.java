@@ -2,6 +2,7 @@ package ServerHandler;
 
 import Common.Socket.MyCustomWorker;
 import Common.Socket.WorkerFactory;
+import Controller.IRServersManager;
 import View.IRServerHandler;
 import java.net.Socket;
 import java.util.ArrayList;
@@ -13,17 +14,17 @@ import java.util.ArrayList;
  */
 public class BrokerWorkerFactory implements WorkerFactory {
 
-    private ArrayList<IRServerHandler> irServers;
+    private IRServersManager irServersManager;
 
-    public BrokerWorkerFactory(ArrayList<IRServerHandler> irServers) {
-        this.irServers = irServers;
+    public BrokerWorkerFactory(IRServersManager irServersManager) {
+        this.irServersManager = irServersManager;
     }
 
     @Override
     public MyCustomWorker create(Socket connection) {
         return new BrokerWorker(
                 connection,
-                this.irServers
+                this.irServersManager
         );
     }
 }
