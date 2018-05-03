@@ -24,9 +24,6 @@ Propuesta completa [aquí][1]
 3) Edit values of properties in file `config.ini`
 4) Run process: `python sockets.py [-dv]`
 
-#### Broker
-
-
 #### IR server
 1) Add libraries needed: 
 -- Json: https://mvnrepository.com/artifact/org.json/json/20140107
@@ -38,4 +35,10 @@ Propuesta completa [aquí][1]
 3) Edit values of properties in `config.properties`
 4) Run View.InitServer
  
-
+#### Broker
+1) Rename file `IR_servers.cfg.example` to `IR_servers.cfg`
+2) To add more servers, add their address to `IR_servers.cfg`
+3) Rename file `config.properties.example` to `config.properties`
+4) Edit values of properties in `config.properties`
+5) Run View.InitBroker
+ 

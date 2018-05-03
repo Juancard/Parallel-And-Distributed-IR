@@ -1,0 +1,2 @@
+BROKER_PORT=4646
+IR_SERVERS_FILE=/path/to/parallel-and-distributed-IR/broker/src/IR_servers.cfg
