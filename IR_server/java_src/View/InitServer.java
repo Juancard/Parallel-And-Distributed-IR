@@ -77,9 +77,7 @@ public class InitServer {
             this.setupIndexerConfiguration(properties);
             this.setupPythonHost(properties);
             this.setupNormalizer(properties);
-            this.setupVocabulary(properties);
-            this.setupDocuments(properties);
-            this.setupIndexFilesHandler(properties);
+            this.setupLocalInvertedIndex(properties);
             this.setupCache(properties);
             this.setupGpuServer(properties);
             this.setupStats(properties);
@@ -176,39 +174,8 @@ public class InitServer {
         this.normalizer = new IRNormalizer(this.indexerConfiguration);
     }
 
-    private void setupVocabulary(Properties properties) throws IOException {
+    private void setupLocalInvertedIndex(Properties properties) throws IOException, IndexerException {
         File indexPath = this.indexerConfiguration.getIndexPath();
-        String vocabularyFilename = properties.getProperty("IR_VOCABULARY_FILENAME");
-        String vocabularyFilePath = indexPath + "/" + vocabularyFilename;
-        try {
-            this.vocabulary = new Vocabulary(
-                    new File(vocabularyFilePath)
-            );
-        } catch (IOException e) {
-            throw new IOException("Loading vocabulary: " + e.getMessage());
-        }
-        LOGGER.info("Loaded vocabulary from: " + vocabularyFilePath);
-    }
-
-    private void setupDocuments(Properties properties) throws IOException {
-        File indexPath = this.indexerConfiguration.getIndexPath();
-        String corpusPath = properties.getProperty("IR_CORPUS_PATH");
-        String documentsFilename = properties.getProperty("IR_DOCUMENTS_FILENAME");
-        String documentsFilePath = indexPath + "/" + documentsFilename;
-        try {
-            this.documents = new Documents(
-                    new File(documentsFilePath)
-            );
-            this.documents.setCorpusPath(corpusPath);
-        } catch (IOException e) {
-            throw new IOException("Loading documents: " + e.getMessage());
-        }
-        LOGGER.info("Loaded documents from: " + documentsFilePath);
-    }
-
-
-    private void setupIndexFilesHandler(Properties properties) throws IOException {
-        File irIndexPath = this.indexerConfiguration.getIndexPath();
         String filesProp[] = {
                 "IR_POSTINGS_FILENAME",
                 "IR_POINTERS_FILENAME",
@@ -217,8 +184,8 @@ public class InitServer {
                 "IR_VOCABULARY_FILENAME",
                 "IR_DOCUMENTS_FILENAME"
         };
-
         File[] files = new File[6];
+        boolean invertedIndexExists = true;
         for (int i=0; i<filesProp.length; i++){
             String fpath = properties.getProperty(filesProp[i]);
             if (fpath == null || fpath.isEmpty())
@@ -227,10 +194,44 @@ public class InitServer {
                                 + filesProp[i]
                                 + "': not a valid filename: "
                                 + fpath);
+            invertedIndexExists &= isValidFile(indexPath + "/" + fpath);
             files[i] = new File(
-                    irIndexPath + "/" + fpath
+                    indexPath + "/" + fpath
             );
         }
+        this.setupIndexFilesHandler(files);
+        if (!invertedIndexExists){
+            LOGGER.info("Inverted index does not exists in disk. Indexing.");
+            this.pyIndexer.indexViaSocket(this.indexFilesHandler);
+        }
+
+        this.setupVocabulary(files[4]);
+        String corpusPath = properties.getProperty("IR_CORPUS_PATH");
+        this.setupDocuments(files[5], corpusPath);
+    }
+
+    private void setupVocabulary(File vocabularyFile) throws IOException {
+        try {
+            this.vocabulary = new Vocabulary(vocabularyFile);
+        } catch (IOException e) {
+            throw new IOException("Loading vocabulary: " + e.getMessage());
+        }
+        LOGGER.info("Loaded vocabulary in memory from: " + vocabularyFile);
+    }
+
+    private void setupDocuments(File documentsFile, String corpusPath) throws IOException {
+        File indexPath = this.indexerConfiguration.getIndexPath();
+        try {
+            this.documents = new Documents(documentsFile);
+            this.documents.setCorpusPath(corpusPath);
+        } catch (IOException e) {
+            throw new IOException("Loading documents: " + e.getMessage());
+        }
+        LOGGER.info("Loaded documents in memory from: " + documentsFile);
+    }
+
+
+    private void setupIndexFilesHandler(File[] files) throws IOException {
 
         String postingsPath = files[0].toString();
         String pointersPath = files[1].toString();

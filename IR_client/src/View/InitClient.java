@@ -133,9 +133,13 @@ public class InitClient {
                 "universidad riqueza atletismo argentina estado nacion edificio comunicacion",
                 "ultima consulta"
         };
-        Thread[] threads = new Thread[queries.length];
-        for (int i=0; i<queries.length; i++)
-            threads[i] =  new Thread(new QueryBotRunnable(this.irClientHandler, queries[i]));
+        Thread[] threads = new Thread[queries.length * 10];
+        for (int j=0; j < 10; j++){
+            for (int i=0; i<queries.length; i++) {
+                threads[j*queries.length + i] = new Thread(new QueryBotRunnable(this.irClientHandler, queries[i]));
+            }
+        }
+
         for (Thread t : threads)
             t.start();
     }
