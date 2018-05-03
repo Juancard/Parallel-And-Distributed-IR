@@ -2,6 +2,7 @@ package Controller;
 
 import Common.MyAppException;
 import Common.UnidentifiedException;
+import Model.DocScores;
 import View.IRServerHandler;
 
 import java.util.ArrayList;
@@ -43,7 +44,21 @@ public class IRServersManager {
         }
         if (!serverAvailable)
             throw new MyAppException("No server is available.");
-        return this.irServers.get(serverIndex).query(query);
+        DocScores docScores = serverSelected.query(query);
+        // Send update cache to each server except the one selected
+        IRServerHandler nonSelectedServer = null;
+        for (i = 0; i < this.irServers.size(); i++){
+            if (i != serverIndex){
+                nonSelectedServer = this.irServers.get(i);
+                LOGGER.info("Update cache - " + nonSelectedServer.getName());
+                try {
+                    nonSelectedServer.updateCache(docScores);
+                } catch (MyAppException e){
+                    throw new MyAppException("Updating cache at " + nonSelectedServer.getName() + ". Cause: " + e.getMessage());
+                }
+            }
+        }
+        return docScores.getScores();
     }
 
     public synchronized int nextServerIndex(){

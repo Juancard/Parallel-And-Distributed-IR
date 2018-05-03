@@ -6,9 +6,11 @@ import Common.Socket.MyCustomWorker;
 import Controller.IndexerHandler.IndexHandler;
 import Controller.IndexerHandler.IndexerException;
 import Controller.QueryHandler;
+import Model.DocScores;
 
 import java.io.IOException;
 import java.net.Socket;
+import java.util.HashMap;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -55,6 +57,8 @@ public class IRWorker extends MyCustomWorker{
                 LOGGER.log(Level.SEVERE, m, e);
                 return new Exception(m);
             }
+        } else if (request.equals(IRProtocol.UPDATE_CACHE)){
+            out = this.updateCache();
         } else if (request.equals(IRProtocol.GET_INDEX_METADATA)){
             out = this.getIndexMetadata();
         } else if (request.equals(IRProtocol.TEST)){
@@ -101,4 +105,21 @@ public class IRWorker extends MyCustomWorker{
     public Object getIndexMetadata() {
         return this.indexHandler.getIndexMetadata();
     }
+
+    private Object updateCache() {
+        try {
+            DocScores docScores = (DocScores) this.readFromClient();
+            this.queryHandler.updateCache(docScores);
+            return IRProtocol.UPDATE_CACHE_SUCCESS;
+        } catch (IOException e) {
+            String m = "Error updating cache: " + e.getMessage();
+            LOGGER.log(Level.SEVERE, m, e);
+            return new MyAppException(m);
+        } catch (ClassNotFoundException e) {
+            String m = "Error updating cache: " + e.getMessage();
+            LOGGER.log(Level.SEVERE, m, e);
+            return new MyAppException(m);
+        }
+    }
+
 }

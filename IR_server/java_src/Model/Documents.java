@@ -7,6 +7,7 @@ import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.HashMap;
+import java.util.Map;
 
 /**
  * Created by juan on 14/09/17.
@@ -47,6 +48,15 @@ public class Documents {
         if (this.corpusPath == null)
             return this.idToPath.get(id);
         return Paths.get(this.corpusPath, this.idToPath.get(id)).toString();
+    }
+
+    public int getIdFromPath(String path){
+        for (Map.Entry<Integer, String> entry : this.idToPath.entrySet()) {
+            if (path.equals(entry.getValue())) {
+                return entry.getKey();
+            }
+        }
+        return -1;
     }
 
     public int getNumberOfDocs(){

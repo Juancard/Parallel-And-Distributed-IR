@@ -38,7 +38,7 @@ public class IRWorkerFactory implements WorkerFactory{
             PythonIndexer pythonIndexer,
             IRNormalizer normalizer,
             IndexFilesHandler indexFilesHandler,
-            Cache<Query, HashMap<Integer, Double>> IRCache,
+            Cache<HashMap<Integer, Integer>, HashMap<Integer, Double>> IRCache,
             QueryEvaluator queryEvaluator,
             StatsHandler statsHandler) {
         this.indexHandler = new IndexHandler(

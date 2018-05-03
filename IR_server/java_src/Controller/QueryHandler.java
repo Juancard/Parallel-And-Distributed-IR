@@ -1,14 +1,12 @@
 package Controller;
 
 import Common.MyAppException;
-import Model.Documents;
-import Model.IRNormalizer;
-import Model.Query;
-import Model.Vocabulary;
+import Model.*;
 import com.google.common.cache.Cache;
 
 import java.io.IOException;
 import java.util.HashMap;
+import java.util.Map;
 import java.util.concurrent.ExecutionException;
 
 /**
@@ -24,14 +22,14 @@ public class QueryHandler {
     private IRNormalizer irNormalizer;
     private Documents documents;
     private StatsHandler statsHandler;
-    private Cache<Query, HashMap<Integer, Double>> IRCache;
+    private Cache<HashMap<Integer, Integer>, HashMap<Integer, Double>> IRCache;
 
     public QueryHandler(
             GpuServerHandler gpuServerHandler,
             Vocabulary vocabulary,
             IRNormalizer irNormalizer,
             Documents documents,
-            Cache<Query, HashMap<Integer, Double>> IRCache,
+            Cache<HashMap<Integer, Integer>, HashMap<Integer, Double>> IRCache,
             QueryEvaluator queryEvaluator,
             StatsHandler statsHandler){
         this.gpuServerHandler = gpuServerHandler;
@@ -43,22 +41,26 @@ public class QueryHandler {
         this.IRCache = IRCache;
     }
 
-    public HashMap<String, Double> query(String queryStr) throws MyAppException {
+    public DocScores query(String queryStr) throws MyAppException {
         Query q = new Query(
                 queryStr,
                 this.vocabulary.getMapTermStringToTermId(),
                 this.irNormalizer
         );
-        if (q.isEmptyOfTerms()) return new HashMap<String, Double>();
-        boolean isQueryInCache =  this.IRCache.asMap().containsKey(q);
+
+        if (q.isEmptyOfTerms())
+            return new DocScores(q.getTermsAndFrequency(), new HashMap<String, Double>());
+
+        HashMap<Integer, Integer> queryTermFreq = q.getTermsAndFrequency();
+        boolean isQueryInCache =  this.IRCache.asMap().containsKey(queryTermFreq);
         QueryCallable qCallable = new QueryCallable(
                 this.gpuServerHandler,
                 this.queryEvaluator,
-                q
+                queryTermFreq
         );
         HashMap<Integer, Double> docScoresId = null;
         try {
-            docScoresId = this.IRCache.get(q, qCallable);
+            docScoresId = this.IRCache.get(queryTermFreq, qCallable);
         } catch (ExecutionException e) {
             String m = "Caching query. Cause: " + e.getMessage();
             LOGGER.severe(m);
@@ -66,6 +68,10 @@ public class QueryHandler {
         }
 
         LOGGER.info("Aproximate Cache size: " + this.IRCache.size());
+        String queriesCached = "";
+        for (HashMap<Integer, Integer> k : this.IRCache.asMap().keySet())
+            queriesCached += k.keySet().toString();
+        LOGGER.info("Caché contains: " + queriesCached);
 
         HashMap<String, Double> docScoresPath = new HashMap<String, Double>();
         for (int docId : docScoresId.keySet())
@@ -85,7 +91,18 @@ public class QueryHandler {
             LOGGER.warning(m);
         }
 
-        return docScoresPath;
+        return new DocScores(q.getTermsAndFrequency(), docScoresPath);
+    }
+
+    public void updateCache(DocScores docScores){
+        HashMap<Integer, Double> docScoresId = new HashMap<Integer, Double>();
+        for (Map.Entry<String, Double> entry : docScores.getScores().entrySet())
+            docScoresId.put(
+                    this.documents.getIdFromPath(entry.getKey()),
+                    entry.getValue()
+            );
+        this.IRCache.put(docScores.getQuery(), docScoresId);
+        LOGGER.info("Cache is: " + this.IRCache.asMap().keySet());
     }
 
     private void saveQueryStats(

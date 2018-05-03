@@ -18,7 +18,7 @@ public class QueryCallable implements Callable<HashMap<Integer, Double>> {
 
     private final GpuServerHandler gpuServerHandler;
     private final QueryEvaluator queryEvaluator;
-    private final Query query;
+    private final HashMap<Integer, Integer> query;
     protected long queryTimeStart;
     protected long queryTimeEnd;
     protected boolean isGpuEval;
@@ -26,7 +26,7 @@ public class QueryCallable implements Callable<HashMap<Integer, Double>> {
     public QueryCallable(
             GpuServerHandler gpuServerHandler,
             QueryEvaluator queryEvaluator,
-            Query query
+            HashMap<Integer, Integer> query
     ){
         this.gpuServerHandler = gpuServerHandler;
         this.queryEvaluator = queryEvaluator;

@@ -31,6 +31,10 @@ public class QueryEvaluator {
     }
 
     public HashMap<Integer, Double> evaluateQuery(Query query) throws IOException {
+        return this.evaluateQuery(query.getTermsAndFrequency());
+    }
+
+    public HashMap<Integer, Double> evaluateQuery(HashMap<Integer, Integer> query) throws IOException {
         PythonSocketConnection sc = null;
         try {
             sc = new PythonSocketConnection(host, port);
@@ -39,11 +43,10 @@ public class QueryEvaluator {
             throw new IOException("Could not connect to evaluator host. Cause: " + e.getMessage());
         }
         sc.sendMessage(this.REQUEST_EVALUATION);
-        HashMap<Integer, Integer> termsFreq = query.getTermsAndFrequency();
-        sc.sendInt(termsFreq.size());
-        for (Integer termId : termsFreq.keySet()){
+        sc.sendInt(query.size());
+        for (Integer termId : query.keySet()){
             sc.sendInt(termId);
-            sc.sendInt(termsFreq.get(termId));
+            sc.sendInt(query.get(termId));
         }
         LOGGER.info("Receiving documents scores...");
         HashMap<Integer, Double> docsScore = new HashMap<Integer, Double>();

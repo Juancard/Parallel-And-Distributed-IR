@@ -18,7 +18,7 @@ import java.util.logging.Logger;
 public class IndexHandler {
     // classname for the logger
     private final static Logger LOGGER = Logger.getLogger(Logger.GLOBAL_LOGGER_NAME);
-    private final Cache<Query, HashMap<Integer, Double>> IRCache;
+    private final Cache<HashMap<Integer, Integer>, HashMap<Integer, Double>> IRCache;
 
     private IndexFilesHandler indexFilesHandler;
     private GpuServerHandler gpuServerHandler;
@@ -32,7 +32,7 @@ public class IndexHandler {
             GpuServerHandler gpuServerHandler,
             Vocabulary vocabulary,
             Documents documents,
-            Cache<Query, HashMap<Integer, Double>> IRCache
+            Cache<HashMap<Integer, Integer>, HashMap<Integer, Double>> IRCache
     ){
         this.gpuServerHandler = gpuServerHandler;
         this.indexFilesHandler = indexFilesHandler;

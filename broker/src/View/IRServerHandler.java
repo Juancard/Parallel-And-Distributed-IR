@@ -5,7 +5,9 @@ import Common.MyAppException;
 import Common.ServerInfo;
 import Common.Socket.SocketConnection;
 import Common.UnidentifiedException;
+import Model.DocScores;
 
+import javax.print.Doc;
 import java.io.IOException;
 import java.net.SocketException;
 import java.util.HashMap;
@@ -43,7 +45,7 @@ public class IRServerHandler {
         return (Boolean) response;
     }
 
-    public HashMap<String, Double> query(String query) throws MyAppException, UnidentifiedException {
+    public DocScores query(String query) throws MyAppException, UnidentifiedException {
         SocketConnection connection = null;
         try {
             connection = new SocketConnection(host, port);
@@ -68,7 +70,7 @@ public class IRServerHandler {
             throw new UnidentifiedException("Error on " + this.getName() + ". Cause: " + ((Exception) response).getMessage());
 
         connection.close();
-        return (HashMap) response;
+        return (DocScores) response;
     }
 
     public boolean testConnection() throws MyAppException {
@@ -130,6 +132,27 @@ public class IRServerHandler {
             throw new IOException("Could not receive response.");
         } catch (ClassNotFoundException e) {
             throw new IOException("Could not receive response.");
+        } finally {
+            connection.close();
+        }
+    }
+
+    public boolean updateCache(DocScores docScores) throws MyAppException {
+        SocketConnection connection = null;
+        try {
+            connection = new SocketConnection(this.host, this.port);
+        } catch (IOException e) {
+            throw new MyAppException("Could not stablish connection.");
+        }
+        connection.send(IRProtocol.UPDATE_CACHE);
+        connection.send(docScores);
+        try {
+            Object response = connection.read();
+            return (Integer) response == IRProtocol.UPDATE_CACHE_SUCCESS;
+        } catch (IOException e) {
+            throw new MyAppException("Could not receive response.");
+        } catch (ClassNotFoundException e) {
+            throw new MyAppException("Could not receive response.");
         } finally {
             connection.close();
         }

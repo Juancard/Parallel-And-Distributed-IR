@@ -46,37 +46,41 @@ public class GpuServerHandler {
         this.isSshTunnel = false;
 	}
 
-	public HashMap<Integer, Double> sendQuery(Query query) throws GpuException, IOException {
+    public HashMap<Integer, Double> sendQuery(Query query) throws GpuException, IOException {
+        return this.sendQuery(query.getTermsAndFrequency());
+    }
+
+    public HashMap<Integer, Double> sendQuery(HashMap<Integer, Integer> query) throws GpuException, IOException {
+        LOGGER.info("Sending query: termsId[" + query.keySet() + "] freqs[" + query.values() + "]");
+
         SocketConnection connection;
-		try {
+        try {
             LOGGER.info(this.connectionMessage());
             connection = this.connect();
-		} catch (IOException e) {
-			String m = "Could not connect to Gpu server. Cause: " + e.getMessage(); 
-			throw new GpuException(m);
-		}
-		DataOutputStream out = new DataOutputStream(connection.getSocketOutput());
+        } catch (IOException e) {
+            String m = "Could not connect to Gpu server. Cause: " + e.getMessage();
+            throw new GpuException(m);
+        }
+        DataOutputStream out = new DataOutputStream(connection.getSocketOutput());
         DataInputStream in = new DataInputStream(connection.getSocketInput());
 
-        LOGGER.info("Sending query: " + query.toString());
         try {
             out.writeInt((IRProtocol.EVALUATE).length());
-    		out.writeBytes(IRProtocol.EVALUATE);
-            HashMap<Integer, Integer> termsFreq = query.getTermsAndFrequency();
-    		out.writeInt(termsFreq.size());
-    		for (Integer termId : termsFreq.keySet()){
+            out.writeBytes(IRProtocol.EVALUATE);
+            out.writeInt(query.size());
+            for (Integer termId : query.keySet()){
                 out.writeInt(termId);
-                out.writeInt(termsFreq.get(termId));
+                out.writeInt(query.get(termId));
             }
         } catch(IOException e) {
-        	String m = "Could not send query to GPU. Cause: " + e.getMessage();
-			throw new GpuException(m);
+            String m = "Could not send query to GPU. Cause: " + e.getMessage();
+            throw new GpuException(m);
         }
 
         LOGGER.info("Receiving documents scores...");
         HashMap<Integer, Double> docsScore = new HashMap<Integer, Double>();
         int docs;
-		try {
+        try {
             connection.getClientSocket().setSoTimeout(2000);
             docs = in.readInt();
             int doc, weightLength;
@@ -92,17 +96,18 @@ public class GpuServerHandler {
 
                 docsScore.put(doc, new Double(weightStr));
             }
-		} catch (IOException e) {
-        	String m = "Error while receiving docs scores. Cause: " + e.getMessage();
-			throw new GpuException(m);
-		}
+        } catch (IOException e) {
+            String m = "Error while receiving docs scores. Cause: " + e.getMessage();
+            throw new GpuException(m);
+        }
         LOGGER.info("Closing connection with Gpu Server");
         connection.close();
         out.close();
         in.close();
 
         return docsScore;
-	}
+
+    }
 
     public boolean sendIndex() throws IOException {
         String m = "Sending index files ";

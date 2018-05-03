@@ -11,10 +11,12 @@ public class IRProtocol {
     public static final String EVALUATE = "EVA";
     public static final String TEST = "TEST";
     public static final String GET_INDEX_METADATA = "G_I_M";
+    public static final String UPDATE_CACHE = "UPDATE_CACHE";
 
     public static final int INDEX_SUCCESS = 1;
     public static final int INDEX_FAIL = -1;
     public static final int INDEX_LOAD_SUCCESS = 2;
+    public static final int UPDATE_CACHE_SUCCESS = 3;
 
     public static final int TEST_OK = 1;
 }

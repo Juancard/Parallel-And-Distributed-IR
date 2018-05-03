@@ -55,12 +55,12 @@ public class InitClient {
             CommonMain.display("We are not available at the moment. Please, try again later.");
         } else {
             this.queryBot();
-            /*
+/*
             while (true){
                 CommonMain.createSection("Query");
                 this.query();
             }
-            */
+*/
         }
     }
 
@@ -127,14 +127,15 @@ public class InitClient {
                 "pais libre",
                 "perro libre finanzas religion estado morfologia",
                 "pais",
-                "tecnologia",
+                "tecnologia libre",
                 "pais",
                 "estado libre",
                 "universidad riqueza atletismo argentina estado nacion edificio comunicacion",
                 "ultima consulta"
         };
-        Thread[] threads = new Thread[queries.length * 10];
-        for (int j=0; j < 10; j++){
+        int times = 1;
+        Thread[] threads = new Thread[queries.length * times];
+        for (int j=0; j < times; j++){
             for (int i=0; i<queries.length; i++) {
                 threads[j*queries.length + i] = new Thread(new QueryBotRunnable(this.irClientHandler, queries[i]));
             }

@@ -26,6 +26,7 @@ import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
+import com.jcraft.jsch.HASH;
 import org.ini4j.Ini;
 
 @SuppressWarnings("ALL")
@@ -60,7 +61,7 @@ public class InitServer {
     private IndexFilesHandler indexFilesHandler;
     private QueryEvaluator queryEvaluator;
     private StatsHandler statsHandler;
-    private Cache<Query, HashMap<Integer, Double>> IRCache;
+    private Cache<HashMap<Integer, Integer>, HashMap<Integer, Double>> IRCache;
 
     public InitServer(String propertiesPath){
         Properties properties = null;
