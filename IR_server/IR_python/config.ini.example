@@ -5,10 +5,10 @@
 # all options can be removed unless REQUIRED ones
 
 # REQUIRED
-index_dir=path/to/index/
-# where index files will be saved, if it does not exists, it gets created
+index_dir=/path/to/index
+# where index files will be saved, if it does not exists, it is created
 
-stopwords=path/to/stopwords
+stopwords=/path/to/stopwords
 # path to stopwords file
 
 term_min_size=3
@@ -19,3 +19,4 @@ term_max_size=23
 
 stem=es
 # language of stemming prefered
+# if you dont want to apply stemming, remove this option

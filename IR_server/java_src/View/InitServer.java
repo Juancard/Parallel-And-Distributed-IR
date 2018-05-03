@@ -32,7 +32,7 @@ import org.ini4j.Ini;
 @SuppressWarnings("ALL")
 public class InitServer {
 
-    public static final String PROPERTIES_PATH = "/ssh_tunnel.properties";
+    public static final String PROPERTIES_PATH = "/config.properties";
 
     public static void main(java.lang.String[] args){
         try {
