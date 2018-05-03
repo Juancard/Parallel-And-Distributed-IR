@@ -54,13 +54,13 @@ public class InitClient {
         if (!isBrokerAvailable()){
             CommonMain.display("We are not available at the moment. Please, try again later.");
         } else {
-            this.queryBot();
-/*
+            //this.queryBot();
+
             while (true){
                 CommonMain.createSection("Query");
                 this.query();
             }
-*/
+
         }
     }
 

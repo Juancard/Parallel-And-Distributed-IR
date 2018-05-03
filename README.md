@@ -42,3 +42,7 @@ Propuesta completa [aquí][1]
 4) Edit values of properties in `config.properties`
 5) Run View.InitBroker
  
+#### IR client
+1) Rename file `config.properties.example` to `config.properties`
+2) Edit values of properties in `config.properties`
+3) Run View.InitClient
