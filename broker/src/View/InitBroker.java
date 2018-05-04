@@ -76,6 +76,8 @@ public class InitBroker {
             serversInfo = RemotePortsLoader.remotePortsFrom(irServersFile);
         } catch (IOException e) {
             throw new MyAppException("Loading IR servers from file: " + e.getMessage());
+        } catch (NotValidRemotePortException e) {
+            throw new MyAppException("Loading IR servers from file: " + e.getMessage());
         }
         for (ServerInfo si : serversInfo)
             this.irServers.add(new IRServerHandler(si));
