@@ -5,10 +5,10 @@
 # all options can be removed unless REQUIRED ones
 
 # REQUIRED
-index_dir=/path/to/index
+index_dir=/path/to/parallel-and-distributed-IR/IR_server/Resources/Index
 # where index files will be saved, if it does not exists, it is created
 
-stopwords=/path/to/stopwords
+stopwords=/path/to/parallel-and-distributed-IR/IR_server/Resources/Stopwords/stopwords_es.txt
 # path to stopwords file
 
 term_min_size=3

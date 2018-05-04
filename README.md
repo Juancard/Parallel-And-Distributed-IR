@@ -18,22 +18,28 @@ Propuesta completa [aquí][1]
 
 ### IR server
 
-#### Python process
+#### IR server
+
+##### Python process
 1) Install python  modules: nltk y numpy
 2) Rename file `config.ini.example` to `config.ini`
 3) Edit values of properties in file `config.ini`
-4) Run process: `python sockets.py [-dv]`
+4) Run process: ```python sockets.py [-dv]```
 
-#### IR server
+##### Java process
 1) Add libraries needed: 
--- Json: https://mvnrepository.com/artifact/org.json/json/20140107
--- Jsch: http://www.java2s.com/Code/Jar/j/Downloadjsch0142jar.htm
--- Guava: http://central.maven.org/maven2/com/google/guava/guava/16.0.1/guava-16.0.1.jar
--- Ini4j: https://mvnrepository.com/artifact/org.ini4j/ini4j/0.5.1
+- Json: https://mvnrepository.com/artifact/org.json/json/20140107
+- Jsch: http://www.java2s.com/Code/Jar/j/Downloadjsch0142jar.htm
+- Guava: http://central.maven.org/maven2/com/google/guava/guava/16.0.1/guava-16.0.1.jar
+- Ini4j: https://mvnrepository.com/artifact/org.ini4j/ini4j/0.5.1
 
 2) Rename file `config.properties.example` to `config.properties`
 3) Edit values of properties in `config.properties`
-4) Run View.InitServer
+4) Open ssh tunnel (You'll be asked to enter user and pass in the remote gpu server)
+```ssh -L 3491:localhost:3491 your_user@170.210.103.21```
+5) Run View.InitServer
+
+
  
 #### Broker
 1) Rename file `IR_servers.cfg.example` to `IR_servers.cfg`
