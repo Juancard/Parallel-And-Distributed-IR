@@ -23,6 +23,7 @@ public class IRWorker extends MyCustomWorker{
 
     // classname for the logger
     private final static Logger LOGGER = Logger.getLogger(Logger.GLOBAL_LOGGER_NAME);
+    private static final int MAX_LOG_LEN = 140;
     private final IndexHandler indexHandler;
     private final QueryHandler queryHandler;
 
@@ -65,7 +66,7 @@ public class IRWorker extends MyCustomWorker{
             out = IRProtocol.TEST_OK;
         }
 
-        LOGGER.info("Response - " + out.toString().substring(0, Math.min(out.toString().length(), 60)));
+        LOGGER.info("Response - " + out.toString().substring(0, Math.min(out.toString().length(), MAX_LOG_LEN)));
 
         return out;
     }
