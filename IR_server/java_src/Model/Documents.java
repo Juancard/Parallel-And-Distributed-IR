@@ -47,7 +47,7 @@ public class Documents {
             return "none";
         if (this.corpusPath == null)
             return this.idToPath.get(id);
-        return this.idToPath.get(id);comunica
+        return this.idToPath.get(id);
         //return Paths.get(this.corpusPath, this.idToPath.get(id)).toString();
     }
 
