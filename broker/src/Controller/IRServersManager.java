@@ -51,11 +51,17 @@ public class IRServersManager {
             if (i != serverIndex){
                 nonSelectedServer = this.irServers.get(i);
                 LOGGER.info("Update cache - " + nonSelectedServer.getName());
+                /* BATCH
                 try {
                     nonSelectedServer.updateCache(docScores);
                 } catch (MyAppException e){
                     throw new MyAppException("Updating cache at " + nonSelectedServer.getName() + ". Cause: " + e.getMessage());
                 }
+                */
+                //PARALLEL
+                new Thread(
+                        new UploadCacheWorker(nonSelectedServer, docScores)
+                ).start();
             }
         }
         return docScores.getScores();
