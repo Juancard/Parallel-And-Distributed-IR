@@ -21,16 +21,28 @@ import java.util.logging.Logger;
 public class IRServerHandler {
     String host;
     int port;
+    private int timeout;
 
     public IRServerHandler(String host, int port){
-        this.host = host;
-        this.port = port;
+        this(host, port, 2000);
     }
 
     public IRServerHandler(ServerInfo serverInfo){
-        this.host = serverInfo.getHost();
-        this.port = serverInfo.getPort();
+        this(serverInfo.getHost(), serverInfo.getPort(), 2000);
     }
+
+    public IRServerHandler(ServerInfo serverInfo, int timeout){
+        this(serverInfo.getHost(), serverInfo.getPort(), timeout);
+    }
+
+    public IRServerHandler(String host, int port, int timeout){
+        this.host = host;
+        this.port = port;
+        this.timeout = timeout;
+    }
+
+
+
 
     public boolean index() throws Exception {
         SocketConnection connection = new SocketConnection(host, port);
@@ -82,7 +94,7 @@ public class IRServerHandler {
         }
         connection.send(IRProtocol.TEST);
         try {
-            connection.getClientSocket().setSoTimeout(2000);
+            connection.getClientSocket().setSoTimeout(this.timeout);
             Object response = connection.read();
             return (Integer) response == IRProtocol.TEST_OK;
         } catch (ClassNotFoundException e) {

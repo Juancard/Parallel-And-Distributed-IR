@@ -68,6 +68,7 @@ public class InitBroker {
 
     private void setupIRServers(Properties properties) throws MyAppException {
         String irServersFile = properties.getProperty("IR_SERVERS_FILE");
+        int timeout = new Integer(properties.getProperty("SERVER_TIMEOUT_MS"));
         if (!this.isValidFile(irServersFile)){
             throw new MyAppException("Loading IR servers file: IR_SERVERS_FILE is not a valid file path");
         }
@@ -80,7 +81,7 @@ public class InitBroker {
             throw new MyAppException("Loading IR servers from file: " + e.getMessage());
         }
         for (ServerInfo si : serversInfo)
-            this.irServers.add(new IRServerHandler(si));
+            this.irServers.add(new IRServerHandler(si, timeout));
         if (this.irServers.isEmpty())
             throw new MyAppException("No IR servers specified at " + irServersFile);
     }
