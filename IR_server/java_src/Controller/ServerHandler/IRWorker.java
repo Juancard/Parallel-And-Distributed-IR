@@ -28,17 +28,20 @@ public class IRWorker extends MyCustomWorker{
     private final QueryHandler queryHandler;
 
     private IRServerForConnections irServer;
+    private TokenHandler tokenHandler;
 
     public IRWorker(
             Socket clientSocket,
             IRServerForConnections irServer,
             IndexHandler indexHandler,
-            QueryHandler queryHandler
+            QueryHandler queryHandler,
+            TokenHandler tokenHandler
     ) {
         super(clientSocket);
         this.irServer = irServer;
         this.indexHandler = indexHandler;
         this.queryHandler = queryHandler;
+        this.tokenHandler = tokenHandler;
     }
 
     protected Object onClientRequest(String request) {
@@ -62,6 +65,10 @@ public class IRWorker extends MyCustomWorker{
             out = this.updateCache();
         } else if (request.equals(IRProtocol.GET_INDEX_METADATA)){
             out = this.getIndexMetadata();
+        } else if (request.equals(IRProtocol.TOKEN_ACTIVATE)){
+            out = this.setToken(true);
+        } else if (request.equals(IRProtocol.TOKEN_RELEASE)){
+            out = this.setToken(false);
         } else if (request.equals(IRProtocol.TEST)){
             out = IRProtocol.TEST_OK;
         }
@@ -69,6 +76,10 @@ public class IRWorker extends MyCustomWorker{
         LOGGER.info("Response - " + out.toString().substring(0, Math.min(out.toString().length(), MAX_LOG_LEN)));
 
         return out;
+    }
+
+    private Object setToken(boolean activate) {
+        return (activate)? this.tokenHandler.activate() : this.tokenHandler.release();
     }
 
     private Object index() {
