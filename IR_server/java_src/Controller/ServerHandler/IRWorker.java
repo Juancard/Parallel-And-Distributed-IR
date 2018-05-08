@@ -47,7 +47,10 @@ public class IRWorker extends MyCustomWorker{
     protected Object onClientRequest(String request) {
         Object out = new Object();
 
-        LOGGER.info("Request - " + request);
+        boolean loggable = !request.equals(IRProtocol.TOKEN_ACTIVATE) &&
+                !request.equals(IRProtocol.TOKEN_RELEASE);
+        if (loggable)
+            LOGGER.info("Request - " + request);
         if (request.equals(IRProtocol.INDEX_FILES)) {
             out = this.index();
         }  else if (request.equals(IRProtocol.INDEX_LOAD)){
@@ -73,13 +76,20 @@ public class IRWorker extends MyCustomWorker{
             out = IRProtocol.TEST_OK;
         }
 
-        LOGGER.info("Response - " + out.toString().substring(0, Math.min(out.toString().length(), MAX_LOG_LEN)));
+        if (loggable)
+            LOGGER.info("Response - " + out.toString().substring(0, Math.min(out.toString().length(), MAX_LOG_LEN)));
 
         return out;
     }
 
     private Object setToken(boolean activate) {
-        return (activate)? this.tokenHandler.activate() : this.tokenHandler.release();
+        if (activate){
+            this.tokenHandler.activate();
+            return IRProtocol.TOKEN_ACTIVATE_OK;
+        } else {
+            this.tokenHandler.release();
+            return IRProtocol.TOKEN_RELEASE_OK;
+        }
     }
 
     private Object index() {

@@ -14,13 +14,11 @@ public class TokenHandler {
         token.setActive(false);
     }
 
-    public Object activate() {
+    public void activate() {
         token.setActive(true);
-        return IRProtocol.TOKEN_ACTIVATE_OK;
     }
 
-    public Object release() {
+    public void release() {
         token.setActive(false);
-        return IRProtocol.TOKEN_RELEASE_OK;
     }
 }
