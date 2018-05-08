@@ -59,12 +59,23 @@ public class QueryHandler {
                 queryTermFreq
         );
         HashMap<Integer, Double> docScoresId = null;
-        try {
-            docScoresId = this.IRCache.get(queryTermFreq, qCallable);
-        } catch (ExecutionException e) {
-            String m = "Caching query. Cause: " + e.getMessage();
-            LOGGER.severe(m);
-            throw new MyAppException(m);
+        if (!isQueryInCache){
+            try {
+                docScoresId = qCallable.call();
+                this.IRCache.put(queryTermFreq, docScoresId);
+            } catch (MyAppException e) {
+                String m = "Failed at evaluating query via Gpu. Cause: " + e.getMessage();
+                LOGGER.severe(m);
+                throw new MyAppException(m);
+            }
+        } else {
+            try {
+                docScoresId = this.IRCache.get(queryTermFreq, qCallable);
+            } catch (ExecutionException e) {
+                String m = "Caching query. Cause: " + e.getMessage();
+                LOGGER.severe(m);
+                throw new MyAppException(m);
+            }
         }
 
         LOGGER.info("Aproximate Cache size: " + this.IRCache.size());

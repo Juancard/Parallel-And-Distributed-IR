@@ -46,11 +46,11 @@ public class GpuServerHandler {
         this.isSshTunnel = false;
 	}
 
-    public HashMap<Integer, Double> sendQuery(Query query) throws GpuException, IOException {
+    public HashMap<Integer, Double> sendQuery(Query query) throws GpuException {
         return this.sendQuery(query.getTermsAndFrequency());
     }
 
-    public HashMap<Integer, Double> sendQuery(HashMap<Integer, Integer> query) throws GpuException, IOException {
+    public HashMap<Integer, Double> sendQuery(HashMap<Integer, Integer> query) throws GpuException {
         LOGGER.info("Sending query: termsId[" + query.keySet() + "] freqs[" + query.values() + "]");
 
         SocketConnection connection;
@@ -102,8 +102,12 @@ public class GpuServerHandler {
         }
         LOGGER.info("Closing connection with Gpu Server");
         connection.close();
-        out.close();
-        in.close();
+        try {
+            out.close();
+            in.close();
+        } catch (IOException e) {
+            LOGGER.warning("Error while closing connection with Gpu Server: " + e.getMessage());
+        }
 
         return docsScore;
 
