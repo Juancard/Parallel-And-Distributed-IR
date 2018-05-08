@@ -15,11 +15,10 @@ import java.util.logging.Logger;
 public class IRServersManager {
     private final static Logger LOGGER = Logger.getLogger(Logger.GLOBAL_LOGGER_NAME);
 
-    private static final int TOKEN_TIME_IN_SERVER = 5000;
+    private static final int TOKEN_TIME_IN_SERVER = 400;
 
     private ArrayList<IRServerHandler> irServers;
     private int serverIndexForQueries;
-    private int serverIndexForTokens;
 
     public IRServersManager(ArrayList<IRServerHandler> irServers){
         this.irServers = irServers;
@@ -47,6 +46,8 @@ public class IRServersManager {
         if (!serverAvailable)
             throw new MyAppException("No server is available.");
         DocScores docScores = serverSelected.query(query);
+        if (docScores.getScores().isEmpty())
+            return docScores.getScores();
         // Send update cache to each server except the one selected
         IRServerHandler nonSelectedServer = null;
         for (i = 0; i < this.irServers.size(); i++){
@@ -84,7 +85,7 @@ public class IRServersManager {
             tokenActivated = false;
             try {
                 serverSelected = this.irServers.get(serverIndex);
-                LOGGER.info("Sending token to server " + serverIndex + " which is " + serverSelected.getName());
+                //LOGGER.info("Sending token to server " + serverIndex + " which is " + serverSelected.getName());
                 tokenActivated = serverSelected.activateToken();
             } catch (MyAppException e) {
                 LOGGER.info(serverSelected.getName() + " is down.");
