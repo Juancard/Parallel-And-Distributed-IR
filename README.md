@@ -24,15 +24,17 @@ Propuesta completa [aquí][1]
 1) Install python  modules: nltk y numpy
 2) Rename file `config.ini.example` to `config.ini`
 3) Edit values of properties in file `config.ini`
-4) Run process: ```python sockets.py [-dv]```
+4) Run process: 
+```python
+python sockets.py [-dv]
+```
 
 ##### Java process
 1) Add libraries needed: 
-- Json: https://mvnrepository.com/artifact/org.json/json/20140107
-- Jsch: http://www.java2s.com/Code/Jar/j/Downloadjsch0142jar.htm
-- Guava: http://central.maven.org/maven2/com/google/guava/guava/16.0.1/guava-16.0.1.jar
-- Ini4j: https://mvnrepository.com/artifact/org.ini4j/ini4j/0.5.1
-
+- [Json](https://mvnrepository.com/artifact/org.json/json/20140107): 
+- [Jsch](http://www.java2s.com/Code/Jar/j/Downloadjsch0142jar.htm)
+- [Guava](http://central.maven.org/maven2/com/google/guava/guava/16.0.1/guava-16.0.1.jar)
+- [Ini4j](https://mvnrepository.com/artifact/org.ini4j/ini4j/0.5.1)
 2) Rename file `config.properties.example` to `config.properties`
 3) Edit values of properties in `config.properties`
 4) Open ssh tunnel (You'll be asked to enter user and pass in the remote gpu server)
@@ -42,11 +44,13 @@ Propuesta completa [aquí][1]
 
  
 #### Broker
-1) Rename file `IR_servers.cfg.example` to `IR_servers.cfg`
-2) To add more servers, add their address to `IR_servers.cfg`
-3) Rename file `config.properties.example` to `config.properties`
-4) Edit values of properties in `config.properties`
-5) Run View.InitBroker
+1) Add libraries needed: 
+- [Common-validator-1.6](https://mvnrepository.com/artifact/commons-validator/commons-validator/1.6)
+2) Rename file `IR_servers.cfg.example` to `IR_servers.cfg`
+3) To add more servers, add their address to `IR_servers.cfg`
+4) Rename file `config.properties.example` to `config.properties`
+5) Edit values of properties in `config.properties`
+6) Run View.InitBroker
  
 #### IR client
 1) Rename file `config.properties.example` to `config.properties`
