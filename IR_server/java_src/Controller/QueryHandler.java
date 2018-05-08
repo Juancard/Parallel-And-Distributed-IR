@@ -16,6 +16,7 @@ import java.util.concurrent.ExecutionException;
 public class QueryHandler {
     // classname for the logger
     private final static java.util.logging.Logger LOGGER = java.util.logging.Logger.getLogger(java.util.logging.Logger.GLOBAL_LOGGER_NAME);
+    private final static int TIME_CHECK_TOKEN = 100;
 
     private GpuServerHandler gpuServerHandler;
     private QueryEvaluator queryEvaluator;
@@ -57,30 +58,14 @@ public class QueryHandler {
 
         HashMap<Integer, Integer> queryTermFreq = q.getTermsAndFrequency();
         boolean isQueryInCache =  this.IRCache.asMap().containsKey(queryTermFreq);
+        LOGGER.info("Query is in cache: " + isQueryInCache);
         QueryCallable qCallable = new QueryCallable(
                 this.gpuServerHandler,
                 this.queryEvaluator,
                 queryTermFreq
         );
         HashMap<Integer, Double> docScoresId = null;
-        if (!isQueryInCache){
-            try {
-                docScoresId = qCallable.call();
-                this.IRCache.put(queryTermFreq, docScoresId);
-            } catch (MyAppException e) {
-                String m = "Failed at evaluating query via Gpu. Cause: " + e.getMessage();
-                LOGGER.severe(m);
-                throw new MyAppException(m);
-            }
-        } else {
-            try {
-                docScoresId = this.IRCache.get(queryTermFreq, qCallable);
-            } catch (ExecutionException e) {
-                String m = "Caching query. Cause: " + e.getMessage();
-                LOGGER.severe(m);
-                throw new MyAppException(m);
-            }
-        }
+        docScoresId = this.accessCache(queryTermFreq, qCallable, isQueryInCache);
 
         LOGGER.info("Aproximate Cache size: " + this.IRCache.size());
         String queriesCached = "";
@@ -128,5 +113,30 @@ public class QueryHandler {
         this.statsHandler.writeQueryStats(
                 query, start, end, isGpuEval, isQueryInCache, terms, docs, docsMatched
         );
+    }
+
+    private synchronized HashMap<Integer, Double> accessCache (
+            HashMap<Integer, Integer> query,
+            QueryCallable qCallable,
+            boolean isInCache
+    )throws MyAppException{
+        while (!token.isActive()){
+            try {
+                Thread.sleep(TIME_CHECK_TOKEN);
+            } catch (InterruptedException e) {
+                throw new MyAppException("Error waiting for token: " + e.getMessage());
+            }
+        }
+        if (!isInCache){
+            HashMap<Integer, Double> docScoresId = qCallable.call();
+            this.IRCache.put(query, docScoresId);
+            return docScoresId;
+        } else {
+            try {
+                return this.IRCache.get(query, qCallable);
+            } catch (ExecutionException e) {
+                throw new MyAppException("Could not retrieve cached query: " + e.getMessage());
+            }
+        }
     }
 }
