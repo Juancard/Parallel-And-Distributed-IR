@@ -143,6 +143,12 @@ public class InitClient {
 
         for (Thread t : threads)
             t.start();
+        for (Thread t : threads)
+            try {
+                t.join();
+            } catch(InterruptedException e){
+                e.printStackTrace();
+            }
     }
 
     private void query(){
