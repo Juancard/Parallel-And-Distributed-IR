@@ -45,7 +45,7 @@ public class MyCustomWorker implements Runnable{
         } catch (SocketException e) {
             LOGGER.warning("Connection lost with client");
         } catch (EOFException e) {
-            LOGGER.warning("Client disconnected");
+            //LOGGER.warning("Client disconnected");
         } catch (IOException e) {
             LOGGER.severe(e.getMessage());
         } catch (Exception e) {

@@ -78,8 +78,8 @@ public class MyCustomServer {
         Thread t = this.newThread(runnable);
         this.threadsPool.put(t, runnable);
         t.start();
-        String toPrint = "New connection with client: " + clientSocket.getRemoteSocketAddress();
-        LOGGER.info(toPrint);
+        //String toPrint = "New connection with client: " + clientSocket.getRemoteSocketAddress();
+        //LOGGER.info(toPrint);
     }
 
     private Thread newThread(Runnable runnable){

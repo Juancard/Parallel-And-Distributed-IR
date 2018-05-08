@@ -24,7 +24,10 @@ Propuesta completa [aquí][1]
 1) Install python  modules: nltk y numpy
 2) Rename file `config.ini.example` to `config.ini`
 3) Edit values of properties in file `config.ini`
-4) Run process: ```python sockets.py [-dv]```
+4) Run process: 
+```bash
+python sockets.py [-dv]
+```
 
 ##### Java process
 1) Add libraries needed: 
