@@ -64,8 +64,11 @@ public class QueryHandler {
                 this.queryEvaluator,
                 queryTermFreq
         );
-        HashMap<Integer, Double> docScoresId = null;
-        docScoresId = this.accessCache(queryTermFreq, qCallable, isQueryInCache);
+        HashMap<Integer, Double> docScoresId = this.accessCache(
+                queryTermFreq,
+                qCallable,
+                isQueryInCache
+        );
 
         LOGGER.info("Aproximate Cache size: " + this.IRCache.size());
         String queriesCached = "";
