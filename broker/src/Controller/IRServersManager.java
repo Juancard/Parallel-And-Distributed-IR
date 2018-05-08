@@ -15,13 +15,15 @@ import java.util.logging.Logger;
 public class IRServersManager {
     private final static Logger LOGGER = Logger.getLogger(Logger.GLOBAL_LOGGER_NAME);
 
+    private static final int TOKEN_TIME_IN_SERVER = 5000;
+
     private ArrayList<IRServerHandler> irServers;
-    private int serverIndex;
+    private int serverIndexForQueries;
+    private int serverIndexForTokens;
 
     public IRServersManager(ArrayList<IRServerHandler> irServers){
-
         this.irServers = irServers;
-        this.serverIndex = -1;
+        this.serverIndexForQueries = -1;
     }
 
     public HashMap<String, Double> query(String query) throws MyAppException, UnidentifiedException {
@@ -68,9 +70,39 @@ public class IRServersManager {
     }
 
     public synchronized int nextServerIndex(){
-        this.serverIndex++;
-        if (this.serverIndex >= this.irServers.size())
-            this.serverIndex = 0;
-        return this.serverIndex;
+        this.serverIndexForQueries++;
+        if (this.serverIndexForQueries >= this.irServers.size())
+            this.serverIndexForQueries = 0;
+        return this.serverIndexForQueries;
+    }
+
+    public void handleToken() {
+        int serverIndex = 0;
+        IRServerHandler serverSelected = null;
+        boolean tokenActivated;
+        while (true) {
+            tokenActivated = false;
+            try {
+                serverSelected = this.irServers.get(serverIndex);
+                LOGGER.info("Sending token to server " + serverIndex + " which is " + serverSelected.getName());
+                tokenActivated = serverSelected.activateToken();
+            } catch (MyAppException e) {
+                LOGGER.info(serverSelected.getName() + " is down.");
+            }
+            if (tokenActivated){
+                try {
+                    Thread.sleep(TOKEN_TIME_IN_SERVER);
+                } catch (InterruptedException e) {
+                    LOGGER.info("While token in " + serverIndex + " which is " + serverSelected.getName() + ": " + e.getMessage());
+                }
+                try {
+                    serverSelected.releaseToken();
+                } catch (MyAppException e) {
+                    LOGGER.info("While releasing token in " + serverIndex + " which is " + serverSelected.getName() + ": " + e.getMessage());
+                }
+            }
+            if (++serverIndex >= this.irServers.size())
+                serverIndex = 0;
+        }
     }
 }

@@ -170,7 +170,55 @@ public class IRServerHandler {
         }
     }
 
+    public boolean activateToken() throws MyAppException {
+        SocketConnection connection = null;
+        try {
+            connection = new SocketConnection(this.host, this.port);
+        } catch (IOException e) {
+            throw new MyAppException("Could not stablish connection.");
+        }
+        connection.send(IRProtocol.TOKEN_ACTIVATE);
+        try {
+            connection.getClientSocket().setSoTimeout(2000);
+            Object response = connection.read();
+            return (Integer) response == IRProtocol.TOKEN_ACTIVATE_OK;
+        } catch (ClassNotFoundException e) {
+            throw new MyAppException("Could not receive response. Cause: " + e.getMessage());
+        } catch (SocketException e) {
+            throw new MyAppException("Could not wait for response. Cause: " + e.getMessage());
+        } catch (IOException e) {
+            throw new MyAppException("Could not receive response. Cause: " + e.getMessage());
+        } finally {
+            connection.close();
+        }
+    }
+
+
     public String getName(){
         return this.host + ":" + this.port;
+    }
+
+
+    public boolean releaseToken() throws MyAppException {
+        SocketConnection connection = null;
+        try {
+            connection = new SocketConnection(this.host, this.port);
+        } catch (IOException e) {
+            throw new MyAppException("Could not stablish connection.");
+        }
+        connection.send(IRProtocol.TOKEN_RELEASE);
+        try {
+            connection.getClientSocket().setSoTimeout(2000);
+            Object response = connection.read();
+            return (Integer) response == IRProtocol.TOKEN_RELEASE_OK;
+        } catch (ClassNotFoundException e) {
+            throw new MyAppException("Could not receive response. Cause: " + e.getMessage());
+        } catch (SocketException e) {
+            throw new MyAppException("Could not wait for response. Cause: " + e.getMessage());
+        } catch (IOException e) {
+            throw new MyAppException("Could not receive response. Cause: " + e.getMessage());
+        } finally {
+            connection.close();
+        }
     }
 }
