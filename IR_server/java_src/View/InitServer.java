@@ -8,14 +8,12 @@ import java.util.logging.Logger;
 
 import Common.MyLogger;
 import Common.PropertiesManager;
-import Controller.GpuServerHandler;
+import Controller.*;
 import Controller.IndexerHandler.IndexFilesHandler;
 import Controller.IndexerHandler.IndexerConfig;
 import Controller.IndexerHandler.IndexerException;
-import Controller.QueryEvaluator;
 import Controller.ServerHandler.IRWorkerFactory;
-import Controller.SshHandler;
-import Controller.StatsHandler;
+import Controller.ServerHandler.TokenHandler;
 import Model.Documents;
 import Model.IRNormalizer;
 import Controller.ServerHandler.IRServer;
@@ -112,7 +110,8 @@ public class InitServer {
                 this.indexFilesHandler,
                 this.IRCache,
                 this.queryEvaluator,
-                this.statsHandler
+                this.statsHandler,
+                new Token()
         );
         IRServer irServer = new IRServer(
                 irServerPort,

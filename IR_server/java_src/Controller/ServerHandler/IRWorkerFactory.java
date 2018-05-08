@@ -2,13 +2,10 @@ package Controller.ServerHandler;
 
 import Common.Socket.MyCustomWorker;
 import Common.Socket.WorkerFactory;
-import Controller.GpuServerHandler;
+import Controller.*;
 import Controller.IndexerHandler.IndexFilesHandler;
 import Controller.IndexerHandler.IndexHandler;
 import Controller.IndexerHandler.PythonIndexer;
-import Controller.QueryEvaluator;
-import Controller.QueryHandler;
-import Controller.StatsHandler;
 import Model.Documents;
 import Model.IRNormalizer;
 import Model.Query;
@@ -30,6 +27,7 @@ public class IRWorkerFactory implements WorkerFactory{
     private IndexHandler indexHandler;
     private QueryHandler queryHandler;
     private Vocabulary vocabulary;
+    private TokenHandler tokenHandler;
 
     public IRWorkerFactory(
             Vocabulary vocabulary,
@@ -40,7 +38,10 @@ public class IRWorkerFactory implements WorkerFactory{
             IndexFilesHandler indexFilesHandler,
             Cache<HashMap<Integer, Integer>, HashMap<Integer, Double>> IRCache,
             QueryEvaluator queryEvaluator,
-            StatsHandler statsHandler) {
+            StatsHandler statsHandler,
+            Token token
+    ) {
+        this.tokenHandler = new TokenHandler(token);
         this.indexHandler = new IndexHandler(
                 indexFilesHandler,
                 pythonIndexer,
@@ -56,7 +57,8 @@ public class IRWorkerFactory implements WorkerFactory{
                 documents,
                 IRCache,
                 queryEvaluator,
-                statsHandler
+                statsHandler,
+                token
         );
         this.vocabulary = vocabulary;
     }
@@ -67,7 +69,8 @@ public class IRWorkerFactory implements WorkerFactory{
                 connection,
                 irServer,
                 this.indexHandler,
-                this.queryHandler
+                this.queryHandler,
+                this.tokenHandler
         );
     }
 

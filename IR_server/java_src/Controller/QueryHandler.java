@@ -1,6 +1,7 @@
 package Controller;
 
 import Common.MyAppException;
+import Controller.ServerHandler.TokenHandler;
 import Model.*;
 import com.google.common.cache.Cache;
 
@@ -23,6 +24,7 @@ public class QueryHandler {
     private Documents documents;
     private StatsHandler statsHandler;
     private Cache<HashMap<Integer, Integer>, HashMap<Integer, Double>> IRCache;
+    private Token token;
 
     public QueryHandler(
             GpuServerHandler gpuServerHandler,
@@ -31,7 +33,8 @@ public class QueryHandler {
             Documents documents,
             Cache<HashMap<Integer, Integer>, HashMap<Integer, Double>> IRCache,
             QueryEvaluator queryEvaluator,
-            StatsHandler statsHandler){
+            StatsHandler statsHandler,
+            Token token){
         this.gpuServerHandler = gpuServerHandler;
         this.vocabulary = vocabulary;
         this.irNormalizer = irNormalizer;
@@ -39,6 +42,7 @@ public class QueryHandler {
         this.queryEvaluator = queryEvaluator;
         this.statsHandler = statsHandler;
         this.IRCache = IRCache;
+        this.token = token;
     }
 
     public DocScores query(String queryStr) throws MyAppException {
