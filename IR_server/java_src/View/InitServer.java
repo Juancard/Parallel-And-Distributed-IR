@@ -6,6 +6,7 @@ import java.util.Properties;
 import java.util.concurrent.TimeUnit;
 import java.util.logging.Logger;
 
+import Common.MyAppException;
 import Common.MyLogger;
 import Common.PropertiesManager;
 import Controller.GpuServerHandler;
@@ -90,6 +91,9 @@ public class InitServer {
             LOGGER.severe("Error setting up server: " + e.getMessage());
             System.exit(1);
         } catch (IOException e) {
+            LOGGER.severe("Error setting up server: " + e.getMessage());
+            System.exit(1);
+        } catch (MyAppException e) {
             LOGGER.severe("Error setting up server: " + e.getMessage());
             System.exit(1);
         }
@@ -264,10 +268,30 @@ public class InitServer {
         );
     }
 
-    public void setupCache(Properties upCache) {
+    public void setupCache(Properties properties) throws MyAppException {
+        String cacheSizeProp = "CACHE_SIZE_IN_QUERIES";
+        String expireAfterAccessProp = "CACHE_EXPIRE_AFTER_SECONDS";
+        int cacheSize, expireAfterAccess;
+        try {
+             cacheSize = new Integer(properties.getProperty(cacheSizeProp));
+        } catch (NumberFormatException e){
+            throw new MyAppException("In property '" + cacheSizeProp + "': is missing.");
+        }
+
+        if (cacheSize < 0)
+            throw new MyAppException("In property '" + cacheSizeProp + "': has to be greater than " + 0);
+        try {
+            expireAfterAccess = new Integer(properties.getProperty(expireAfterAccessProp));
+        } catch (NumberFormatException e){
+            throw new MyAppException("In property '" + expireAfterAccessProp + "': is missing.");
+        }
+        if (expireAfterAccess < 0)
+            throw new MyAppException("In property '" + expireAfterAccessProp + "': has to be greater than " + 0);
+
+        System.out.println(cacheSize + " - " + expireAfterAccess);
         this.IRCache = CacheBuilder.newBuilder()
-                .maximumSize(3)
-                .expireAfterAccess(60, TimeUnit.SECONDS)
+                .maximumSize(cacheSize)
+                .expireAfterAccess(expireAfterAccess, TimeUnit.SECONDS)
                 .build();
     }
 
