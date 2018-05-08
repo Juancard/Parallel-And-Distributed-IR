@@ -4,6 +4,7 @@ import Common.*;
 import Controller.IRServersManager;
 import ServerHandler.BrokerServer;
 import ServerHandler.BrokerWorkerFactory;
+import ServerHandler.TokenWorker;
 
 import java.io.File;
 import java.io.IOException;
@@ -220,10 +221,14 @@ public class InitBroker {
                 this.irServerManager
         );
 
+        TokenWorker tokenWorker = new TokenWorker(
+                this.irServerManager
+        );
 
         BrokerServer brokerServer = new BrokerServer(
                 this.brokerPort,
-                brokerWorkerFactory
+                brokerWorkerFactory,
+                tokenWorker
         );
 
         try {
