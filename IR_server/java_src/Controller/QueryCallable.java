@@ -1,10 +1,12 @@
 package Controller;
 
+import Common.MyAppException;
 import Controller.GpuException;
 import Controller.GpuServerHandler;
 import Controller.QueryEvaluator;
 import Model.Query;
 
+import java.io.IOException;
 import java.util.HashMap;
 import java.util.concurrent.Callable;
 
@@ -35,7 +37,7 @@ public class QueryCallable implements Callable<HashMap<Integer, Double>> {
         this.queryTimeEnd = 0;
     }
 
-    public HashMap<Integer, Double> call() throws Exception {
+    public HashMap<Integer, Double> call() throws MyAppException {
         HashMap<Integer, Double> docScoresId = null;
         try {
             this.queryTimeStart = System.nanoTime();
@@ -49,7 +51,13 @@ public class QueryCallable implements Callable<HashMap<Integer, Double>> {
             this.isGpuEval = false;
             LOGGER.warning("Evaluating query locally.");
             this.queryTimeStart = System.nanoTime();
-            docScoresId = this.queryEvaluator.evaluateQuery(this.query);
+            try {
+                docScoresId = this.queryEvaluator.evaluateQuery(this.query);
+            } catch (IOException e) {
+                String m = "Failed at evaluating query locally. Cause: " + e.getMessage();
+                LOGGER.warning(m);
+                throw new MyAppException(m);
+            }
             this.queryTimeEnd = System.nanoTime();
         }
         return docScoresId;
