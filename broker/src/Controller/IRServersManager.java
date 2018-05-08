@@ -15,14 +15,14 @@ import java.util.logging.Logger;
 public class IRServersManager {
     private final static Logger LOGGER = Logger.getLogger(Logger.GLOBAL_LOGGER_NAME);
 
-    private static final int TOKEN_TIME_IN_SERVER = 400;
-
     private ArrayList<IRServerHandler> irServers;
     private int serverIndexForQueries;
+    private int tokenTimeInServer;
 
-    public IRServersManager(ArrayList<IRServerHandler> irServers){
+    public IRServersManager(ArrayList<IRServerHandler> irServers, int tokenTimeInServer){
         this.irServers = irServers;
         this.serverIndexForQueries = -1;
+        this.tokenTimeInServer = tokenTimeInServer;
     }
 
     public HashMap<String, Double> query(String query) throws MyAppException, UnidentifiedException {
@@ -92,7 +92,7 @@ public class IRServersManager {
             }
             if (tokenActivated){
                 try {
-                    Thread.sleep(TOKEN_TIME_IN_SERVER);
+                    Thread.sleep(this.tokenTimeInServer);
                 } catch (InterruptedException e) {
                     LOGGER.info("While token in " + serverIndex + " which is " + serverSelected.getName() + ": " + e.getMessage());
                 }

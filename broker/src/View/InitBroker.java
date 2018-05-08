@@ -52,7 +52,7 @@ public class InitBroker {
         this.irServers = new ArrayList<IRServerHandler>();
         try {
             this.setupIRServers(properties);
-            this.setupIRServersManager();
+            this.setupIRServersManager(properties);
             this.testIRServers();
             boolean consistent = this.IRServersAreConsistent();
             if (!consistent) {
@@ -87,8 +87,11 @@ public class InitBroker {
             throw new MyAppException("No IR servers specified at " + irServersFile);
     }
 
-    private void setupIRServersManager() {
-        this.irServerManager = new IRServersManager(this.irServers);
+    private void setupIRServersManager(Properties properties) throws MyAppException {
+        int tokenTimeInServer = new Integer(properties.getProperty("TOKEN_TIME_IN_SERVER"));
+        if (tokenTimeInServer < 100)
+            throw new MyAppException("IN property 'TOKEN_TIME_IN_SERVER': value should be greater than 100 ms.");
+        this.irServerManager = new IRServersManager(this.irServers, tokenTimeInServer);
     }
 
     private void testIRServers() throws MyAppException {
