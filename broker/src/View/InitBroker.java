@@ -68,10 +68,10 @@ public class InitBroker {
     }
 
     private void setupIRServers(Properties properties) throws MyAppException {
-        String irServersFile = properties.getProperty("IR_SERVERS_FILE");
-        int timeout = new Integer(properties.getProperty("SERVER_TIMEOUT_MS"));
+        String propertyName = "IR_SERVERS_FILE";
+        String irServersFile = properties.getProperty(propertyName);
         if (!this.isValidFile(irServersFile)){
-            throw new MyAppException("Loading IR servers file: IR_SERVERS_FILE is not a valid file path");
+            throw new MyAppException("Loading IR servers file: " + propertyName + " is not a valid file path");
         }
         ArrayList<ServerInfo> serversInfo = null;
         try {
@@ -88,9 +88,10 @@ public class InitBroker {
     }
 
     private void setupIRServersManager(Properties properties) throws MyAppException {
-        int tokenTimeInServer = new Integer(properties.getProperty("TOKEN_TIME_IN_SERVER"));
+        String propertyName = "TOKEN_TIME_IN_SERVER_MS";
+        int tokenTimeInServer = new Integer(properties.getProperty(propertyName));
         if (tokenTimeInServer < 100)
-            throw new MyAppException("IN property 'TOKEN_TIME_IN_SERVER': value should be greater than 100 ms.");
+            throw new MyAppException("IN property " + propertyName + ": value should be greater than 100 ms.");
         this.irServerManager = new IRServersManager(this.irServers, tokenTimeInServer);
     }
 

@@ -1,3 +1,7 @@
 BROKER_PORT=4646
 IR_SERVERS_FILE=/path/to/parallel-and-distributed-IR/broker/src/IR_servers.cfg
+<<<<<<< 8b76c03a76223b0b5543862b8180f24a104d76b6
 SERVER_TIMEOUT_MS=2000
+=======
+TOKEN_TIME_IN_SERVER_MS=400
+>>>>>>> added new property to config.properties.example
