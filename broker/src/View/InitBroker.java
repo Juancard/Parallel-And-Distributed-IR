@@ -69,7 +69,9 @@ public class InitBroker {
 
     private void setupIRServers(Properties properties) throws MyAppException {
         String propertyName = "IR_SERVERS_FILE";
+        String timeoutProperty = "SERVER_TIMEOUT_MS";
         String irServersFile = properties.getProperty(propertyName);
+        int timeout = new Integer(properties.getProperty(timeoutProperty));
         if (!this.isValidFile(irServersFile)){
             throw new MyAppException("Loading IR servers file: " + propertyName + " is not a valid file path");
         }
