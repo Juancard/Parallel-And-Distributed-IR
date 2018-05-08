@@ -69,7 +69,6 @@ public class QueryHandler {
                 qCallable,
                 isQueryInCache
         );
-
         LOGGER.info("Aproximate Cache size: " + this.IRCache.size());
         String queriesCached = "";
         for (HashMap<Integer, Integer> k : this.IRCache.asMap().keySet())
