@@ -36,29 +36,28 @@ public class IRWorkerFactory implements WorkerFactory{
             PythonIndexer pythonIndexer,
             IRNormalizer normalizer,
             IndexFilesHandler indexFilesHandler,
-            Cache<HashMap<Integer, Integer>, HashMap<Integer, Double>> IRCache,
             QueryEvaluator queryEvaluator,
+            CacheHandler cacheHandler,
             StatsHandler statsHandler,
-            Token token
+            TokenHandler tokenHandler
     ) {
-        this.tokenHandler = new TokenHandler(token);
+        this.tokenHandler = tokenHandler;
         this.indexHandler = new IndexHandler(
                 indexFilesHandler,
                 pythonIndexer,
                 gpuHandler,
                 vocabulary,
                 documents,
-                IRCache
+                cacheHandler
         );
         this.queryHandler = new QueryHandler(
                 gpuHandler,
                 vocabulary,
                 normalizer,
                 documents,
-                IRCache,
                 queryEvaluator,
                 statsHandler,
-                token
+                cacheHandler
         );
         this.vocabulary = vocabulary;
     }

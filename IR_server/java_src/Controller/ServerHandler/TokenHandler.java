@@ -21,4 +21,8 @@ public class TokenHandler {
     public void release() {
         token.setActive(false);
     }
+
+    public boolean isTokenActive() {
+        return this.token.isActive();
+    }
 }

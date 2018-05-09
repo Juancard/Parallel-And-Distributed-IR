@@ -1,9 +1,7 @@
 package View;
 
 import java.io.*;
-import java.util.HashMap;
 import java.util.Properties;
-import java.util.concurrent.TimeUnit;
 import java.util.logging.Logger;
 
 import Common.MyAppException;
@@ -19,13 +17,7 @@ import Model.Documents;
 import Model.IRNormalizer;
 import Controller.ServerHandler.IRServer;
 import Controller.IndexerHandler.PythonIndexer;
-import Model.Query;
 import Model.Vocabulary;
-import com.google.common.cache.Cache;
-import com.google.common.cache.CacheBuilder;
-import com.google.common.cache.CacheLoader;
-import com.google.common.cache.LoadingCache;
-import com.jcraft.jsch.HASH;
 import org.ini4j.Ini;
 
 @SuppressWarnings("ALL")
@@ -60,7 +52,8 @@ public class InitServer {
     private IndexFilesHandler indexFilesHandler;
     private QueryEvaluator queryEvaluator;
     private StatsHandler statsHandler;
-    private Cache<HashMap<Integer, Integer>, HashMap<Integer, Double>> IRCache;
+    private CacheHandler cacheHandler;
+    private TokenHandler tokenHandler;
 
     public InitServer(String propertiesPath){
         Properties properties = null;
@@ -78,6 +71,7 @@ public class InitServer {
             this.setupPythonHost(properties);
             this.setupNormalizer(properties);
             this.setupLocalInvertedIndex(properties);
+            this.setUpToken();
             this.setupCache(properties);
             this.setupGpuServer(properties);
             this.setupStats(properties);
@@ -112,10 +106,10 @@ public class InitServer {
                 this.pyIndexer,
                 this.normalizer,
                 this.indexFilesHandler,
-                this.IRCache,
                 this.queryEvaluator,
+                this.cacheHandler,
                 this.statsHandler,
-                new Token()
+                this.tokenHandler
         );
         IRServer irServer = new IRServer(
                 irServerPort,
@@ -267,10 +261,22 @@ public class InitServer {
         );
     }
 
+    private void setUpToken() {
+        this.tokenHandler = new TokenHandler(new Token());
+    }
+
     public void setupCache(Properties properties) throws MyAppException {
+        String cacheActivatedProp = "CACHE_ACTIVATED";
         String cacheSizeProp = "CACHE_SIZE_IN_QUERIES";
         String expireAfterAccessProp = "CACHE_EXPIRE_AFTER_SECONDS";
         int cacheSize, expireAfterAccess;
+        boolean cacheActivated = properties.stringPropertyNames().contains(cacheActivatedProp)
+                && properties.getProperty(cacheActivatedProp).equals("true");
+        LOGGER.info("Server uses cache: " + cacheActivated);
+        if (!cacheActivated){
+            this.cacheHandler = new CacheHandler(cacheActivated, tokenHandler);
+            return;
+        }
         try {
              cacheSize = new Integer(properties.getProperty(cacheSizeProp));
         } catch (NumberFormatException e){
@@ -287,11 +293,7 @@ public class InitServer {
         if (expireAfterAccess < 0)
             throw new MyAppException("In property '" + expireAfterAccessProp + "': has to be greater than " + 0);
 
-        System.out.println(cacheSize + " - " + expireAfterAccess);
-        this.IRCache = CacheBuilder.newBuilder()
-                .maximumSize(cacheSize)
-                .expireAfterAccess(expireAfterAccess, TimeUnit.SECONDS)
-                .build();
+        this.cacheHandler = new CacheHandler(cacheActivated, tokenHandler, cacheSize, expireAfterAccess);
     }
 
     private void setupSshHandler(Properties properties) throws IOException {

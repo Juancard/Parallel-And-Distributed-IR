@@ -1,5 +1,6 @@
 package Controller.IndexerHandler;
 
+import Controller.CacheHandler;
 import Controller.GpuServerHandler;
 import Model.Documents;
 import Model.IRNormalizer;
@@ -18,8 +19,8 @@ import java.util.logging.Logger;
 public class IndexHandler {
     // classname for the logger
     private final static Logger LOGGER = Logger.getLogger(Logger.GLOBAL_LOGGER_NAME);
-    private final Cache<HashMap<Integer, Integer>, HashMap<Integer, Double>> IRCache;
 
+    private CacheHandler cacheHandler;
     private IndexFilesHandler indexFilesHandler;
     private GpuServerHandler gpuServerHandler;
     private PythonIndexer pythonIndexer;
@@ -32,14 +33,14 @@ public class IndexHandler {
             GpuServerHandler gpuServerHandler,
             Vocabulary vocabulary,
             Documents documents,
-            Cache<HashMap<Integer, Integer>, HashMap<Integer, Double>> IRCache
+            CacheHandler cacheHandler
     ){
         this.gpuServerHandler = gpuServerHandler;
         this.indexFilesHandler = indexFilesHandler;
         this.pythonIndexer = pythonIndexer;
         this.vocabulary = vocabulary;
         this.documents = documents;
-        this.IRCache = IRCache;
+        this.cacheHandler = cacheHandler;
     }
 
     public boolean index() throws IOException {
@@ -58,7 +59,7 @@ public class IndexHandler {
                 throw  new IndexerException(m);
             }
             LOGGER.info("Cleaning caché");
-            this.IRCache.invalidateAll();
+            this.cacheHandler.clean();
         } catch (IndexerException e) {
             String m = "Error on indexer: " + e.getMessage();
             LOGGER.warning(m);
