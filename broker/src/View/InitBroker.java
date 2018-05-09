@@ -91,10 +91,17 @@ public class InitBroker {
 
     private void setupIRServersManager(Properties properties) throws MyAppException {
         String propertyName = "TOKEN_TIME_IN_SERVER_MS";
-        int tokenTimeInServer = new Integer(properties.getProperty(propertyName));
-        if (tokenTimeInServer < 100)
-            throw new MyAppException("IN property " + propertyName + ": value should be greater than 100 ms.");
-        this.irServerManager = new IRServersManager(this.irServers, tokenTimeInServer);
+        String distributedCacheProp = "DISTRIBUTED_CACHE_CONSISTENCY";
+        boolean isDistributedCache = properties.stringPropertyNames().contains(distributedCacheProp)
+                && properties.getProperty(distributedCacheProp).equals("true");
+        this.irServerManager = new IRServersManager(this.irServers, isDistributedCache);
+        LOGGER.info("Distributed caché consistency is: " + ((isDistributedCache)? "ENABLED" : "DISABLED"));
+        if (isDistributedCache){
+            int tokenTimeInServer = new Integer(properties.getProperty(propertyName));
+            if (tokenTimeInServer < 100)
+                throw new MyAppException("IN property " + propertyName + ": value should be greater than 100 ms.");
+            this.irServerManager.setTokenTimeInServer(tokenTimeInServer);
+        }
     }
 
     private void testIRServers() throws MyAppException {

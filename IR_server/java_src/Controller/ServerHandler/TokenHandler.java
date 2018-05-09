@@ -11,7 +11,7 @@ public class TokenHandler {
 
     public TokenHandler(Token token){
         this.token = token;
-        token.setActive(false);
+        token.setActive(true);
     }
 
     public void activate() {

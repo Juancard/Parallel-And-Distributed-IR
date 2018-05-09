@@ -15,16 +15,18 @@ import java.util.logging.Logger;
 public class IRServersManager {
     private final static Logger LOGGER = Logger.getLogger(Logger.GLOBAL_LOGGER_NAME);
 
-    private static final int TOKEN_TIME_IN_SERVER = 400;
+    private static final int TOKEN_TIME_IN_SERVER_DEFAULT = 400;
 
     private ArrayList<IRServerHandler> irServers;
     private int serverIndexForQueries;
     private int tokenTimeInServer;
+    private boolean isDistributedCache;
 
-    public IRServersManager(ArrayList<IRServerHandler> irServers, int tokenTimeInServer){
+    public IRServersManager(ArrayList<IRServerHandler> irServers, boolean isDistributedCache){
         this.irServers = irServers;
         this.serverIndexForQueries = -1;
-        this.tokenTimeInServer = tokenTimeInServer;
+        this.tokenTimeInServer = TOKEN_TIME_IN_SERVER_DEFAULT;
+        this.isDistributedCache = isDistributedCache;
     }
 
     public HashMap<String, Double> query(String query) throws MyAppException, UnidentifiedException {
@@ -83,7 +85,7 @@ public class IRServersManager {
         int serverIndex = 0;
         IRServerHandler serverSelected = null;
         boolean tokenActivated;
-        while (true) {
+        while (this.isDistributedCache) {
             tokenActivated = false;
             try {
                 serverSelected = this.irServers.get(serverIndex);
@@ -107,5 +109,9 @@ public class IRServersManager {
             if (++serverIndex >= this.irServers.size())
                 serverIndex = 0;
         }
+    }
+
+    public void setTokenTimeInServer(int tokenTimeInServer) {
+        this.tokenTimeInServer = tokenTimeInServer;
     }
 }
