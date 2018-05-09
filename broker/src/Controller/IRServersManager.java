@@ -15,6 +15,8 @@ import java.util.logging.Logger;
 public class IRServersManager {
     private final static Logger LOGGER = Logger.getLogger(Logger.GLOBAL_LOGGER_NAME);
 
+    private static final int TOKEN_TIME_IN_SERVER = 400;
+
     private ArrayList<IRServerHandler> irServers;
     private int serverIndexForQueries;
     private int tokenTimeInServer;

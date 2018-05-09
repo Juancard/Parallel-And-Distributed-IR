@@ -108,7 +108,12 @@ public class QueryHandler {
     }
 
     private void saveQueryStats(
-            String query, boolean isGpuEval, boolean isQueryInCache, long start, long end, int docsMatched
+            String query,
+            boolean isGpuEval,
+            boolean isQueryInCache,
+            long start,
+            long end,
+            int docsMatched
     ) throws IOException {
         int terms = this.vocabulary.getNumerOfTerms();
         int docs = this.documents.getNumberOfDocs();

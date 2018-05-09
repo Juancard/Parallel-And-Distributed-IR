@@ -25,7 +25,7 @@ Propuesta completa [aquí][1]
 2) Rename file `config.ini.example` to `config.ini`
 3) Edit values of properties in file `config.ini`
 4) Run process: 
-```python
+```bash
 python sockets.py [-dv]
 ```
 
