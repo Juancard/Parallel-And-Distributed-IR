@@ -7,7 +7,7 @@ import argparse
 import logging
 import os
 from ir_manager import IRManager
-from custom_exceptions import NoIndexFilesException
+from custom_exceptions import NoIndexFilesException, IniException
 
 REQUEST_INDEX = 'IND'
 REQUEST_EVALUATION="EVA"
@@ -173,10 +173,15 @@ def main():
 		logging.basicConfig(format=format, level=logging.DEBUG)
 	try:
 		irManager = IRManager()
+	except IniException as e:
+		logging.error("Error in config.ini file: " + e.value)
+		sys.exit(0)
+	try:
 		irManager.loadStoredIndex()
 	except NoIndexFilesException as e:
 		logging.warning("Index could not be loaded in memory: " + e.value)
 		logging.warning("Queries are not going to be evaluated until a call to index is received.")
+
 	s = openSocket()
 	while 1:
 	    acceptConnection(s, irManager)

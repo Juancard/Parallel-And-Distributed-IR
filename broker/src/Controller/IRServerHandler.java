@@ -16,16 +16,18 @@ import java.net.SocketException;
  * Time: 20:23
  */
 public class IRServerHandler {
+    private static final int DEFAULT_TIMEOUT = 2000;
+
     String host;
     int port;
     private int timeout;
 
     public IRServerHandler(String host, int port){
-        this(host, port, 2000);
+        this(host, port, DEFAULT_TIMEOUT);
     }
 
     public IRServerHandler(ServerInfo serverInfo){
-        this(serverInfo.getHost(), serverInfo.getPort(), 2000);
+        this(serverInfo.getHost(), serverInfo.getPort(), DEFAULT_TIMEOUT);
     }
 
     public IRServerHandler(ServerInfo serverInfo, int timeout){

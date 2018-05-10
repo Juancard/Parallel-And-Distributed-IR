@@ -9,7 +9,7 @@ import pprint
 import numpy as np
 from modulos.Collection import Collection
 from modulos.Indexer import Indexer
-from custom_exceptions import NoIndexFilesException
+from custom_exceptions import NoIndexFilesException, IniException
 
 
 POSTINGS_FILENAME = "postings.bin"
@@ -27,6 +27,7 @@ class IRManager(object):
         self.postings = False
         self.idf = False
         self.docsNorm = False
+        self.indexConfig = loadIndexConfig(loadIni())
 
     def index(self, corpusPath):
     	try:
@@ -34,12 +35,9 @@ class IRManager(object):
     	except OSError, e:
     		logging.error(e)
     		raise
-    	iniData = loadIni()
-    	# data para el analizador lexico
-    	indexConfig = loadIndexConfig(iniData)
 
     	indexer = Indexer(collection)
-    	indexer.index(indexConfig)
+    	indexer.index(self.indexConfig)
 
         self.corpusPath = corpusPath
         indexer.postings.sortByKey()
@@ -134,9 +132,11 @@ def loadIni():
 	return iniData
 
 def loadIndexConfig(iniData):
-	indexConfig = {}
-	if "stopwords" in iniData and iniData["stopwords"]:
-		indexConfig["stopwords"] = iniData['stopwords']
+    indexConfig = {}
+    if "stopwords" in iniData and iniData["stopwords"]:
+        if not (iniData["stopwords"]):
+            raise IniException("in 'stopwords' property: not a valid file path")
+        indexConfig["stopwords"] = iniData['stopwords']
 	if "stem" in iniData and iniData["stem"]:
 		indexConfig["stem"] = iniData['stem']
 	if "term_min_size" in iniData and iniData["term_min_size"]:

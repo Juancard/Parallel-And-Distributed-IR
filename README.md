@@ -26,7 +26,7 @@ Propuesta completa [aquí][1]
 3) Edit values of properties in file `config.ini`
 4) Run process: 
 ```bash
-python sockets.py [-dv]
+python sockets.py -v >> logs.txt
 ```
 
 ##### Java process
