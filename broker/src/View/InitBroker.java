@@ -108,10 +108,10 @@ public class InitBroker {
     private void testIRServers() throws MyAppException {
         for (IRServerHandler irServerHandler : this.irServers){
             try {
-                LOGGER.info("Testing connection to " + irServerHandler.getHost() + ":" + irServerHandler.getPort());
+                LOGGER.info("Testing connection to " + irServerHandler.getName());
                 irServerHandler.testConnection();
             } catch (MyAppException e) {
-                throw new MyAppException(irServerHandler.getHost() + ":" + irServerHandler.getPort() + " connection failed. Cause: " + e.getMessage());
+                throw new MyAppException(irServerHandler.getName() + ": connection failed. Cause: " + e.getMessage());
             }
         }
     }
@@ -125,7 +125,7 @@ public class InitBroker {
             int[] indexMetadata = new int[0];
             try {
                 indexMetadata = irServerHandler.getIndexMetadata();
-                LOGGER.info(irServerHandler.getHost() + ":" + irServerHandler.getPort() + " - Terms: " + indexMetadata[0] + " - Docs: " + indexMetadata[1]);
+                LOGGER.info(irServerHandler.getName() + " - Terms: " + indexMetadata[0] + " - Docs: " + indexMetadata[1]);
                 if (!initialized){
                     terms = indexMetadata[0];
                     docs = indexMetadata[1];
@@ -133,8 +133,8 @@ public class InitBroker {
                 } else {
                     consistency &= indexMetadata[0] == terms & indexMetadata[1] == docs;
                 }
-            } catch (IOException e) {
-                throw new MyAppException(irServerHandler.getHost() + ":" + irServerHandler.getPort() + ": checking failed. Cause: " + e.getMessage());
+            } catch (MyAppException e) {
+                throw new MyAppException(irServerHandler.getName() + ": checking failed. Cause: " + e.getMessage());
             }
         }
         return consistency;
@@ -221,10 +221,10 @@ public class InitBroker {
                 return;
             }
             try {
-                LOGGER.info("Loading inverted index at gpu via " + fastestServer.getHost() + ":" + fastestServer.getPort());
+                LOGGER.info("Loading inverted index at gpu via " + fastestServer.getName());
                 fastestServer.sendInvertedIndexToGpu();
                 LOGGER.info("Indexing completed!!");
-            } catch (IOException e) {
+            } catch (MyAppException e) {
                 LOGGER.severe("Error loading inverted index in gpu server. Cause: " + e.getMessage());
             }
         }
