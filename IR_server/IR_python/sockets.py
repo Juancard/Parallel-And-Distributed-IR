@@ -166,10 +166,11 @@ def acceptConnection(s, irManager):
 
 def main():
 	args = loadArgParser()
+	format = '%(asctime)s: %(levelname)s: %(message)s'
 	if args.verbose:
-		logging.basicConfig(format='%(levelname)s: %(message)s', level=logging.INFO)
+		logging.basicConfig(format=format, level=logging.INFO)
 	if args.debug:
-		logging.basicConfig(format='%(levelname)s: %(message)s', level=logging.DEBUG)
+		logging.basicConfig(format=format, level=logging.DEBUG)
 	try:
 		irManager = IRManager()
 		irManager.loadStoredIndex()
