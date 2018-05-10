@@ -116,7 +116,7 @@ def onRequest(conn, addr, irManager):
 			logging.info("Sending documents")
 			for docId in range(0, indexData["docs"]):
 			    relPath = os.path.relpath(indexData["documents"][docId], corpusPath)
-			    sendLengthThenMsg(conn, relPath)
+			    sendLengthThenMsg(conn, relPath.decode("UTF-8"))
 			# SEND MAX FREQS
 			logging.info("Sending maxfreqs")
 			max_freqs = [indexData["max_freq"][d] for d in range(0, len(indexData["max_freq"]))]
