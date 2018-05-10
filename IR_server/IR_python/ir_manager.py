@@ -123,7 +123,6 @@ def loadIni():
 	INI_PATH = os.path.dirname(os.path.realpath(__file__)) + "/config.ini"
 	Config = ConfigParser.ConfigParser()
 	Config.read(INI_PATH)
-	logging.info(INI_PATH)
 	iniData = {}
 	sections = Config.sections()
 	for option in Config.options(sections[0]):
@@ -134,7 +133,7 @@ def loadIni():
 def loadIndexConfig(iniData):
     indexConfig = {}
     if "stopwords" in iniData and iniData["stopwords"]:
-        if not (iniData["stopwords"]):
+        if not (os.path.exists(iniData["stopwords"])):
             raise IniException("in 'stopwords' property: not a valid file path")
         indexConfig["stopwords"] = iniData['stopwords']
 	if "stem" in iniData and iniData["stem"]:
