@@ -1,4 +1,4 @@
-package Controller;
+package Model;
 
 /**
  * Created by juan on 08/05/18.

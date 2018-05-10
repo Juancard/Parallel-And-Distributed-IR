@@ -1,4 +1,4 @@
-package View;
+package Controller;
 
 import java.util.logging.Logger;
 
@@ -32,5 +32,29 @@ public class IndexWorker implements Runnable {
             this.isIndexedOk = false;
             LOGGER.severe("Error indexing at: " + irServer.host + ":" + irServer.port + ". Cause: " + e.getMessage());
         }
+    }
+
+    public IRServerHandler getIrServer() {
+        return irServer;
+    }
+
+    public void setIrServer(IRServerHandler irServer) {
+        this.irServer = irServer;
+    }
+
+    public long getIndexingTime() {
+        return indexingTime;
+    }
+
+    public void setIndexingTime(long indexingTime) {
+        this.indexingTime = indexingTime;
+    }
+
+    public boolean isIndexedOk() {
+        return isIndexedOk;
+    }
+
+    public void setIndexedOk(boolean indexedOk) {
+        isIndexedOk = indexedOk;
     }
 }

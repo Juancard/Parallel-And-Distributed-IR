@@ -1,10 +1,11 @@
 package View;
 
 import Common.*;
+import Controller.IRServerHandler;
 import Controller.IRServersManager;
-import ServerHandler.BrokerServer;
-import ServerHandler.BrokerWorkerFactory;
-import ServerHandler.TokenWorker;
+import Controller.IndexWorker;
+import Controller.RemotePortsLoader;
+import Controller.ServerHandler.*;
 
 import java.io.File;
 import java.io.IOException;
@@ -107,10 +108,10 @@ public class InitBroker {
     private void testIRServers() throws MyAppException {
         for (IRServerHandler irServerHandler : this.irServers){
             try {
-                LOGGER.info("Testing connection to " + irServerHandler.host + ":" + irServerHandler.port);
+                LOGGER.info("Testing connection to " + irServerHandler.getHost() + ":" + irServerHandler.getPort());
                 irServerHandler.testConnection();
             } catch (MyAppException e) {
-                throw new MyAppException(irServerHandler.host + ":" + irServerHandler.port + " connection failed. Cause: " + e.getMessage());
+                throw new MyAppException(irServerHandler.getHost() + ":" + irServerHandler.getPort() + " connection failed. Cause: " + e.getMessage());
             }
         }
     }
@@ -124,7 +125,7 @@ public class InitBroker {
             int[] indexMetadata = new int[0];
             try {
                 indexMetadata = irServerHandler.getIndexMetadata();
-                LOGGER.info(irServerHandler.host + ":" + irServerHandler.port + " - Terms: " + indexMetadata[0] + " - Docs: " + indexMetadata[1]);
+                LOGGER.info(irServerHandler.getHost() + ":" + irServerHandler.getPort() + " - Terms: " + indexMetadata[0] + " - Docs: " + indexMetadata[1]);
                 if (!initialized){
                     terms = indexMetadata[0];
                     docs = indexMetadata[1];
@@ -133,7 +134,7 @@ public class InitBroker {
                     consistency &= indexMetadata[0] == terms & indexMetadata[1] == docs;
                 }
             } catch (IOException e) {
-                throw new MyAppException(irServerHandler.host + ":" + irServerHandler.port + ": checking failed. Cause: " + e.getMessage());
+                throw new MyAppException(irServerHandler.getHost() + ":" + irServerHandler.getPort() + ": checking failed. Cause: " + e.getMessage());
             }
         }
         return consistency;
@@ -200,10 +201,10 @@ public class InitBroker {
         boolean allFinished = true;
         long fastest = Long.MAX_VALUE;
         for (IndexWorker worker : workers){
-            allFinished &= worker.isIndexedOk;
-            if (worker.isIndexedOk && worker.indexingTime <= fastest){
-                fastest = worker.indexingTime;
-                fastestServer = worker.irServer;
+            allFinished &= worker.isIndexedOk();
+            if (worker.isIndexedOk() && worker.getIndexingTime() <= fastest){
+                fastest = worker.getIndexingTime();
+                fastestServer = worker.getIrServer();
             }
         }
         if (!allFinished || fastestServer == null){
@@ -220,7 +221,7 @@ public class InitBroker {
                 return;
             }
             try {
-                LOGGER.info("Loading inverted index at gpu via " + fastestServer.host + ":" + fastestServer.port);
+                LOGGER.info("Loading inverted index at gpu via " + fastestServer.getHost() + ":" + fastestServer.getPort());
                 fastestServer.sendInvertedIndexToGpu();
                 LOGGER.info("Indexing completed!!");
             } catch (IOException e) {

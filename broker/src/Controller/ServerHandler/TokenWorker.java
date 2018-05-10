@@ -1,4 +1,4 @@
-package ServerHandler;
+package Controller.ServerHandler;
 
 import Controller.IRServersManager;
 

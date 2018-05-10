@@ -1,4 +1,4 @@
-package View;
+package Controller;
 
 import Common.NotValidRemotePortException;
 import Common.ServerInfo;

@@ -1,4 +1,4 @@
-package ServerHandler;
+package Controller.ServerHandler;
 
 import Common.IRProtocol;
 import Common.MyAppException;

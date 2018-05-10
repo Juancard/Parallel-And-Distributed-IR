@@ -1,9 +1,8 @@
-package ServerHandler;
+package Controller.ServerHandler;
 
 import Common.Socket.MyCustomServer;
 
 import java.io.IOException;
-import java.util.logging.Logger;
 
 
 /**
@@ -14,7 +13,7 @@ import java.util.logging.Logger;
 public class BrokerServer extends MyCustomServer {
 
     private TokenWorker tokenWorker;
-    BrokerWorkerFactory brokerWorkerFactory;
+    private BrokerWorkerFactory brokerWorkerFactory;
 
     public BrokerServer(int port, BrokerWorkerFactory brokerWorkerFactory, TokenWorker tokenWorker) {
         super(port, brokerWorkerFactory);

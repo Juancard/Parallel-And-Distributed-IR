@@ -2,7 +2,6 @@ package Controller;
 
 import Common.MyAppException;
 import Model.DocScores;
-import View.IRServerHandler;
 
 import java.util.logging.Logger;
 

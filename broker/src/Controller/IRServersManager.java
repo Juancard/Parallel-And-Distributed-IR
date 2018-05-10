@@ -3,7 +3,6 @@ package Controller;
 import Common.MyAppException;
 import Common.UnidentifiedException;
 import Model.DocScores;
-import View.IRServerHandler;
 
 import java.util.ArrayList;
 import java.util.HashMap;

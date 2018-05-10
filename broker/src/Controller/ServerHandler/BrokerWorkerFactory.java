@@ -1,11 +1,10 @@
-package ServerHandler;
+package Controller.ServerHandler;
 
 import Common.Socket.MyCustomWorker;
 import Common.Socket.WorkerFactory;
 import Controller.IRServersManager;
-import View.IRServerHandler;
+
 import java.net.Socket;
-import java.util.ArrayList;
 
 /**
  * User: juan

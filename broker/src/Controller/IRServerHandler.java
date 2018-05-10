@@ -1,4 +1,4 @@
-package View;
+package Controller;
 
 import Common.IRProtocol;
 import Common.MyAppException;
@@ -7,11 +7,8 @@ import Common.Socket.SocketConnection;
 import Common.UnidentifiedException;
 import Model.DocScores;
 
-import javax.print.Doc;
 import java.io.IOException;
 import java.net.SocketException;
-import java.util.HashMap;
-import java.util.logging.Logger;
 
 /**
  * User: juan
@@ -220,5 +217,37 @@ public class IRServerHandler {
         } finally {
             connection.close();
         }
+    }
+
+    private SocketConnection stablishConnection() throws MyAppException {
+        try {
+            return new SocketConnection(this.host, this.port);
+        } catch (IOException e) {
+            throw new MyAppException("Could not stablish connection." + e.getMessage());
+        }
+    }
+
+    public String getHost() {
+        return host;
+    }
+
+    public void setHost(String host) {
+        this.host = host;
+    }
+
+    public int getPort() {
+        return port;
+    }
+
+    public void setPort(int port) {
+        this.port = port;
+    }
+
+    public int getTimeout() {
+        return timeout;
+    }
+
+    public void setTimeout(int timeout) {
+        this.timeout = timeout;
     }
 }
