@@ -52,7 +52,7 @@ __global__ void k_evaluateQuery (
 	int myDocId = index;
 	docScores[myDocId] = 0;
 	int i;
-	//printf("docs norm: %.4f\n", docsNorm[myDocId]);
+	//printf("doc %d: docs norm: %.4f\n", myDocId, docsNorm[myDocId]);
 
 	PostingTfIdf termPosting;
 	for (i = 0; i < q.size; i++) {
@@ -69,7 +69,7 @@ __global__ void k_evaluateQuery (
       //printf("found my doc id: %d\n", currentDocId);
 			//printf("doc %d: weight to sum: %.2f * %.2f\n", myDocId, termPosting.weights[docIdsPos], q.weights[i]);
       docScores[myDocId] += termPosting.weights[docIdsPos] * q.weights[i];
-      //printf("doc %d: current weight: %4.2f\n", myDocId, docScores[myDocId]);
+      //printf("doc %d: current weight: %4.6f\n", myDocId, docScores[myDocId]);
 		}
 	}
 	/*
@@ -77,10 +77,11 @@ __global__ void k_evaluateQuery (
 	next code turns scalar product into cosene similarity
 	*/
   float normProduct = q.norm * docsNorm[myDocId];
+  //printf("doc %d: normProduct: %.6f\n", myDocId, normProduct);
   if (normProduct != 0) {
     docScores[myDocId] /= normProduct;
   }
-  //printf("final score doc %d: %4.2f\n", myDocId, docScores[myDocId]);
+  //printf("final score doc %d: %4.6f\n", myDocId, docScores[myDocId]);
 }
 
 extern "C" int loadIndexInCuda(Collection irCollection) {
