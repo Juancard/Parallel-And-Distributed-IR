@@ -1,9 +1,6 @@
 package View;
 
-import Common.CommonMain;
-import Common.MyAppException;
-import Common.PropertiesManager;
-import Common.UnidentifiedException;
+import Common.*;
 import Controller.DocScores;
 import Controller.IRClientHandler;
 
@@ -33,6 +30,12 @@ public class InitClient {
     private IRClientHandler irClientHandler;
 
     public InitClient(String propertiesString){
+        try {
+            MyLogger.setup();
+        } catch (IOException e) {
+            throw new RuntimeException("Problems with creating the log files");
+        }
+
         Properties properties = null;
         try {
             properties = PropertiesManager.loadProperties(getClass().getResourceAsStream(propertiesString));

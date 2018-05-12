@@ -15,6 +15,7 @@ import java.util.HashMap;
  * Time: 20:23
  */
 public class IRClientHandler {
+    private static final int DEFAULT_TIMEOUT = 2000;
     String host;
     int port;
 
@@ -80,7 +81,7 @@ public class IRClientHandler {
         }
         connection.send(IRProtocol.TEST);
         try {
-            connection.getClientSocket().setSoTimeout(2000);
+            connection.getClientSocket().setSoTimeout(DEFAULT_TIMEOUT);
             Object response = connection.read();
             return (Integer) response == IRProtocol.TEST_OK;
         } catch (SocketException e) {

@@ -1,0 +1,6 @@
+may 10, 2018 8:57:41 PM View.InitClient isBrokerAvailable
+GRAVE: Connecting to broker: Could not stablish connection. Cause: Conexión rehusada (Connection refused).
+may 10, 2018 8:58:19 PM View.InitClient isBrokerAvailable
+GRAVE: Connecting to broker: Could not stablish connection. Cause: Conexión rehusada (Connection refused).
+may 11, 2018 8:06:38 PM View.InitClient isBrokerAvailable
+GRAVE: Connecting to broker: Could not stablish connection. Cause: Conexión rehusada (Connection refused).
