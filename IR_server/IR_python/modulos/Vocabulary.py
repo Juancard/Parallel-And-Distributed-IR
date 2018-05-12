@@ -8,10 +8,13 @@ class Vocabulary(object):
 		self.content = {}
 
 	def addTerm(self, term, cf, df):
+		termId = len(self.content)
 		self.content[term] = {
+			"id": termId,
 			"cf": cf,
 			"df": df
 		}
+		return termId
 
 	def incrementCF(self, term, n):
 		if self.isATerm(term):

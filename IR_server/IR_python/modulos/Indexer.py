@@ -20,7 +20,6 @@ class Indexer(object):
 		self.vocabulary = Vocabulary()
 		self.postings = DictionaryPostings({})
 		self.documents = Documents()
-		self.documentsTerms = {}
 		self.maxFreqInDocs = {}
 		#self.positions = DictionaryPostings({})
 		if self.calculateStats:
@@ -65,7 +64,7 @@ class Indexer(object):
 			self.documents.addDocument(docId, actualDoc["path"])
 
 			# De cada documento los terminos que tiene (sin repetir)
-			self.documentsTerms[docId] = set()
+			#self.documentsTerms[docId] = set()
 
 			# Actualizo vocabulario
 			self.updateIndex(docId, terms)
@@ -81,53 +80,47 @@ class Indexer(object):
 			logging.info("Generando stats")
 			self.endStats()
 
-		logging.info(u"Ordenando vocabulario alfabeticamente")
-		self.vocabulary.setAlphabeticalOrder()
-		logging.info(u"Generando id de los terminos")
-		self.setTermsId()
-		logging.info(u"Ordenando postings por clave")
-		self.postings.sortByKey()
+		#logging.info(u"Ordenando vocabulario alfabeticamente")
+		#self.vocabulary.setAlphabeticalOrder()
+		#logging.info(u"Generando id de los terminos")
+		#self.setTermsId()
+		#logging.info(u"Ordenando postings por clave")
+		#self.postings.sortByKey()
 		#self.positions.sortByKey()
-		logging.info(u"Calculando frecuencias maximas de cada documento")
-		self.loadMaxFreqs()
+		#logging.info(u"Calculando frecuencias maximas de cada documento")
+		#self.loadMaxFreqs()
 
 	def updateIndex(self, docId, terms):
 		position = 0
+		termToFreq = {}
 		for t in terms:
-			self.documentsTerms[docId].add(t)
+			#self.documentsTerms[docId].add(t)
 			# Si termino no esta en vocabulario lo agrego inicializando la data
 			if not self.vocabulary.isATerm(t):
-				self.vocabulary.addTerm(t, 1.0, 1.0)
-				self.postings.addPosting(t, docId, 1.0)
+				termId = self.vocabulary.addTerm(t, 1.0, 1.0)
+				self.postings.addPosting(termId, docId, 1.0)
 				#self.positions.addPosting(t, docId, [position])
+				termToFreq[t] = 1
 			else:
 				self.vocabulary.incrementCF(t, 1.0)
 				# termino no estaba en este documento?
-				if not self.postings.isDocInPosting(t, docId):
+				termId = self.vocabulary.getId(t)
+				if not self.postings.isDocInPosting(termId, docId):
+					termToFreq[t] = 1
 					self.vocabulary.incrementDF(t, 1.0)
-					self.postings.addDocToPosting(t, docId, 1.0)
+					self.postings.addDocToPosting(termId, docId, 1.0)
 					#self.positions.addDocToPosting(t, docId, [position])
 				# else termino ya existe en documento:
 				else:
+					termToFreq[t] += 1
 					# Actualizo postings con frecuencias
-					self.postings.addDocToPosting(t, docId, self.postings.getValue(t, docId) + 1.0)
+					self.postings.addDocToPosting(termId, docId, self.postings.getValue(termId, docId) + 1.0)
 					# Actualizo postings posicionales
 					#positionList = self.positions.getValue(t, docId)
 					#positionList.append(position)
 					#self.positions.addDocToPosting(t, docId, positionList)
-			position += 1
-
-	def setTermsId(self):
-		termId = 0
-		for term in self.vocabulary.content:
-			self.vocabulary.setId(term, termId)
-			self.postings.termToId(term, termId)
-			#self.positions.termToId(term, termId)
-			for doc in self.documentsTerms:
-				if term in self.documentsTerms[doc]:
-					self.documentsTerms[doc].discard(term)
-					self.documentsTerms[doc].add(termId)
-			termId += 1
+			#position += 1
+		self.maxFreqInDocs[docId] = 0 if len(termToFreq) == 0 else max([(key, value) for key, value in termToFreq.items()])[1] 
 
 	def getInitStats(self):
 		out = {
@@ -206,39 +199,3 @@ class Indexer(object):
 				% self.stats["terms_freq_one"])
 			statsFile.write(''.join(s))
 		return title
-
-	def setTfIdf(self):
-		# Seteo idf
-		if not self.vocabulary.hasIdf():
-			self.vocabulary.setIdf(len(self.documents.content))
-
-		# Maximas frecuencias de cada documento
-		maxTfreq = {}
-		for d in self.documentsTerms:
-			maxTfreq[d] = 0
-			for t in self.documentsTerms[d]:
-				tfreq = self.postings.getValue(t, d)
-				if tfreq > maxTfreq[d]: maxTfreq[d] = tfreq
-
-		# Seteo TF_idf como valor de la posting
-		for t in self.vocabulary.content:
-			termId = self.vocabulary.getId(t)
-			p = self.postings.getPosting(termId)
-			[self.postings.addDocToPosting(termId, docId, (p[docId] / maxTfreq[docId]) * self.vocabulary.getIdf(t)) for docId in p]
-
-	def loadMaxFreqs(self):
-		for d in self.documentsTerms:
-			self.maxFreqInDocs[d] = 0
-			for t in self.documentsTerms[d]:
-				tfreq = self.postings.getValue(t, d)
-				if tfreq > self.maxFreqInDocs[d]: self.maxFreqInDocs[d] = tfreq
-
-	def getDocumentsNorm(self):
-		documentsNorm = {}
-		for d in self.documentsTerms:
-			total = 0.0
-			for t in self.documentsTerms[d]:
-				p = self.postings.getPosting(t)
-				total += p[d] ** 2.0
-			documentsNorm[d] = total ** 0.5
-		return documentsNorm

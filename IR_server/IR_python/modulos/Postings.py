@@ -53,13 +53,13 @@ class DictionaryPostings(Postings):
 	def getPosting(self, term):
 		return self.content[term]
 
-	def addPosting(self, term, docId, value):
-		if term not in self.content:
-			self.content[term] = {
+	def addPosting(self, termId, docId, value):
+		if termId not in self.content:
+			self.content[termId] = {
 				docId: value
 			}
 		else:
-			self.addDocToPosting(term, docId, value)
+			self.addDocToPosting(termId, docId, value)
 
 	def addDocToPosting(self, term, docId, value):
 		if term in self.content:
