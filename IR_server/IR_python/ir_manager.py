@@ -24,8 +24,7 @@ class IRManager(object):
         self.corpusPath = False
         self.docs = False
         self.terms = False
-        self.postings = False
-        self.idf = False
+        self.maxfreqs = False
         self.docsNorm = False
         self.indexConfig = loadIndexConfig(loadIni())
 
@@ -98,33 +97,32 @@ class IRManager(object):
         logging.info("%d docs and %d terms" % (self.docs, self.terms))
 
         logging.info("Loading maxfreqs")
-        maxFreqs = loadMaxfreqs(maxFreqsDir, self.docs)
+        self.maxfreqs = loadMaxfreqs(maxFreqsDir, self.docs)
 
         logging.info("Loading pointers to postings")
         df = loadDf(pointersDir, self.terms)
 
-        logging.info("Loading postings")
-        self.postings = loadPostings(postingsDir, df)
-
         logging.info("Generating retrieval data structures")
-        self.generateRetrievalData(maxFreqs)
+        self.generateDocsNorm(postingsDir, df)
 
-    def generateRetrievalData(self, maxFreqs):
-        self.docsNorm = {}
-        for dId in range(0, self.docs):
-            self.docsNorm[dId] = 0.0
-
-        self.idf = {}
-        for tId in self.postings:
-            df = len(self.postings[tId]) + 0.0
-            currentIdf = np.log10(self.docs / df)
-            self.idf[tId] = currentIdf
-            for dId in self.postings[tId]:
-                currentTf = (self.postings[tId][dId] + 0.0) / maxFreqs[dId]
-                currentTfIdf = currentTf * currentIdf
-                self.postings[tId][dId] = currentTfIdf
-                self.docsNorm[dId] += currentTfIdf ** 2.0
-
+    def generateDocsNorm(self, postingsDir, lenPostings):
+        self.docsNorm = {k:0.0 for k in range(0, self.docs)}
+        print self.maxfreqs
+        with open(postingsDir, "rb") as f:
+            for tId in range(0, self.terms):
+                logging.debug("%d of %d" % (tId, self.terms))
+                df = lenPostings[tId]
+                currentIdf = np.log10(self.docs / float(df))
+                docIdsRead = struct.unpack('<%iI' % df, f.read(df * 4))
+                freqsRead = struct.unpack('<%iI' % df, f.read(df * 4))
+                for i in range(0, df):
+                    currentTf = 0
+                    if self.maxfreqs[docIdsRead[i]] != 0:
+                        currentTf = (freqsRead[i] + 0.0) / float(self.maxfreqs[docIdsRead[i]])
+                    currentTfIdf = currentTf * currentIdf
+                    if docIdsRead[i] == 3:
+                        print tId, currentIdf, currentTfIdf, self.maxfreqs[docIdsRead[i]]
+                    self.docsNorm[docIdsRead[i]] += currentTfIdf ** 2.0
         for dId in self.docsNorm:
             self.docsNorm[dId] = self.docsNorm[dId] ** 0.5
 

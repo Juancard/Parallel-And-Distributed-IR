@@ -120,7 +120,11 @@ class Indexer(object):
 					#positionList.append(position)
 					#self.positions.addDocToPosting(t, docId, positionList)
 			#position += 1
-		self.maxFreqInDocs[docId] = 0 if len(termToFreq) == 0 else max([(key, value) for key, value in termToFreq.items()])[1] 
+		maxValue = 0
+		for t in termToFreq:
+			if termToFreq[t] >= maxValue:
+				maxValue = termToFreq[t]
+		self.maxFreqInDocs[docId] = maxValue
 
 	def getInitStats(self):
 		out = {
