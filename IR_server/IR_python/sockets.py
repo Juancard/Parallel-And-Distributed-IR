@@ -134,7 +134,9 @@ def onRequest(conn, addr, irManager):
 				conn.sendall(struct.pack('<%sI' % len(docIds), *docIds))
 				conn.sendall(struct.pack('<%sI' % len(freqs), *freqs))
 			sendLengthThenMsg(conn, RESPONSE_SUCCESS)
-			irManager.generateRetrievalData(indexData["max_freq"])
+			message = readLengthThenMsg(conn)
+			if message == RESPONSE_SUCCESS:
+				irManager.generateRetrievalData()
 		except OSError, e:
 		    logging.error(e)
 		    sendLengthThenMsg(conn, RESPONSE_FAIL)

@@ -26,6 +26,9 @@ class IRManager(object):
         self.terms = False
         self.maxfreqs = False
         self.docsNorm = False
+        self.df = False
+        self.pointers = False
+        self.postingsDir = False
         self.indexConfig = loadIndexConfig(loadIni())
 
     def index(self, corpusPath):
@@ -59,15 +62,21 @@ class IRManager(object):
             docScores[docId] = 0.0
         qMaxFreq = max(query.values()) + 0.0
         qNorm = 0.0
+        idf = {}
         for qtId in query:
-            qTfIdf = (query[qtId] / qMaxFreq) * self.idf[qtId]
+            idf[qtId] = np.log10(self.docs / float(self.df[qtId]))
+            qTfIdf = (query[qtId] / float(qMaxFreq)) * idf[qtId]
             query[qtId] = qTfIdf
             qNorm += qTfIdf ** 2.0
         qNorm = qNorm ** 0.5
         for qtId in query:
-            qtPosting = self.postings[qtId]
-            for dId in qtPosting:
-                docScores[dId] += query[qtId] * qtPosting[dId]
+            docIdsRead, freqsRead = self.readPostingList(qtId)
+            for i in range(0, len(docIdsRead)):
+                dId = docIdsRead[i]
+                tfidf = 0
+                if self.maxfreqs[dId] != 0:
+                    tfidf = (freqsRead[i] / float(self.maxfreqs[dId])) * idf[qtId]
+                docScores[dId] += query[qtId] * tfidf
         for docId in range(0, self.docs):
             divider = qNorm * self.docsNorm[docId]
             if divider == 0.0:
@@ -75,6 +84,14 @@ class IRManager(object):
             else:
                 docScores[docId] /= divider
         return docScores
+
+    def readPostingList(self, termId):
+        with open(self.postingsDir, "rb") as f:
+            f.seek(self.pointers[termId])
+            df = self.df[termId]
+            docIdsRead = struct.unpack('<%iI' % df, f.read(df * 4))
+            freqsRead = struct.unpack('<%iI' % df, f.read(df * 4))
+        return docIdsRead, freqsRead
 
     def loadStoredIndex(self):
         logging.info("Loading stored index")
@@ -87,6 +104,7 @@ class IRManager(object):
         maxFreqsDir = os.path.join(self.indexPath, MAXFREQS_FILENAME)
         pointersDir = os.path.join(self.indexPath, POSTINGS_POINTERS_FILENAME)
         postingsDir = os.path.join(self.indexPath, POSTINGS_FILENAME)
+        self.postingsDir = postingsDir
         if not (os.path.exists(metadataDir) and os.path.exists(maxFreqsDir) and os.path.exists(pointersDir) and os.path.exists(postingsDir)):
             raise NoIndexFilesException("index files have not been generated.")
 
@@ -100,19 +118,22 @@ class IRManager(object):
         self.maxfreqs = loadMaxfreqs(maxFreqsDir, self.docs)
 
         logging.info("Loading pointers to postings")
-        df = loadDf(pointersDir, self.terms)
+        self.df = loadDf(pointersDir, self.terms)
 
         logging.info("Generating retrieval data structures")
-        self.generateDocsNorm(postingsDir, df)
+        self.generateRetrievalData()
+        logging.info("Finished generating retrieval data structures")
 
-    def generateDocsNorm(self, postingsDir, lenPostings):
-        self.docsNorm = {k:0.0 for k in range(0, self.docs)}
-        print self.maxfreqs
-        with open(postingsDir, "rb") as f:
+    def generateRetrievalData(self):
+        self.docsNorm = [0.0 for k in range(0, self.docs)]
+        self.pointers = [0 for k in range(0, self.terms)]
+        with open(self.postingsDir, "rb") as f:
             for tId in range(0, self.terms):
-                logging.debug("%d of %d" % (tId, self.terms))
-                df = lenPostings[tId]
+                if tId % 100000 == 0:
+                    logging.info("Processing %d of %d terms" % (tId, self.terms))
+                df = self.df[tId]
                 currentIdf = np.log10(self.docs / float(df))
+                self.pointers[tId] = f.tell()
                 docIdsRead = struct.unpack('<%iI' % df, f.read(df * 4))
                 freqsRead = struct.unpack('<%iI' % df, f.read(df * 4))
                 for i in range(0, df):
@@ -120,11 +141,8 @@ class IRManager(object):
                     if self.maxfreqs[docIdsRead[i]] != 0:
                         currentTf = (freqsRead[i] + 0.0) / float(self.maxfreqs[docIdsRead[i]])
                     currentTfIdf = currentTf * currentIdf
-                    if docIdsRead[i] == 3:
-                        print tId, currentIdf, currentTfIdf, self.maxfreqs[docIdsRead[i]]
                     self.docsNorm[docIdsRead[i]] += currentTfIdf ** 2.0
-        for dId in self.docsNorm:
-            self.docsNorm[dId] = self.docsNorm[dId] ** 0.5
+        self.docsNorm = [norm ** 0.5 for norm in self.docsNorm]
 
 def loadIni():
 	INI_PATH = os.path.dirname(os.path.realpath(__file__)) + "/config.ini"
