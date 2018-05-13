@@ -113,4 +113,12 @@ public class IndexerConfig {
     public File getIndexPath() {
         return indexPath;
     }
+
+    public int getMinTermsLength() {
+        return minTermsLength;
+    }
+
+    public int getMaxTermsLength() {
+        return maxTermsLength;
+    }
 }

@@ -1,5 +1,8 @@
 package Controller.IndexerHandler;
 
+import Common.IRProtocol;
+import Common.MyAppException;
+
 import java.io.*;
 
 import java.util.ArrayList;
@@ -88,7 +91,7 @@ public class PythonIndexer {
         return true;
     }
 
-    public synchronized boolean indexViaSocket(IndexFilesHandler indexFilesHandler) throws IndexerException, IOException {
+    public synchronized boolean indexViaSocket(IndexFilesHandler indexFilesHandler) throws IndexerException, MyAppException {
         PythonSocketConnection sc = null;
         try {
             sc = new PythonSocketConnection(host, port);
@@ -97,56 +100,102 @@ public class PythonIndexer {
             throw new IndexerException("Could not connect to indexer host. Cause: " + e.getMessage());
         }
         // SEND INDEX REQUEST
-        sc.sendMessage(this.REQUEST_INDEX);
-        sc.sendMessage(this.corpusPath);
+        try {
+            sc.sendMessage(this.REQUEST_INDEX);
+            sc.sendMessage(this.corpusPath);
+        } catch (IOException e) {
+            LOGGER.log(Level.SEVERE, e.getMessage(), e);
+            throw new IndexerException("Could not send index request to python process. Cause: " + e.getMessage());
+        }
         //Read metadata
-        int docs = sc.readInt();
-        int terms = sc.readInt();
+        int docs = 0, terms = 0;
+        try {
+            docs = sc.readInt();
+            terms = sc.readInt();
+        } catch (IOException e) {
+            throw new IndexerException("Could not receive metadata: " + e.getMessage());
+        }
         LOGGER.info("Docs: " + docs + " - Terms: " + terms);
         // Read vocabulary
 
         LOGGER.info("Loading vocabulary");
         HashMap<String, Integer> vocabulary = new HashMap<String, Integer>();
         for (int i=0; i<terms; i++)
-            vocabulary.put(sc.readMessage(), i);
+            try {
+                vocabulary.put(sc.readMessage(), i);
+            } catch (IOException e) {
+                throw new IndexerException("Could not receive vocabulary: " + e.getMessage());
+            }
 
         // Read documents
         LOGGER.info("Loading documents");
         HashMap<String, Integer> documents = new HashMap<String, Integer>();
-        for (int i=0; i<docs; i++) documents.put(sc.readMessage(), i);
+        for (int i=0; i<docs; i++)
+            try {
+                documents.put(sc.readMessage(), i);
+            } catch (IOException e) {
+                throw new IndexerException("Could not receive documents data: " + e.getMessage());
+            }
         //Read max freqs
         LOGGER.info("Loading maxfreqs");
         int[] maxFreqs = new int[docs];
         for (int i=0; i<docs; i++)
-            maxFreqs[i] = sc.readInt();
+            try {
+                maxFreqs[i] = sc.readInt();
+            } catch (IOException e) {
+                throw new IndexerException("Could not receive maxfreqs: " + e.getMessage());
+            }
         // READ DF
         LOGGER.info("Loading df");
         int[] df = new int[terms];
         for (int i=0; i<terms; i++)
-            df[i] = sc.readInt();
+            try {
+                df[i] = sc.readInt();
+            } catch (IOException e) {
+                throw new IndexerException("Could not receive pointers to postings: " + e.getMessage());
+            }
         //READ POSTINGS
         LOGGER.info("Loading postings");
         HashMap<Integer, HashMap<Integer, Integer>> postings = new HashMap<Integer, HashMap<Integer, Integer>>();
         int[] docIds;
         HashMap<Integer, Integer> mapDocToFreq;
-        for (int termId=0; termId<terms; termId++){
-            docIds = new int[df[termId]];
-            mapDocToFreq = new HashMap<Integer, Integer>();
-            for (int i=0; i<df[termId]; i++) docIds[i] = sc.readInt();
-            for (int i=0; i<df[termId]; i++) mapDocToFreq.put(docIds[i], sc.readInt());
-            postings.put(termId, mapDocToFreq);
+        try {
+            for (int termId=0; termId<terms; termId++){
+                docIds = new int[df[termId]];
+                mapDocToFreq = new HashMap<Integer, Integer>();
+                for (int i=0; i<df[termId]; i++) docIds[i] = sc.readInt();
+                for (int i=0; i<df[termId]; i++) mapDocToFreq.put(docIds[i], sc.readInt());
+                postings.put(termId, mapDocToFreq);
+            }
+        } catch (IOException e){
+            throw new IndexerException("Could not receive postings: " + e.getMessage());
         }
-        String status = sc.readMessage();
+        String status = null;
+        try {
+            status = sc.readMessage();
+        } catch (IOException e) {
+            throw new IndexerException("Could not receive python process status: " + e.getMessage());
+        }
         if (status.equals(RESPONSE_FAIL)){
-            String errorMsg = sc.readMessage();
+            String errorMsg = null;
+            try {
+                errorMsg = sc.readMessage();
+            } catch (IOException e) {
+                throw new IndexerException("Could not receive error message from python process: " + e.getMessage());
+            }
             sc.close();
             throw new IndexerException("At Indexer host: " + errorMsg);
         }
         sc.close();
 
-        boolean persistStatus = indexFilesHandler.persist(
-          docs, terms, postings, maxFreqs, documents, vocabulary
-        );
+        boolean persistStatus = false;
+        try {
+            persistStatus = indexFilesHandler.persist(
+              docs, terms, postings, maxFreqs, documents, vocabulary
+            );
+        } catch (IOException e) {
+            throw new MyAppException("saving data on disk: " + e.getMessage());
+        }
 
         return persistStatus && status.equals(this.RESPONSE_SUCCESS);
     }

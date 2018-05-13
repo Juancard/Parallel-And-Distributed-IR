@@ -21,7 +21,9 @@ public class IRNormalizer {
     public static String PUNCTUATION = "¡¿!\"#$%&'()*+,-./:;<=>?@[\\]^_`{|}~";
     public static String WEIRD_CHARS = "§âÂ¢«»­±¬ºï©®Ÿ€¾°“”·—’‘–Ã¼ü";
 
+    // DEPRECATED
     private ArrayList<String> stopwords;
+
     private IndexerConfig indexerConfig;
 
     public IRNormalizer(IndexerConfig indexerConfiguration) throws IOException {
@@ -31,6 +33,7 @@ public class IRNormalizer {
             this.loadStopwords();
     }
 
+    // DEPRECATED
     public void loadStopwords() throws IOException {
         BufferedReader br = null;
         try {
@@ -44,13 +47,33 @@ public class IRNormalizer {
         }
         String stopword;
         while ((stopword = br.readLine()) != null)
-            this.stopwords.add(stopword);
+            this.stopwords.add(this.normalize(stopword));
     }
 
     public String stripAccents(String s){
         s = Normalizer.normalize(s, Normalizer.Form.NFKD);
         s = s.replaceAll("[\\p{InCombiningDiacriticalMarks}]", "");
         return s;
+    }
+
+    public String normalize(String toNormalize){
+        toNormalize = this.stripAccents(toNormalize);
+        toNormalize = this.toLowerCase(toNormalize);
+        toNormalize = this.removePunctuation(toNormalize);
+        toNormalize = this.removeOtherCharacters(toNormalize);
+        return toNormalize;
+    }
+
+    public String[] tokenize(String toTokenize){
+        return toTokenize.split(" ");
+    }
+
+    public boolean isValidTermSize(String term){
+        return term.length() >= this.indexerConfig.getMinTermsLength() & term.length() <= this.indexerConfig.getMaxTermsLength();
+    }
+
+    public boolean isStopword(String word){
+        return this.stopwords.contains(word);
     }
 
     public String toLowerCase(String s){

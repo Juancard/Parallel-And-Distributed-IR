@@ -96,10 +96,7 @@ public class IRWorker extends MyCustomWorker{
         try {
             this.indexHandler.testConnection();
             return this.indexHandler.index();
-        } catch (IOException e) {
-            LOGGER.log(Level.SEVERE, e.getMessage(), e);
-            return new IOException(e.getMessage());
-        } catch (IndexerException e) {
+        } catch (MyAppException e) {
             LOGGER.log(Level.SEVERE, e.getMessage(), e);
             return new IOException(e.getMessage());
         }

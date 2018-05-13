@@ -172,7 +172,7 @@ public class InitServer {
         this.normalizer = new IRNormalizer(this.indexerConfiguration);
     }
 
-    private void setupLocalInvertedIndex(Properties properties) throws IOException, IndexerException {
+    private void setupLocalInvertedIndex(Properties properties) throws IOException, IndexerException, MyAppException {
         File indexPath = this.indexerConfiguration.getIndexPath();
         String filesProp[] = {
                 "IR_POSTINGS_FILENAME",

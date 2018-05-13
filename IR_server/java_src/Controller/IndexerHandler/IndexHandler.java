@@ -1,5 +1,6 @@
 package Controller.IndexerHandler;
 
+import Common.MyAppException;
 import Controller.CacheHandler;
 import Controller.GpuServerHandler;
 import Model.Documents;
@@ -43,29 +44,28 @@ public class IndexHandler {
         this.cacheHandler = cacheHandler;
     }
 
-    public boolean index() throws IOException {
+    public boolean index() throws MyAppException {
         try {
             LOGGER.info("Calling indexer");
             //this.pythonIndexer.callScriptIndex();
             if (!this.pythonIndexer.indexViaSocket(indexFilesHandler))
                 return false;
-            try {
-                LOGGER.info("Updating index in IR server");
-                this.vocabulary.update();
-                this.documents.update();
-            } catch (IOException e) {
-                String m = "Could not update index in IR server: " + e.getMessage();
-                LOGGER.warning(m);
-                throw  new IndexerException(m);
-            }
-            LOGGER.info("Cleaning caché");
-            this.cacheHandler.clean();
         } catch (IndexerException e) {
-            String m = "Error on indexer: " + e.getMessage();
+            String m = "Error indexing at python process: " + e.getMessage();
             LOGGER.warning(m);
-            throw new IOException(m);
+            throw  new MyAppException(m);
         }
-
+        try {
+            LOGGER.info("Updating index in IR server");
+            this.vocabulary.update();
+            this.documents.update();
+        } catch (IOException e) {
+            String m = "Could not update index in IR server: " + e.getMessage();
+            LOGGER.warning(m);
+            throw  new MyAppException(m);
+        }
+        LOGGER.info("Cleaning caché");
+        this.cacheHandler.clean();
         return true;
     }
 
@@ -87,16 +87,16 @@ public class IndexHandler {
         return true;
     }
 
-    public boolean testConnection() throws IndexerException {
+    public boolean testConnection() throws MyAppException {
         try {
             this.gpuServerHandler.testConnection();
         } catch (IOException e) {
-            throw new IndexerException("GPU server is not responding. Cause: " + e.getMessage());
+            throw new MyAppException("GPU server is not responding. Cause: " + e.getMessage());
         }
         try {
             this.pythonIndexer.testConnection();
         } catch (IOException e) {
-            throw new IndexerException("Indexer is not responding. Cause: " + e.getMessage());
+            throw new MyAppException("Indexer is not responding. Cause: " + e.getMessage());
         }
         return true;
     }

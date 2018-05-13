@@ -21,26 +21,19 @@ public class Query{
         this.vocabulary = vocabulary;
         this.normalizer = normalizer;
         this.termsFreq = new HashMap<Integer, Integer>();
-        String queryNormalized = normalize(query);
-        this.setTermsAndWeights(this.tokenize(queryNormalized));
-    }
-
-    private String normalize(String query){
-        query = this.normalizer.stripAccents(query);
-        query = this.normalizer.toLowerCase(query);
-        query = this.normalizer.removePunctuation(query);
-        query = this.normalizer.removeOtherCharacters(query);
-        return query;
-    }
-
-    public String[] tokenize(String toTokenize){
-        return toTokenize.split(" ");
+        String queryNormalized = this.normalizer.normalize(query);
+        this.setTermsAndWeights(this.normalizer.tokenize(queryNormalized));
     }
 
     private void setTermsAndWeights(String[] tokens){
-        for (String token : tokens)
-            if (this.vocabulary.containsKey(token))
+        boolean isTerm = false;
+        for (String token : tokens){
+            isTerm = this.normalizer.isValidTermSize(token)
+                    && this.normalizer.isStopword(token)
+                    && this.vocabulary.containsKey(token);
+            if (isTerm)
                 this.addQueryTerm(token);
+        }
     }
 
     private void addQueryTerm(String token){
