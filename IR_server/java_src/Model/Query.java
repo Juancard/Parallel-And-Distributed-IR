@@ -1,9 +1,11 @@
 package Model;
 
 import java.io.DataInputStream;
+import java.util.ArrayList;
 import java.util.HashMap;
 
 public class Query{
+    private final static java.util.logging.Logger LOGGER = java.util.logging.Logger.getLogger(java.util.logging.Logger.GLOBAL_LOGGER_NAME);
 
     private HashMap<Integer, Integer> termsFreq;
     private IRNormalizer normalizer;
@@ -27,13 +29,18 @@ public class Query{
 
     private void setTermsAndWeights(String[] tokens){
         boolean isTerm = false;
+        ArrayList<String> tokensDiscarded = new ArrayList<String>();
         for (String token : tokens){
             isTerm = this.normalizer.isValidTermSize(token)
-                    && this.normalizer.isStopword(token)
+                    && !this.normalizer.isStopword(token)
                     && this.vocabulary.containsKey(token);
             if (isTerm)
                 this.addQueryTerm(token);
+            else
+                tokensDiscarded.add(token);
         }
+        if (!tokensDiscarded.isEmpty())
+            LOGGER.info("Tokens discarded: " + tokensDiscarded);
     }
 
     private void addQueryTerm(String token){
