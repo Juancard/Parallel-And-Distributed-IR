@@ -83,6 +83,7 @@ class IRManager(object):
         if not os.path.isdir(self.indexPath):
             logging.info("Index files directory does not exist. Creating...")
             os.makedirs(self.indexPath)
+
         metadataDir = os.path.join(self.indexPath, METADATA_FILENAME)
         maxFreqsDir = os.path.join(self.indexPath, MAXFREQS_FILENAME)
         pointersDir = os.path.join(self.indexPath, POSTINGS_POINTERS_FILENAME)
@@ -90,11 +91,19 @@ class IRManager(object):
         if not (os.path.exists(metadataDir) and os.path.exists(maxFreqsDir) and os.path.exists(pointersDir) and os.path.exists(postingsDir)):
             raise NoIndexFilesException("index files have not been generated.")
 
+        logging.info("Loading metadata")
         metadata = loadMetadata(metadataDir)
         self.docs = metadata["docs"]
         self.terms = metadata["terms"]
+        logging.info("%d docs and %d terms" % (self.docs, self.terms))
+
+        logging.info("Loading maxfreqs")
         maxFreqs = loadMaxfreqs(maxFreqsDir, self.docs)
+
+        logging.info("Loading pointers to postings")
         df = loadDf(pointersDir, self.terms)
+
+        logging.info("Loading postings")
         self.postings = loadPostings(postingsDir, df)
 
         logging.info("Generating retrieval data structures")
@@ -173,11 +182,14 @@ def loadDf(dfDir, terms):
 
 def loadPostings(postingsDir, df):
     postings = collections.OrderedDict()
+    lenPostingLists = len(df)
     with open(postingsDir, "rb") as f:
-        for tId in range(0, len(df)):
+        for tId in range(0, lenPostingLists):
+            logging.info("%d of %d" % (tId, lenPostingLists))
             postings[tId] = collections.OrderedDict()
-            docIdsRead = struct.unpack('<%iI' % df[tId], f.read(df[tId] * 4))
-            freqsRead = struct.unpack('<%iI' % df[tId], f.read(df[tId] * 4))
-            for i in range(0, df[tId]):
+            lenPosting = df[tId]
+            docIdsRead = struct.unpack('<%iI' % lenPosting, f.read(lenPosting * 4))
+            freqsRead = struct.unpack('<%iI' % lenPosting, f.read(lenPosting * 4))
+            for i in range(0, lenPosting):
                 postings[tId][int(docIdsRead[i])] = int(freqsRead[i])
     return postings
