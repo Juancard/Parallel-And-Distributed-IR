@@ -45,9 +45,9 @@ public class IRServerHandler {
 
     public boolean index() throws MyAppException {
         return (boolean) this.sendMessageGetResponse(
-                IRProtocol.INDEX_FILES,
-                false,
-                true
+            IRProtocol.INDEX_FILES,
+            false,
+            true
         );
     }
 
@@ -139,7 +139,11 @@ public class IRServerHandler {
         try {
             if (isTimeout)
                 connection.getClientSocket().setSoTimeout(this.timeout);
-            return connection.read();
+            Object response = connection.read();
+            if (response instanceof Exception){
+                throw new MyAppException("At IR server: " + ((Exception)response).getMessage());
+            }
+            return response;
         } catch (ClassNotFoundException e) {
             throw new MyAppException("Could not receive response. Cause: " + e.getMessage());
         } catch (SocketException e) {

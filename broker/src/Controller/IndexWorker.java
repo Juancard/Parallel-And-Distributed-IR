@@ -1,5 +1,7 @@
 package Controller;
 
+import Common.MyAppException;
+
 import java.util.logging.Logger;
 
 /**
@@ -28,7 +30,7 @@ public class IndexWorker implements Runnable {
             this.indexingTime = end - start;
             this.isIndexedOk = true;
             LOGGER.info("Indexing at " + irServer.host + ":" + irServer.port + ": Success!!");
-        } catch (Exception e) {
+        } catch (MyAppException e) {
             this.isIndexedOk = false;
             LOGGER.severe("Error indexing at: " + irServer.host + ":" + irServer.port + ". Cause: " + e.getMessage());
         }
