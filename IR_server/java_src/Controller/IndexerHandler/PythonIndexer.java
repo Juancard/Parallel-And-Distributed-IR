@@ -186,7 +186,6 @@ public class PythonIndexer {
             sc.close();
             throw new IndexerException("At Indexer host: " + errorMsg);
         }
-        sc.close();
 
         boolean persistStatus = false;
         try {
@@ -197,7 +196,15 @@ public class PythonIndexer {
             throw new MyAppException("saving data on disk: " + e.getMessage());
         }
 
-        return persistStatus && status.equals(this.RESPONSE_SUCCESS);
+        if (persistStatus){
+            try {
+                sc.sendMessage(this.RESPONSE_SUCCESS);
+            } catch (IOException e) {
+                throw new MyAppException("Sending success message: " + e.getMessage());
+            }
+        }
+        sc.close();
+        return true;
     }
 
     public boolean testConnection() throws IOException {
