@@ -93,7 +93,6 @@ public class GpuServerHandler {
                 weightBytes = new byte[weightLength];    // Se le da el tamaño
                 in.read(weightBytes, 0, weightLength);   // Se leen los bytes
                 weightStr = new String (weightBytes); // Se convierten a String
-
                 docsScore.put(doc, new Double(weightStr));
             }
         } catch (IOException e) {

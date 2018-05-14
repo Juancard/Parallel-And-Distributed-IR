@@ -163,14 +163,15 @@ public class InitClient {
             HashMap<String, Double> docsScores = this.irClientHandler.query(query);
             long elapsedTime = System.nanoTime() - start;
             double seconds = (double)elapsedTime / 1000000000.0;
-            CommonMain.display("Time: " + decimalFormat.format(seconds) + " seconds.");
             docsScores = DocScores.orderByScore(
                     DocScores.removeBehindThreshold(docsScores, 0.0),
                     false
             );
+            CommonMain.display("Docs found: " + docsScores.size() + ".");
             if (docsScores.isEmpty())
                 CommonMain.display("No documents match your query");
             else{
+                CommonMain.display("Time: " + decimalFormat.format(seconds) + " seconds.");
                 CommonMain.display("RANK - DOC - SCORE");
                 int rank = 1;
                 for (String d : docsScores.keySet()){
@@ -185,6 +186,7 @@ public class InitClient {
                             break;
                     }
                 }
+                docsScores.clear();
             }
         } catch (MyAppException e) {
             LOGGER.severe(e.getMessage());

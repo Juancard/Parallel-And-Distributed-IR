@@ -67,7 +67,7 @@ public class CacheHandler {
                 throw new MyAppException("Error waiting for token: " + e.getMessage());
             }
         }
-        if (isInCache){
+        if (!isInCache){
             HashMap<Integer, Double> docScoresId = qCallable.call();
             this.irCache.put(query, docScoresId);
             return docScoresId;
