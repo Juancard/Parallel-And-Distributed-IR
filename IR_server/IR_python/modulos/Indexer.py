@@ -34,6 +34,8 @@ class Indexer(object):
 
 		#-----------------LEER-COLECCION--------------#
 		docId = 0
+		totalDocs = len(self.collection.allFiles())
+		number_of_logs = 1 if totalDocs < 50 else totalDocs/50;
 		for filePath in self.collection.allFiles():
 			if (not filePath.lower().endswith('.txt')):
 				logging.warning("following file will not be indexed: " + filePath)
@@ -46,8 +48,8 @@ class Indexer(object):
 			}
 
 			#----------LEER-ARCHIVO--------------------#
-
-			logging.info("Cargando " + actualDoc["name"])
+			if (docId + 1) % number_of_logs == 0:
+				logging.info("Cargando %s (%d/%d)" % (actualDoc["name"], docId + 1, totalDocs))
 			with codecs.open(filePath, mode='rt', encoding='utf-8') as f:
 
 				# Guardo tokens y terminos del documento

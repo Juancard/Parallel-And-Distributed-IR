@@ -43,14 +43,16 @@ class IRManager(object):
 
         self.corpusPath = corpusPath
         indexer.postings.sortByKey()
-        self.postings = indexer.postings.content
         self.terms = len(indexer.vocabulary.content)
         self.docs = len(indexer.documents.content)
+        self.maxfreqs = indexer.maxFreqInDocs
+        self.df = [len(postings[tId].keys()) for tId in indexer.postings.content]
         return {
             "vocabulary": indexer.vocabulary.content,
             "documents": indexer.documents.content,
-            "postings": self.postings,
-            "max_freq": indexer.maxFreqInDocs,
+            "postings": indexer.postings.content,
+            "max_freq": self.maxfreqs,
+            "df": self.df,
             "terms": self.terms,
             "docs": self.docs
         }

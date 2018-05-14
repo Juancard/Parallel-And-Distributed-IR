@@ -123,14 +123,12 @@ def onRequest(conn, addr, irManager):
 			conn.sendall(struct.pack('<%di' % len(max_freqs), *max_freqs))
 			#SEND Postings
 			logging.info("Sending postings")
-			postings = indexData["postings"]
-			df = [len(postings[tId].keys()) for tId in postings]
-			conn.sendall(struct.pack('<%dI' % len(df), *df))
+			conn.sendall(struct.pack('<%dI' % len(indexData["df"]), *indexData["df"]))
 			#SEND POINTERS
 			logging.info("Sending pointers")
-			for tId in postings:
-				docIds = postings[tId].keys()
-				freqs = postings[tId].values()
+			for tId in indexData["postings"]:
+				docIds = indexData["postings"][tId].keys()
+				freqs = indexData["postings"][tId].values()
 				conn.sendall(struct.pack('<%sI' % len(docIds), *docIds))
 				conn.sendall(struct.pack('<%sI' % len(freqs), *freqs))
 			sendLengthThenMsg(conn, RESPONSE_SUCCESS)
