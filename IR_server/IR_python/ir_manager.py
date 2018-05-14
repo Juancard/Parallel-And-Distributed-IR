@@ -46,7 +46,7 @@ class IRManager(object):
         self.terms = len(indexer.vocabulary.content)
         self.docs = len(indexer.documents.content)
         self.maxfreqs = indexer.maxFreqInDocs
-        self.df = [len(postings[tId].keys()) for tId in indexer.postings.content]
+        self.df = [len(indexer.postings.content[tId].keys()) for tId in indexer.postings.content]
         return {
             "vocabulary": indexer.vocabulary.content,
             "documents": indexer.documents.content,
