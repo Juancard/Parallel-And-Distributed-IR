@@ -107,29 +107,39 @@ void onTestConnectionRequest(int socketfd){
 int sendEvaluationResponse(int socketfd, DocScores docScores){
   // first sends docs
   // (could be removed if the client knows number of docs in collection)
-  if (sendInteger(socketfd, docScores.size) == -1)
+  int relevantDocs = 0;
+  int i;
+  for (i=0; i < docScores.size; i++){
+    if (docScores.scores[i] >= 0.00001){
+        relevantDocs++;
+    }
+  }
+  printf("Relevant docs: %d\n", relevantDocs);
+
+  if (sendInteger(socketfd, relevantDocs) == -1)
     perror("send docscores length");
 
   // Sending docScores to client
-  int i, docId, weightStrLength;
+  int docId, weightStrLength;
   for (i=0; i < docScores.size; i++){
-    //printf("Sending doc %d: %.6f\n", i, docScores.scores[i]);
-
-    // sending doc id
-    //
-    //could be removed if server always send every doc score
-    // needed if gpu server decides to send only those docs
-    // whose score exceeds some threshold (not currently the case)
-    if ( sendInteger(socketfd, i) == -1) perror("send doc");
 
     // sending weight as string
-    char weightStr[10];
-    snprintf(weightStr, 10, "%.4f", docScores.scores[i]);
-    weightStrLength = strlen(weightStr);
-    if ( sendInteger(socketfd, weightStrLength) == -1)
-      perror("send doc");
-    if ( send(socketfd, weightStr, strlen(weightStr), 0) == -1)
-      perror("send doc");
+    if (docScores.scores[i] >= 0.00001){
+      //printf("Sending doc %d: %.6f\n", i, docScores.scores[i]);
+      // sending doc id
+      //
+      //could be removed if server always send every doc score
+      // needed if gpu server decides to send only those docs
+      // whose score exceeds some threshold (not currently the case)
+      if ( sendInteger(socketfd, i) == -1) perror("send doc");
+      char weightStr[10];
+      snprintf(weightStr, 10, "%.4f", docScores.scores[i]);
+      weightStrLength = strlen(weightStr);
+      if ( sendInteger(socketfd, weightStrLength) == -1)
+        perror("send doc");
+      if ( send(socketfd, weightStr, strlen(weightStr), 0) == -1)
+        perror("send doc");
+    }
   }
 
   return 0;
