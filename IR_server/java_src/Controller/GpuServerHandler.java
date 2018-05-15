@@ -2,6 +2,7 @@ package Controller;
 
 import java.io.*;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Vector;
 import java.util.logging.*;
@@ -10,6 +11,7 @@ import Common.IRProtocol;
 import Common.MyAppException;
 import Common.Socket.SocketConnection;
 import Controller.IndexerHandler.IndexFilesHandler;
+import Model.ArrayIndexComparator;
 import Model.Query;
 import com.jcraft.jsch.*;
 import com.jcraft.jsch.Logger;
@@ -236,17 +238,28 @@ public class GpuServerHandler {
             throw new MyAppException("Loading postings file: " + e.getMessage());
         }
         try {
+            Integer[] toSend;
+            Integer[] indexes;
+            ArrayIndexComparator comparator;
             for (int i=0; i<terms; i++){
                 out.writeInt(df[i]);
+                toSend = new Integer[df[i]];
                 // sends docIds
                 for (int j=0; j<df[i]; j++){
-                    int doc = Integer.reverseBytes(dis.readInt());
-                    out.writeInt(doc);
+                    toSend[j] = Integer.reverseBytes(dis.readInt());
+                }
+                comparator = new ArrayIndexComparator(toSend);
+                indexes = comparator.createIndexArray();
+                Arrays.sort(indexes, comparator);
+                for (int index : indexes){
+                    out.writeInt(toSend[index]);
                 }
                 // sends freqs
                 for (int j=0; j<df[i]; j++){
-                    int freq = Integer.reverseBytes(dis.readInt());
-                    out.writeInt(freq);
+                    toSend[j] = Integer.reverseBytes(dis.readInt());
+                }
+                for (int index : indexes){
+                    out.writeInt(toSend[index]);
                 }
             }
         } catch(IOException e){

@@ -44,7 +44,14 @@ void onIndexFilesRequest(int socketfd){
   printf("Receiving postings...\n");
   PostingFreq *postings = (PostingFreq *) malloc(sizeof(PostingFreq) * terms);
   int j;
+  int logs = terms;
+  if (terms > 25){
+    logs = (terms / 25);
+  }
   for (i=0; i<terms; i++){
+    if ((i % logs) == 0){
+      printf("Processing posting list: %d of %d\n", i, terms);
+    }
     postings[i].docsLength = readInteger(socketfd);
     postings[i].docIds = (int *) malloc(sizeof(int) * postings[i].docsLength);
     postings[i].freq = (int *) malloc(sizeof(int) * postings[i].docsLength);

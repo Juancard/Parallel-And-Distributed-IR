@@ -53,7 +53,6 @@ __global__ void k_evaluateQuery (
 	docScores[myDocId] = 0;
 	int i;
 	//printf("doc %d: docs norm: %.4f\n", myDocId, docsNorm[myDocId]);
-
 	PostingTfIdf termPosting;
 	for (i = 0; i < q.size; i++) {
 		termPosting = postings[q.termIds[i]];

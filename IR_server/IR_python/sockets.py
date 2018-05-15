@@ -114,12 +114,12 @@ def onRequest(conn, addr, irManager):
 			    sendLengthThenMsg(conn, term)
 			# READ DOCUMENTS
 			logging.info("Sending documents")
-			for docId in range(0, len(irManager.indexer.documents.content)):
+			for docId in range(0, irManager.docs):
 			    relPath = os.path.relpath(irManager.indexer.documents.content[docId], corpusPath)
 			    sendLengthThenMsg(conn, relPath.decode("UTF-8"))
 			# SEND MAX FREQS
 			logging.info("Sending maxfreqs")
-			max_freqs = [irManager.maxfreqs[d] for d in range(0, len(irManager.maxfreqs))]
+			max_freqs = [irManager.maxfreqs[d] for d in range(0, irManager.docs)]
 			conn.sendall(struct.pack('<%di' % len(max_freqs), *max_freqs))
 			max_freqs=None
 			#SEND Postings
