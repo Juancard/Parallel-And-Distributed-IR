@@ -106,9 +106,9 @@ public class IRWorker extends MyCustomWorker{
         try {
             this.indexHandler.sendInvertedIndexToGpu();
             return IRProtocol.INDEX_LOAD_SUCCESS;
-        } catch (IOException e) {
+        } catch (MyAppException e) {
             LOGGER.log(Level.SEVERE, e.getMessage(), e);
-            return new IOException(e.getMessage());
+            return new MyAppException(e.getMessage());
         }
     }
 

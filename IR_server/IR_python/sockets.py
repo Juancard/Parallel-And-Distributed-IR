@@ -107,30 +107,24 @@ def onRequest(conn, addr, irManager):
 			indexData = irManager.index(corpusPath)
 			# SEND METADATA
 			logging.info("Sending metadata")
-			conn.sendall(struct.pack('<2i', indexData["docs"], indexData["terms"]))
+			conn.sendall(struct.pack('<2i', irManager.docs, irManager.terms))
 			# SEND VOCABULARY
 			logging.info("Sending vocabulary")
-			for term in sorted(indexData["vocabulary"], key=lambda x: indexData["vocabulary"][x]["id"]):
+			for term in sorted(irManager.indexer.vocabulary.content, key=lambda x: irManager.indexer.vocabulary.content[x]["id"]):
 			    sendLengthThenMsg(conn, term)
 			# READ DOCUMENTS
 			logging.info("Sending documents")
-			for docId in range(0, indexData["docs"]):
-			    relPath = os.path.relpath(indexData["documents"][docId], corpusPath)
+			for docId in range(0, len(irManager.indexer.documents.content)):
+			    relPath = os.path.relpath(irManager.indexer.documents.content[docId], corpusPath)
 			    sendLengthThenMsg(conn, relPath.decode("UTF-8"))
 			# SEND MAX FREQS
 			logging.info("Sending maxfreqs")
-			max_freqs = [indexData["max_freq"][d] for d in range(0, len(indexData["max_freq"]))]
+			max_freqs = [irManager.maxfreqs[d] for d in range(0, len(irManager.maxfreqs))]
 			conn.sendall(struct.pack('<%di' % len(max_freqs), *max_freqs))
+			max_freqs=None
 			#SEND Postings
-			logging.info("Sending postings")
-			conn.sendall(struct.pack('<%dI' % len(indexData["df"]), *indexData["df"]))
-			#SEND POINTERS
 			logging.info("Sending pointers")
-			for tId in indexData["postings"]:
-				docIds = indexData["postings"][tId].keys()
-				freqs = indexData["postings"][tId].values()
-				conn.sendall(struct.pack('<%sI' % len(docIds), *docIds))
-				conn.sendall(struct.pack('<%sI' % len(freqs), *freqs))
+			conn.sendall(struct.pack('<%dI' % len(irManager.df), *irManager.df))
 			sendLengthThenMsg(conn, RESPONSE_SUCCESS)
 			message = readLengthThenMsg(conn)
 			if message == RESPONSE_SUCCESS:

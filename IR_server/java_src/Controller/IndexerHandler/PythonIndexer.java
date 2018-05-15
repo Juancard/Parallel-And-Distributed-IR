@@ -154,22 +154,6 @@ public class PythonIndexer {
             } catch (IOException e) {
                 throw new IndexerException("Could not receive pointers to postings: " + e.getMessage());
             }
-        //READ POSTINGS
-        LOGGER.info("Loading postings");
-        HashMap<Integer, HashMap<Integer, Integer>> postings = new HashMap<Integer, HashMap<Integer, Integer>>();
-        int[] docIds;
-        HashMap<Integer, Integer> mapDocToFreq;
-        try {
-            for (int termId=0; termId<terms; termId++){
-                docIds = new int[df[termId]];
-                mapDocToFreq = new HashMap<Integer, Integer>();
-                for (int i=0; i<df[termId]; i++) docIds[i] = sc.readInt();
-                for (int i=0; i<df[termId]; i++) mapDocToFreq.put(docIds[i], sc.readInt());
-                postings.put(termId, mapDocToFreq);
-            }
-        } catch (IOException e){
-            throw new IndexerException("Could not receive postings: " + e.getMessage());
-        }
         String status = null;
         try {
             status = sc.readMessage();
@@ -190,7 +174,7 @@ public class PythonIndexer {
         boolean persistStatus = false;
         try {
             persistStatus = indexFilesHandler.persist(
-              docs, terms, postings, maxFreqs, documents, vocabulary
+              docs, terms, maxFreqs, documents, vocabulary, df
             );
         } catch (IOException e) {
             throw new MyAppException("saving data on disk: " + e.getMessage());

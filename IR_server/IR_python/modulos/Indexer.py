@@ -8,12 +8,12 @@ import logging
 
 from LexAnalyser import LexAnalyser
 from Vocabulary import Vocabulary
-from Postings import DictionaryPostings
+from Postings import DictionaryPostings, BinaryPostings
 from Documents import Documents
 
 class Indexer(object):
 
-	def __init__(self, collection, doStats=False):
+	def __init__(self, collection, doStats=False, postingsFile=False):
 		self.collection = collection
 		self.lexAnalyser = False
 		self.calculateStats = doStats
@@ -61,6 +61,7 @@ class Indexer(object):
 					analysed = self.lexAnalyser.analyse(line)
 					terms.extend(analysed["terms"])
 					tokens.extend(analysed["tokens"])
+					analysed = None
 
 			# Guardo documento actual
 			self.documents.addDocument(docId, actualDoc["path"])
@@ -74,6 +75,8 @@ class Indexer(object):
 			if self.calculateStats:
 				self.updateStats(tokens, terms)
 
+			tokens = None
+			terms = None
 			docId += 1
 			#------FIN-LEER-ARCHIVO--------------------#
 
@@ -100,32 +103,35 @@ class Indexer(object):
 			# Si termino no esta en vocabulario lo agrego inicializando la data
 			if not self.vocabulary.isATerm(t):
 				termId = self.vocabulary.addTerm(t, 1.0, 1.0)
-				self.postings.addPosting(termId, docId, 1.0)
+				#self.postings.addPosting(termId, docId, 1.0)
 				#self.positions.addPosting(t, docId, [position])
-				termToFreq[t] = 1
+				termToFreq[termId] = 1
 			else:
 				self.vocabulary.incrementCF(t, 1.0)
 				# termino no estaba en este documento?
 				termId = self.vocabulary.getId(t)
-				if not self.postings.isDocInPosting(termId, docId):
-					termToFreq[t] = 1
+				if not termId in termToFreq:
+					termToFreq[termId] = 1
 					self.vocabulary.incrementDF(t, 1.0)
-					self.postings.addDocToPosting(termId, docId, 1.0)
+					#self.postings.addDocToPosting(termId, docId, 1.0)
 					#self.positions.addDocToPosting(t, docId, [position])
 				# else termino ya existe en documento:
 				else:
-					termToFreq[t] += 1
+					termToFreq[termId] += 1
 					# Actualizo postings con frecuencias
-					self.postings.addDocToPosting(termId, docId, self.postings.getValue(termId, docId) + 1.0)
+					#self.postings.addDocToPosting(termId, docId, self.postings.getValue(termId, docId) + 1.0)
 					# Actualizo postings posicionales
 					#positionList = self.positions.getValue(t, docId)
 					#positionList.append(position)
 					#self.positions.addDocToPosting(t, docId, positionList)
 			#position += 1
+		for tId in termToFreq:
+			self.postings.addPosting(tId, docId, termToFreq[tId])
 		maxValue = 0
 		for t in termToFreq:
 			if termToFreq[t] >= maxValue:
 				maxValue = termToFreq[t]
+		termToFreq = None
 		self.maxFreqInDocs[docId] = maxValue
 
 	def getInitStats(self):

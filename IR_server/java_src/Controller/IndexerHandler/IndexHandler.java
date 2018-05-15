@@ -69,7 +69,7 @@ public class IndexHandler {
         return true;
     }
 
-    public boolean sendInvertedIndexToGpu() throws IOException {
+    public boolean sendInvertedIndexToGpu() throws MyAppException {
         LOGGER.info(
                 "Connecting to Gpu server at "
                         + this.gpuServerHandler.getHost()
@@ -82,7 +82,7 @@ public class IndexHandler {
         } catch (IOException e) {
             String m = "Error loading index in gpu server: " + e.getMessage();
             LOGGER.warning(m);
-            throw new IOException(m);
+            throw new MyAppException(m);
         }
         return true;
     }

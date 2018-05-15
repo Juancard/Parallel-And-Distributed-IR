@@ -21,6 +21,9 @@ class IRManager(object):
 
     def __init__(self):
         self.indexPath = loadIni()["index_dir"]
+        if not (os.path.exists(self.indexPath)):
+            raise IniException("in 'index_dir' property: not a valid path")
+        self.postingsDir = os.path.join(self.indexPath, POSTINGS_FILENAME)
         self.corpusPath = False
         self.docs = False
         self.terms = False
@@ -28,7 +31,7 @@ class IRManager(object):
         self.docsNorm = False
         self.df = False
         self.pointers = False
-        self.postingsDir = False
+        self.indexer = False
         self.indexConfig = loadIndexConfig(loadIni())
 
     def index(self, corpusPath):
@@ -38,24 +41,29 @@ class IRManager(object):
     		logging.error(e)
     		raise
 
-    	indexer = Indexer(collection)
-    	indexer.index(self.indexConfig)
+    	self.indexer = Indexer(collection)
+    	self.indexer.index(self.indexConfig)
 
         self.corpusPath = corpusPath
-        indexer.postings.sortByKey()
-        self.terms = len(indexer.vocabulary.content)
-        self.docs = len(indexer.documents.content)
-        self.maxfreqs = indexer.maxFreqInDocs
-        self.df = [len(indexer.postings.content[tId].keys()) for tId in indexer.postings.content]
-        return {
-            "vocabulary": indexer.vocabulary.content,
-            "documents": indexer.documents.content,
-            "postings": indexer.postings.content,
-            "max_freq": self.maxfreqs,
-            "df": self.df,
-            "terms": self.terms,
-            "docs": self.docs
-        }
+        #self.indexer.postings.sortByKey()
+        self.terms = len(self.indexer.vocabulary.content)
+        self.docs = len(self.indexer.documents.content)
+        self.maxfreqs = self.indexer.maxFreqInDocs
+        self.df = [0 for k in range(0, self.terms)]
+        logging.info("Writing postings")
+        logs_mod = self.terms if self.terms < 3 else  (self.terms / 3)
+        with open(self.postingsDir, "wb") as f:
+            for tId in range(0, self.terms):
+                if tId % logs_mod == 0:
+                    logging.info("Writing term %d of %d" % (tId, self.terms))
+                docIds = self.indexer.postings.content[tId].keys()
+                freqs = self.indexer.postings.content[tId].values()
+                self.indexer.postings.content[tId] = {}
+                self.df[tId] = len(docIds)
+                f.write(struct.pack('<%sI' % len(docIds), *docIds))
+                f.write(struct.pack('<%sI' % len(freqs), *freqs))
+                docIds = None
+                freqs = None
 
 
     def evaluate(self, query):
@@ -127,6 +135,7 @@ class IRManager(object):
         logging.info("Finished generating retrieval data structures")
 
     def generateRetrievalData(self):
+        self.indexer = None
         self.docsNorm = [0.0 for k in range(0, self.docs)]
         self.pointers = [0 for k in range(0, self.terms)]
         with open(self.postingsDir, "rb") as f:
@@ -190,11 +199,11 @@ def loadMaxfreqs(metadataDir, docs):
     return maxfreqs
 
 def loadDf(dfDir, terms):
-    df = {}
+    df = [0 for k in range(0,terms)]
     with open(dfDir, "rb") as f:
         read = f.read(terms * 4)
         read = struct.unpack('<%iI' % terms, read)
-        for tId in range(0, terms):
+        for tId in range(0,terms):
             df[tId] = int(read[tId])
     return df
 

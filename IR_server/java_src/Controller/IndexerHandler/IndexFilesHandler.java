@@ -98,22 +98,28 @@ public class IndexFilesHandler {
     public boolean persist(
             int docs,
             int terms,
-            HashMap<Integer, HashMap<Integer, Integer>> postings,
             int[] maxFreqs,
             HashMap<String, Integer> documents,
-            HashMap<String, Integer> vocabulary
-    ) throws IOException {
+            HashMap<String, Integer> vocabulary,
+            int[] df) throws IOException {
         try {
             this.persistMetadata(docs, terms);
             this.persistDocuments(documents);
             this.persistVocabulary(vocabulary);
             this.persistMaxfreqs(maxFreqs);
-            this.persistPostings(postings);
+            this.persistDf(df, terms);
         } catch (IOException e) {
             LOGGER.log(Level.SEVERE, e.getMessage(), e);
             throw new IOException("Could not persist index files: " + e.getMessage());
         }
         return true;
+    }
+
+    private void persistDf(int[] df, int terms) throws IOException{
+        DataOutputStream pointersOut = this.dataOutputStreamFromPath(this.pointersPath);
+        for (int termId=0; termId<terms; termId++){
+            pointersOut.writeInt(Integer.reverseBytes(df[termId]));
+        }
     }
 
     private boolean persistPostings(

@@ -7,6 +7,7 @@ import java.util.Vector;
 import java.util.logging.*;
 
 import Common.IRProtocol;
+import Common.MyAppException;
 import Common.Socket.SocketConnection;
 import Controller.IndexerHandler.IndexFilesHandler;
 import Model.Query;
@@ -112,7 +113,7 @@ public class GpuServerHandler {
 
     }
 
-    public boolean sendIndex() throws IOException {
+    public boolean sendIndex() throws MyAppException {
         String m = "Sending index files ";
         if (this.sshHandler != null){
             LOGGER.info( m + "via ssh");
@@ -123,17 +124,33 @@ public class GpuServerHandler {
         return this.sendIndexViaSocket();
     }
 
-	public synchronized boolean loadIndexInGpu() throws IOException{
+	public synchronized boolean loadIndexInGpu() throws MyAppException{
 
         LOGGER.info(this.connectionMessage());
-		SocketConnection connection = this.connect();
+        SocketConnection connection = null;
+        try {
+            connection = this.connect();
+        } catch (IOException e) {
+            throw new MyAppException("Could not connect to Gpu server: " + e.getMessage());
+        }
         DataOutputStream out = new DataOutputStream(connection.getSocketOutput());
         DataInputStream in = new DataInputStream(connection.getSocketInput());
 
         LOGGER.info("Sending load index message to Gpu");
-        out.writeInt((IRProtocol.INDEX_LOAD).length());
-		out.writeBytes(IRProtocol.INDEX_LOAD);
-		int result = in.readInt();
+        try {
+            out.writeInt((IRProtocol.INDEX_LOAD).length());
+            out.writeBytes(IRProtocol.INDEX_LOAD);
+        } catch(IOException e){
+            throw new MyAppException("Sending load index message to Gpu: " + e.getMessage());
+        }
+
+        int result = 0;
+        try {
+            result = in.readInt();
+        } catch (IOException e) {
+            throw new MyAppException("Reading Gpu status: " + e.getMessage());
+
+        }
 
         LOGGER.info("Closing connection with Gpu Server");
         connection.close();
@@ -145,7 +162,7 @@ public class GpuServerHandler {
         this.sshHandler = sshHandler;
     }
 
-    private synchronized void sendIndexViaSsh() throws IOException {
+    private synchronized void sendIndexViaSsh() throws MyAppException {
         try {
             LOGGER.info("Sending index");
             this.sshHandler.sendViaSftp(
@@ -153,55 +170,95 @@ public class GpuServerHandler {
                     this.indexFilesHandler.getAllFiles()
             );
         } catch (IOException e) {
-            throw new IOException("Could not send index files to gpu server. Cause: " + e.getMessage());
+            throw new MyAppException("Could not send index files to gpu server. Cause: " + e.getMessage());
         }
     }
-    public synchronized boolean sendIndexViaSocket() throws IOException{
+    public synchronized boolean sendIndexViaSocket() throws MyAppException {
         LOGGER.info(this.connectionMessage());
-        SocketConnection connection = this.connect();
+        SocketConnection connection = null;
+        try {
+            connection = this.connect();
+        } catch (IOException e) {
+            throw new MyAppException("Could not connect to Gpu server: " + e.getMessage());
+        }
         DataOutputStream out = new DataOutputStream(connection.getSocketOutput());
         DataInputStream in = new DataInputStream(connection.getSocketInput());
         DataInputStream dis;
 
         LOGGER.info("Sending index files request message to Gpu");
-        out.writeInt((IRProtocol.INDEX_FILES).length());
-        out.writeBytes(IRProtocol.INDEX_FILES);
-
-        LOGGER.info("Sending Metadata file");
-        dis = this.indexFilesHandler.loadMetadata();
-        int docs = Integer.reverseBytes(dis.readInt());
-        int terms = Integer.reverseBytes(dis.readInt());
-        out.writeInt(docs);
-        out.writeInt(terms);
-
-        LOGGER.info("Sending Max freqs file");
-        dis = this.indexFilesHandler.loadMaxFreqs();
-        for (int i=0; i<docs; i++)
-            out.writeInt(Integer.reverseBytes(dis.readInt()));
-
-        LOGGER.info("Sending pointers file");
-        dis = this.indexFilesHandler.loadPointers();
-        int[] df = new int[terms];
-        for (int i=0; i<terms; i++)
-            df[i] = Integer.reverseBytes(dis.readInt());
-
-        LOGGER.info("Sending postings file");
-        dis = this.indexFilesHandler.loadPostings();
-        for (int i=0; i<terms; i++){
-            out.writeInt(df[i]);
-            // sends docIds
-            for (int j=0; j<df[i]; j++){
-                int doc = Integer.reverseBytes(dis.readInt());
-                out.writeInt(doc);
-            }
-            // sends freqs
-            for (int j=0; j<df[i]; j++){
-                int freq = Integer.reverseBytes(dis.readInt());
-                out.writeInt(freq);
-            }
+        try {
+            out.writeInt((IRProtocol.INDEX_FILES).length());
+            out.writeBytes(IRProtocol.INDEX_FILES);
+        } catch (IOException e) {
+            throw new MyAppException("Sending " +IRProtocol.INDEX_FILES + ": " + e.getMessage());
         }
 
-        return in.readInt() == IRProtocol.INDEX_SUCCESS;
+        int terms, docs;
+        LOGGER.info("Sending Metadata file");
+        try {
+            dis = this.indexFilesHandler.loadMetadata();
+            docs = Integer.reverseBytes(dis.readInt());
+            terms = Integer.reverseBytes(dis.readInt());
+            out.writeInt(docs);
+            out.writeInt(terms);
+        } catch (IOException e) {
+            throw new MyAppException("Sending metadata: " + e.getMessage());
+        }
+
+        LOGGER.info("Sending Max freqs file");
+        try {
+            dis = this.indexFilesHandler.loadMaxFreqs();
+            for (int i=0; i<docs; i++)
+                out.writeInt(Integer.reverseBytes(dis.readInt()));
+        } catch(IOException e){
+            throw new MyAppException("Sending maxfreqs: " + e.getMessage());
+        }
+
+        LOGGER.info("Sending pointers file");
+        int[] df;
+        try {
+            dis = this.indexFilesHandler.loadPointers();
+        } catch (IOException e) {
+            throw new MyAppException("Sending pointers file: " + e.getMessage());
+        }
+        df = new int[terms];
+        for (int i=0; i<terms; i++)
+            try {
+                df[i] = Integer.reverseBytes(dis.readInt());
+            } catch (IOException e) {
+                throw new MyAppException("Sending pointer at term " + i + ": " + e.getMessage());
+            }
+
+        LOGGER.info("Sending postings file");
+        try {
+            dis = this.indexFilesHandler.loadPostings();
+        } catch (IOException e) {
+            throw new MyAppException("Loading postings file: " + e.getMessage());
+        }
+        try {
+            for (int i=0; i<terms; i++){
+                out.writeInt(df[i]);
+                // sends docIds
+                for (int j=0; j<df[i]; j++){
+                    int doc = Integer.reverseBytes(dis.readInt());
+                    out.writeInt(doc);
+                }
+                // sends freqs
+                for (int j=0; j<df[i]; j++){
+                    int freq = Integer.reverseBytes(dis.readInt());
+                    out.writeInt(freq);
+                }
+            }
+        } catch(IOException e){
+            throw new MyAppException("Sending postings file: " + e.getMessage());
+        }
+
+
+        try {
+            return in.readInt() == IRProtocol.INDEX_SUCCESS;
+        } catch (IOException e) {
+            throw new MyAppException("Reading message of gpu status: " + e.getMessage());
+        }
         /*
         String fname = "/home/juan/Documentos/unlu/sis_dis/trabajo_final/parallel-and-distributed-IR/IR_server/Resources/Index/metadata.bin";
         File file = new File(fname);

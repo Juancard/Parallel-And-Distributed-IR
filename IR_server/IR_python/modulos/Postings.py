@@ -201,7 +201,6 @@ class SequentialPostings(Postings):
 	def getDocsIdFromTerm(self, term):
 		return self.getPosting(term).keys()
 
-
 class BinaryPostings(object):
 
 	def __init__(self, path, termToPointer, dgaps=False):
